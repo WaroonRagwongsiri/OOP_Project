@@ -4,14 +4,16 @@ class GameStore {
     - name: String
     - id: String
 
-    - game_list: List<Game>
-    - machine_list: List<Machine>
     - shelf_list: List<Shelf>
+    - stock_product_list: List<StockProduct>
 
     - room_list: List<Room>
 
+    - customer_list: List<Customer>
     - member_list: List<Member>
     - staff_list: List<Staff>
+
+    - payment_method_list: List<PaymentMethod>
 
     - product_proposal_list: List<Product>
 
@@ -21,10 +23,14 @@ class GameStore {
 ' Shelf
 class Shelf {
     - max_capacity: int
-    - product_on_shelf: List<Product>
+    - product_on_shelf: List<ProductItem>
 }
 
 ' Product
+class StockProduct {
+    - product: Product
+    - product_item_list: List<ProductItem>
+}
 abstract class Product {
     - name: String
     - id: String
@@ -33,7 +39,10 @@ abstract class Product {
 
     - sell_price: int
     - rental_price: int
-
+}
+class ProductItem {
+    - product: Product
+    - serial_number: String
     - status: String    ' Waiting_For_Approval, Selling, For_Rental, Unavailable, Removed
     - condition: String ' New, Second_Hand, Refurbish
 }
@@ -143,7 +152,7 @@ class Manufacturer {
 ' Cart
 class Cart {
     - owner: Customer
-    - product_list: List<Product>
+    - product_item_list: List<ProductItem>
 }
 
 ' Discount
@@ -180,6 +189,7 @@ abstract class History {
 
     - discount: Discount
     - total_pricing: int
+    - payment_method: PaymentMethod
 
     - date: Datetime
     - rent_duration: int    ' hr
@@ -195,24 +205,31 @@ class RoomHistory {
 
 ' Order
 class Order {
-    - product: List<Product>
+    - order_type: String    ' Buy, Rent
+    - product_item_list: List<ProductItem>
     - date: Datetime
 }
 
 ' Relation
-GameStore "0..*" o-- Game
-GameStore "0..*" o-- Machine
+GameStore "0..*" o-- StockProduct
 GameStore "0..*" o-- Shelf
 GameStore "1..*" o-- Room
+GameStore "0..*" o-- "1" Customer
 GameStore "0..*" *-- "1" Member
 GameStore "1..*" o-- "1" Staff
+GameStore "1..*" o-- "1" PaymentMethod
 
-Shelf "0" o-- Product
+Shelf "0" o-- ProductItem
+
+StockProduct --> Product
+StockProduct o-- ProductItem
 
 Product <|-- Game
 Product <|-- Machine
 Product "1" --o "o..*" Manufacturer
 Product --o "0..*" Cart
+
+Product <-- ProductItem
 
 Game <|-- GameDisc
 Game <|-- GameKeyCard
@@ -227,7 +244,6 @@ Machine <|-- Switch
 Machine <|-- GameBoi
 
 Customer "0..*" *-- Coupon
-Customer "1..*" o-- PaymentMethod
 Customer "1" <-> "1" Cart
 Customer <|-- Member
 Customer "0..*" o-- History
@@ -235,6 +251,8 @@ Customer "0..*" o-- History
 Member --> "1" MemberStamp
 
 Staff <|-- Manager
+
+Cart o-- ProductItem
 
 Discount <|-- MemberStamp
 Discount <|-- Coupon
@@ -246,11 +264,12 @@ PaymentMethod <|-- Card
 
 History <|-- ProductHistory
 History <|-- RoomHistory
+History --> PaymentMethod
 
 ProductHistory "1..*" o-- Product
 
 RoomHistory "1" --> Room
 
-Order "1..*" o-- Product
+Order "1..*" o-- ProductItem
 
 @enduml
