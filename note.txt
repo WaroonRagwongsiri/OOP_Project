@@ -1,0 +1,15 @@
+เช่าห้องเล่นเกม
+จองห้องเล่นเกม
+ห้อง VIP ห้อง ธรรมดา
+เช่าเกมแล้ว -> ราคาถูกลง
+Member -> จองออนไลน์ได้
+Customer -> Walk in
+ระบบสะสมแต้ม
+Golden TIme -> Promotion
+เมื่อเกมที่ถูกเช่าไปเล่นแล้วราคาจะถูกลงตามชั่วโมงที่ถูกเช่า
+
+order -> เลือกของจากตะกร้า -> confirm order -> payment process -> finish order
+
+Product Id เดียวกัน -> มีหลาย serial numbers
+
+Gamestore store paymeny methond

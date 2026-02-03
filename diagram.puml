@@ -1,0 +1,114 @@
+@startuml A
+skinparam classAttributeIconSize 0
+' ==================
+' Service
+' ==================
+Class GameStore {
+    + name: string
+}
+
+' ==================
+' Game
+' ==================
+Abstract Class Game {
+    + game_id: string
+    + name: string
+}
+Class GameDisc {
+
+}
+Class GameCard {
+
+}
+Class GameCartridge
+
+' ==================
+' Machine
+' ==================
+Abstract Class Machine {
+
+}
+Class N64 {
+
+}
+Class Switch {
+
+}
+Class PC {
+
+}
+
+' ==================
+' Room
+' ==================
+Class Room {
+
+}
+Class VipRoom {
+
+}
+
+' ==================
+' Reservation
+' ==================
+Class Reservation {
+
+}
+
+' ==================
+' Role
+' ==================
+Class Customer {
+    - service_history: List<Datetime>
+    
+    + buy_game(game)
+    + refund(game)
+    + rent_game(game)
+
+    + reserve_room(room_type, [request_machine])
+}
+Abstract Class Member {
+    - point: int    
+}
+Class PlatinumMember {
+
+}
+Class GoldMember {
+
+}
+class SilverMember {
+
+}
+
+Class Staff {
+    - employee_id: String
+    
+    + shelf_restock()
+}
+Class Manager {
+    + stock_restock()
+    + remove_game_from_store()
+}
+
+Class Publisher {
+    - name
+}
+
+
+Game <|-- GameDisc
+Game <|-- GameCard
+Game <|-- GameCartridge
+
+Machine <|-- N64
+Machine <|-- Switch
+Machine <|-- PC
+
+Room <|-- VipRoom
+
+Customer <|-- Member
+Member <|-- PlatinumMember
+Member <|-- GoldMember
+Member <|-- SilverMember
+Staff <|-- Manager
+
+@enduml

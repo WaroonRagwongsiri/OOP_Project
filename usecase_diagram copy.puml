@@ -1,0 +1,156 @@
+@startuml UseCaseDiagram
+
+' =========================
+' Actors (from hierarchy in Class Diagram)
+' =========================
+actor "Customer" as A_Customer
+actor "Member" as A_Member
+actor "Publisher" as A_Publisher
+actor "Staff" as A_Staff
+actor "Manager" as A_Manager
+
+A_Customer <|-- A_Member
+A_Staff <|-- A_Manager
+
+rectangle "Store" {
+
+	'Customer'
+	usecase "AddProductToCart" as UC_AddProductToCart
+	usecase "ViewCart" as UC_ViewCart
+	usecase "RemoveItemFromCart" as UC_RemoveItemFromCart
+	usecase "ViewStore" as UC_ViewStore
+	usecase "ViewProductDetail" as UC_ViewProductDetail
+	usecase "Purchase" as UC_Purchase
+	usecase "UseCoupon" as UC_UseCoupon
+	usecase "ConfirmOrder" as UC_ConfirmOrder
+
+	'Payment'
+	usecase "StartPayment" as UC_StartPayment
+	usecase "PayViaCard" as UC_PayViaCard
+	usecase "PayViaCash" as UC_PayViaCash
+	usecase "PayViaQR" as UC_PayViaQR
+
+	'Member'
+	usecase "ApplyMemberBenefit" as UC_ApplyMemberBenefit
+	usecase "VerifyMember" as UC_VerifyMember
+	usecase "Unsubscribe" as UC_Unsubscribe
+
+	'Publisher'
+	usecase "PublishProduct" as UC_PublishProduct
+	usecase "ViewPublishedProduct" as UC_ViewPublishedProduct
+	usecase "ViewPublishedProductDetail" as UC_ViewPublishedProductDetail
+	usecase "RemoveProduct" as UC_RemoveProduct
+	usecase "FileAppeal" as UC_FileAppeal
+	usecase "ViewOrder" as UC_ViewOrder
+	usecase "ApproveOrder" as UC_ApproveOrder
+	usecase "RejectOrder" as UC_RejectOrder
+
+	'Staff'
+	usecase "Checkout" as UC_Checkout
+	usecase "ApplyDiscount" as UC_ApplyDiscount
+	usecase "CreateMember" as UC_CreateMember
+
+	'Manager'
+	usecase "ViewPendingProduct" as UC_ViewPendingProduct
+	usecase "ApproveProduct" as UC_ApproveProduct
+	usecase "RejectProduct" as UC_RejectProduct
+	usecase "ViewReportedProduct" as UC_ViewReportedProduct
+	usecase "RevokeProduct" as UC_RevokeProduct
+	usecase "ViewAppealMail" as UC_ViewAppealMail
+	usecase "ApproveAppeal" as UC_ApproveAppeal
+	usecase "RejectAppeal" as UC_RejectAppeal
+	usecase "ViewProductStock" as UC_ViewProductStock
+	usecase "RefillShelf" as UC_RefillShelf
+	usecase "CreateCoupon" as UC_CreateCoupon
+	usecase "OrderProduct" as UC_OrderProduct
+
+	'Room Booking'
+	usecase "SearchAvailableRoom" as UC_SearchAvailableRoom
+	usecase "CreateBooking" as UC_CreateBooking
+	usecase "ViewBooking" as UC_ViewBooking
+	usecase "CancelBooking" as UC_CancelBooking
+	usecase "CheckIn" as UC_CheckIn
+	usecase "ExtendTime" as UC_ExtendTime
+	usecase "UpgradeRoom" as UC_UpgradeRoom
+	usecase "CheckoutRoom" as UC_CheckoutRoom
+	usecase "Refund" as UC_Refund
+}
+
+'Customer'
+A_Customer --> UC_ViewCart
+A_Customer --> UC_ViewStore
+A_Customer --> UC_Purchase
+
+UC_ViewStore <.. UC_AddProductToCart : <<extend>>
+UC_ViewStore <.. UC_ViewProductDetail : <<extend>>
+
+UC_ViewProductDetail <.. UC_AddProductToCart : <<extend>>
+
+UC_ViewCart <.. UC_RemoveItemFromCart : <<extend>>
+
+UC_Purchase <.. UC_UseCoupon : <<extend>>
+UC_Purchase ..> UC_StartPayment : <<include>>
+
+'Payment'
+UC_StartPayment <|-- UC_PayViaCash
+UC_StartPayment <|-- UC_PayViaCard
+UC_StartPayment <|-- UC_PayViaQR
+
+'Member'
+A_Member --> UC_ApplyMemberBenefit
+A_Member --> UC_Unsubscribe
+
+UC_ApplyMemberBenefit ..> UC_VerifyMember : <<include>>
+
+'Publisher'
+A_Publisher --> UC_PublishProduct
+A_Publisher --> UC_ViewPublishedProduct
+A_Publisher --> UC_ViewOrder
+
+UC_ViewOrder <.. UC_ApproveOrder : <<extend>>
+UC_ViewOrder <.. UC_RejectOrder : <<extend>>
+
+UC_ViewPublishedProduct <.. UC_RemoveProduct : <<extend>>
+UC_ViewPublishedProduct <.. UC_ViewPublishedProductDetail : <<extend>>
+UC_ViewPublishedProduct <.. UC_FileAppeal : <<extend>>
+
+'Staff'
+A_Staff --> UC_Checkout
+A_Staff --> UC_ViewProductStock
+A_Staff --> UC_CreateMember
+A_Staff --> UC_CheckIn
+A_Staff --> UC_CheckoutRoom
+
+UC_CheckoutRoom <.. UC_Refund : <<extend>>
+UC_CheckoutRoom <.. UC_ExtendTime : <<extend>>
+UC_CheckoutRoom <.. UC_UpgradeRoom : <<extend>>
+
+UC_Checkout <.. UC_ApplyDiscount : <<extend>>
+UC_ViewProductStock <.. UC_RefillShelf : <<extend>>
+
+'Manager'
+A_Manager --> UC_ViewReportedProduct
+A_Manager --> UC_ViewAppealMail
+A_Manager --> UC_ViewPendingProduct
+A_Manager --> UC_CreateCoupon
+A_Manager --> UC_OrderProduct
+
+UC_ViewReportedProduct <.. UC_RevokeProduct : <<extend>>
+
+UC_ViewAppealMail <.. UC_ApproveAppeal : <<extend>>
+UC_ViewAppealMail <.. UC_RejectAppeal : <<extend>>
+
+UC_ViewPendingProduct <.. UC_ApproveProduct : <<extend>>
+UC_ViewPendingProduct <.. UC_RejectProduct : <<extend>>
+
+'Customer / Member booking
+A_Customer --> UC_SearchAvailableRoom
+A_Customer --> UC_CreateBooking
+A_Customer --> UC_ViewBooking
+A_Customer --> UC_CancelBooking
+
+UC_CreateBooking ..> UC_VerifyMember : <<include>>
+UC_CreateBooking ..> UC_StartPayment : <<include>>
+UC_CreateBooking <.. UC_UseCoupon : <<exclude>>
+
+@enduml
