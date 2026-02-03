@@ -1,25 +1,39 @@
 @startuml UsecaseSequenceDiagram
 
 Customer -> GameStore : Get available Room
+activate Customer
 activate GameStore
+alt Have available rooms
 
-GameStore -> Room : Get available Room
-activate Room
+	GameStore -> Room : Get available Room
+	activate Room
 
-loop
-	Room -> Room : is_available()
+	loop
+		Room -> Room : is_available()
+	end
+
+
+	Room -> GameStore : All available rooms
+	deactivate Room
+
+	GameStore -> Customer : All available rooms
+	deactivate GameStore
+	deactivate Customer
+
+else No available rooms
+
+	Room -> GameStore : No available rooms
+	GameStore -> Customer : No available rooms
+	destroy Customer
+
 end
 
-Room -> GameStore : All available rooms
-deactivate Room
 
-GameStore -> Customer : All available rooms
-deactivate GameStore
+Customer -> GameStore : Create booking
+activate Customer
+activate GameStore
 
-opt Success
-
-	Customer -> GameStore : Create booking
-	activate GameStore
+alt booking success
 
 	GameStore -> Room : Set booking
 	activate Room
@@ -29,6 +43,20 @@ opt Success
 
 	GameStore -> Customer : Success
 	deactivate GameStore
+	deactivate Customer
+
+	GameStore -> Transaction : Create Transaction
+	activate Transaction
+
+	Transaction -> GameStore : Created
+	deactivate Transaction
+
+else booking fail
+
+	Room -> GameStore : Fail
+	GameStore -> Customer : Fail
+	destroy Customer
+
 
 end
 
@@ -38,10 +66,11 @@ activate Transaction
 Transaction -> GameStore
 deactivate Transaction
 
-opt
+Customer -> GameStore : Start Payment
+activate Customer
+activate GameStore
 
-	Customer -> GameStore : Start Payment
-	activate GameStore
+alt payment success
 
 	GameStore -> Payment : Start Payment
 	activate Payment
@@ -51,13 +80,22 @@ opt
 
 	GameStore -> Customer : Success
 	deactivate GameStore
+	deactivate Customer
 
+	GameStore -> Transaction : Update Transaction (Set status Success)
+	activate Transaction
+	Transaction -> GameStore : Updated
+	deactivate Transaction
+
+else payment fail
+
+	Payment -> GameStore : Fail
+	GameStore -> Customer : Fail
+	destroy Customer
+
+	GameStore -> Transaction : Update Transaction (Set status Fail)
+	activate Transaction
+	Transaction -> GameStore : Updated
+	deactivate Transaction
 end
-
-GameStore -> Transaction : Update Transaction
-activate Transaction
-
-Transaction -> GameStore
-deactivate Transaction
-
 @enduml
