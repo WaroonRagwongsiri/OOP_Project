@@ -1,114 +1,256 @@
-@startuml A
-skinparam classAttributeIconSize 0
-' ==================
+@startuml n
 ' Service
-' ==================
-Class GameStore {
-    + name: string
+class GameStore {
+    - name: String
+    - id: String
+
+    - game_list: List<Game>
+    - machine_list: List<Machine>
+    - shelf_list: List<Shelf>
+
+    - room_list: List<Room>
+
+    - member_list: List<Member>
+    - staff_list: List<Staff>
+
+    - product_proposal_list: List<Product>
+
+    + make_reservation(customer, room, machines)
 }
 
-' ==================
+' Shelf
+class Shelf {
+    - max_capacity: int
+    - product_on_shelf: List<Product>
+}
+
+' Product
+abstract class Product {
+    - name: String
+    - id: String
+
+    - manufacturer: Manufacturer
+
+    - sell_price: int
+    - rental_price: int
+
+    - status: String    ' Waiting_For_Approval, Selling, For_Rental, Unavailable, Removed
+    - condition: String ' New, Second_Hand, Refurbish
+}
+
 ' Game
-' ==================
-Abstract Class Game {
-    + game_id: string
-    + name: string
+abstract class Game {
+    - genre: List<String>
+    - supported_platform: List<String>
 }
-Class GameDisc {
-
+class GameDisc {
 }
-Class GameCard {
-
+class GameKeyCard {
 }
-Class GameCartridge
-
-' ==================
-' Machine
-' ==================
-Abstract Class Machine {
-
-}
-Class N64 {
-
-}
-Class Switch {
-
-}
-Class PC {
-
+class GameCartridge {
+    - status: String    ' Waiting_For_Approval, Selling, For_Rental, Unavailable, Under_Maintainace, Removed
 }
 
-' ==================
 ' Room
-' ==================
-Class Room {
+class Room {
+    - id: String
+    - max_customer: int
+    - serivce_price: int
 
+    - status: String    ' Available, Reserved, Being-Use, Under-Maintainace
 }
-Class VipRoom {
-
+class VipRoom {
+    - max_customer: int
+    - serivce_price: int
 }
 
-' ==================
 ' Reservation
-' ==================
-Class Reservation {
+class Reservation {
+    - id: String
+
+    - customer: Customer
+    - room_type: String ' Normal, VIP
+
+    - status: String    ' Pending, Paid, Serivced, Cancel
+}
+
+' Machine
+abstract class Machine {
+    - status: String    ' Waiting_For_Approval, Selling, For_Rental, Unavailable, Under_Maintainace, Removed
+}
+class PC {
+    - cpu: String
+    - gpu: String
+    - mem: int
+}
+class Switch {
+
+}
+class GameBoi {
 
 }
 
-' ==================
 ' Role
-' ==================
-Class Customer {
-    - service_history: List<Datetime>
-    
-    + buy_game(game)
-    + refund(game)
-    + rent_game(game)
+class Customer {
+    - name: String
+    - id: String
 
-    + reserve_room(room_type, [request_machine])
-}
-Abstract Class Member {
-    - point: int    
-}
-Class PlatinumMember {
+    - coupon_list: List<Coupon>
+    - payment_method_list: List<PaymentMethod>
 
-}
-Class GoldMember {
+    - cart: Cart
+    - reservation: Reservation
+    - service_history: List<History>
 
-}
-class SilverMember {
+    + add_to_cart(product)
+    + remove_from_cart(product)
 
-}
+    + buy_product()
+    + rent_product()
+    + refund_product(self, product)
 
-Class Staff {
-    - employee_id: String
-    
-    + shelf_restock()
+    + reserve_room(self, room_type)
 }
-Class Manager {
-    + stock_restock()
-    + remove_game_from_store()
+class Member {
+    - store: GameStore
+    - member_expire_date: Datetime
+    - member_stamp: MemberStamp
 }
 
-Class Publisher {
-    - name
+class Staff {
+    - name: String
+    - id: String
+    - store: GameStore
+
+    + shelf_restock(shelf, game_list)
+    + approve_customer_buy_order(order)
+    + approve_customer_refund_order(order)
+}
+class Manager {
+    + approve_product_proposal(self)
+    + order_game(publisher, store, game, game_type, quantity)
 }
 
+class Manufacturer {
+    - name: String
+    - id: String
+    - product_list: List<Product>
+
+    + propose_product(store, product)
+    + supply_product(store, product, quantity)
+}
+
+' Cart
+class Cart {
+    - owner: Customer
+    - product_list: List<Product>
+}
+
+' Discount
+abstract class Discount {
+    - owner: Customer
+    - discount: int
+    - expire_date: Datetime
+}
+class MemberStamp {
+    - points: int
+    - max_point: int
+}
+class Coupon {
+    - minimum_spending: int
+}
+
+' Payment Method
+abstract class PaymentMethod {
+    - id: String
+    - status: String    ' Active/Expired/Blocked
+}
+class QrCode {
+    +bank_name: String
+	+qr_ref: String
+}
+class Card {
+    +brand: String
+	+token_ref: String
+}
+
+' History
+abstract class History {
+    - customer: Customer
+
+    - discount: Discount
+    - total_pricing: int
+
+    - date: Datetime
+    - rent_duration: int    ' hr
+}
+class ProductHistory {
+    - product_list: List<Product>
+    - action: String    ' Buy, Rent, Refund
+}
+class RoomHistory {
+    - room: Room
+    - room_type: String ' Normal, VIP
+}
+
+' Order
+class Order {
+    - product: List<Product>
+    - date: Datetime
+}
+
+' Relation
+GameStore "0..*" o-- Game
+GameStore "0..*" o-- Machine
+GameStore "0..*" o-- Shelf
+GameStore "1..*" o-- Room
+GameStore "0..*" *-> "1" Member
+GameStore "1..*" o-> "1" Staff
+
+Shelf "0" o-- Product
+
+Product <|-- Game
+Product <|-- Machine
+Product "1" <-o "o..*" Manufacturer
+Product --o "0..*" Cart
 
 Game <|-- GameDisc
-Game <|-- GameCard
+Game <|-- GameKeyCard
 Game <|-- GameCartridge
-
-Machine <|-- N64
-Machine <|-- Switch
-Machine <|-- PC
 
 Room <|-- VipRoom
 
+Reservation "1" <-> "1" Customer
+
+Machine <|-- PC
+Machine <|-- Switch
+Machine <|-- GameBoi
+
+Customer "0..*" *-- Coupon
+Customer "1..*" o-- PaymentMethod
+Customer "1" <-> "1" Cart
 Customer <|-- Member
-Member <|-- PlatinumMember
-Member <|-- GoldMember
-Member <|-- SilverMember
+Customer "0..*" o-- History
+
+Member "1" <-- MemberStamp
+
 Staff <|-- Manager
+
+Discount <|-- MemberStamp
+Discount <|-- Coupon
+Discount "1" <-- Customer
+Discount --> "1" History
+
+PaymentMethod <|-- QrCode
+PaymentMethod <|-- Card
+
+History <|-- ProductHistory
+History <|-- RoomHistory
+
+ProductHistory "1..*" o-- Product
+
+RoomHistory "1" <-- Room
+
+Order "1..*" o-- Product
 
 @enduml
