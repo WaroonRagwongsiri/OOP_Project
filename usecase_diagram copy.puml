@@ -1,4 +1,5 @@
 @startuml UseCaseDiagram
+left to right direction
 
 ' =========================
 ' Actors (from hierarchy in Class Diagram)
@@ -63,6 +64,7 @@ rectangle "Store" {
 	usecase "RefillShelf" as UC_RefillShelf
 	usecase "CreateCoupon" as UC_CreateCoupon
 	usecase "OrderProduct" as UC_OrderProduct
+	usecase "ViewStock" as UC_ViewStock
 
 	'Room Booking'
 	usecase "SearchAvailableRoom" as UC_SearchAvailableRoom
@@ -80,6 +82,7 @@ rectangle "Store" {
 A_Customer --> UC_ViewCart
 A_Customer --> UC_ViewStore
 A_Customer --> UC_Purchase
+A_Customer --> UC_ConfirmOrder
 
 UC_ViewStore <.. UC_AddProductToCart : <<extend>>
 UC_ViewStore <.. UC_ViewProductDetail : <<extend>>
@@ -133,7 +136,10 @@ A_Manager --> UC_ViewReportedProduct
 A_Manager --> UC_ViewAppealMail
 A_Manager --> UC_ViewPendingProduct
 A_Manager --> UC_CreateCoupon
-A_Manager --> UC_OrderProduct
+A_Manager --> UC_ViewStock
+
+UC_ViewStock ..> UC_OrderProduct : <<extend>>
+UC_ViewStock ..> UC_RevokeProduct : <<extend>>
 
 UC_ViewReportedProduct <.. UC_RevokeProduct : <<extend>>
 
