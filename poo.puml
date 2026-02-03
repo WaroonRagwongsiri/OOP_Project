@@ -1,0 +1,33 @@
+@startuml name
+actor Staff
+
+boundary MemberUI
+control MemberController
+control MemberService
+entity Member
+database MemberRepository
+
+Staff -> MemberUI : enterMemberDetails()
+MemberUI -> MemberController : submitCreateMember(data)
+
+MemberController -> MemberService : createMember(data)
+
+MemberService -> MemberService : validateMemberData(data)
+note right
+Check required fields
+and data format
+end note
+
+MemberService -> MemberRepository : findMemberByEmail(data.email)
+MemberRepository --> MemberService : null
+
+MemberService -> Member : new Member(data)
+MemberService -> MemberRepository : save(member)
+
+MemberRepository --> MemberService : memberSaved
+MemberService --> MemberController : createSuccess(member)
+
+MemberController --> MemberUI : showSuccessMessage()
+MemberUI --> Staff : displayConfirmation()
+
+@enduml
