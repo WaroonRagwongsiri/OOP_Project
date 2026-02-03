@@ -1,4 +1,5 @@
 @startuml UseCaseDiagram
+left to right direction
 
 ' =========================
 ' Actors (from hierarchy in Class Diagram)
