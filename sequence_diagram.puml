@@ -1,0 +1,63 @@
+@startuml UsecaseSequenceDiagram
+
+Customer -> GameStore : Get available Room
+activate GameStore
+
+GameStore -> Room : Get available Room
+activate Room
+
+loop
+	Room -> Room : is_available()
+end
+
+Room -> GameStore : All available rooms
+deactivate Room
+
+GameStore -> Customer : All available rooms
+deactivate GameStore
+
+opt Success
+
+	Customer -> GameStore : Create booking
+	activate GameStore
+
+	GameStore -> Room : Set booking
+	activate Room
+
+	Room -> GameStore : Success
+	deactivate Room
+
+	GameStore -> Customer : Success
+	deactivate GameStore
+
+end
+
+GameStore -> Transaction : Create Transaction
+activate Transaction
+
+Transaction -> GameStore
+deactivate Transaction
+
+opt
+
+	Customer -> GameStore : Start Payment
+	activate GameStore
+
+	GameStore -> Payment : Start Payment
+	activate Payment
+
+	Payment -> GameStore : Success
+	deactivate Payment
+
+	GameStore -> Customer : Success
+	deactivate GameStore
+
+end
+
+GameStore -> Transaction : Update Transaction
+activate Transaction
+
+Transaction -> GameStore
+deactivate Transaction
+
+@enduml
