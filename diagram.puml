@@ -204,14 +204,14 @@ GameStore "0..*" o-- Game
 GameStore "0..*" o-- Machine
 GameStore "0..*" o-- Shelf
 GameStore "1..*" o-- Room
-GameStore "0..*" *-> "1" Member
-GameStore "1..*" o-> "1" Staff
+GameStore "0..*" *-- "1" Member
+GameStore "1..*" o-- "1" Staff
 
 Shelf "0" o-- Product
 
 Product <|-- Game
 Product <|-- Machine
-Product "1" <-o "o..*" Manufacturer
+Product "1" --o "o..*" Manufacturer
 Product --o "0..*" Cart
 
 Game <|-- GameDisc
@@ -232,14 +232,14 @@ Customer "1" <-> "1" Cart
 Customer <|-- Member
 Customer "0..*" o-- History
 
-Member "1" <-- MemberStamp
+Member --> "1" MemberStamp
 
 Staff <|-- Manager
 
 Discount <|-- MemberStamp
 Discount <|-- Coupon
-Discount "1" <-- Customer
-Discount --> "1" History
+Discount --> "1" Customer
+Discount "1" <-- History
 
 PaymentMethod <|-- QrCode
 PaymentMethod <|-- Card
@@ -249,7 +249,7 @@ History <|-- RoomHistory
 
 ProductHistory "1..*" o-- Product
 
-RoomHistory "1" <-- Room
+RoomHistory "1" --> Room
 
 Order "1..*" o-- Product
 
