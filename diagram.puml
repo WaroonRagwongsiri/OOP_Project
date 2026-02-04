@@ -79,6 +79,7 @@ class Reservation {
 
     - customer: Customer
     - room_type: String ' Normal, VIP
+	- room: Room
 
     - status: String    ' Pending, Paid, Serivced, Cancel
 }
@@ -211,13 +212,14 @@ class Order {
 }
 
 ' Relation
-GameStore "0..*" o-- StockProduct
-GameStore "0..*" o-- Shelf
-GameStore "1..*" o-- Room
-GameStore "0..*" o-- "1" Customer
-GameStore "0..*" *-- "1" Member
-GameStore "1..*" o-- "1" Staff
-GameStore "1..*" o-- "1" PaymentMethod
+GameStore "1" o-- "0..*" StockProduct
+GameStore "1" o-- "0..*" Shelf
+GameStore "1" o-- "1..*" Room
+GameStore "1" o-- "0..*" Customer
+GameStore "1" *-- "0..*" Member
+GameStore "1" o-- "1..*" Staff
+GameStore "1" o-- "1..*" PaymentMethod
+GameStore "1" o-- "0..*" Reservation
 
 Shelf "0" o-- ProductItem
 
@@ -237,6 +239,7 @@ Game <|-- GameCartridge
 
 Room <|-- VipRoom
 
+Reservation "1" --> Room
 Reservation "1" <-> "1" Customer
 
 Machine <|-- PC
