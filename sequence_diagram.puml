@@ -52,6 +52,7 @@ alt booking success
 
 	GameStore -> Transaction : Create Transaction(reservation_id)
 	activate Transaction
+	Transaction -> Transaction : status = Pending
 	Transaction -> GameStore : Created
 	deactivate Transaction
 
@@ -87,6 +88,7 @@ alt payment success
 
 	GameStore -> Transaction : Update Transaction (Set status Success)
 	activate Transaction
+	Transaction -> Transaction : status = Success
 	Transaction -> GameStore : Updated
 	deactivate Transaction
 
@@ -105,6 +107,7 @@ else payment fail
 
 	GameStore -> Transaction : Update Transaction (Set status Fail)
 	activate Transaction
+	Transaction -> Transaction : status = Cancel
 	Transaction -> GameStore : Updated
 	deactivate Transaction
 
