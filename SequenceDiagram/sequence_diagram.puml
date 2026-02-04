@@ -107,7 +107,7 @@ else payment fail
 
 	GameStore -> Transaction : Update Transaction (Set status Fail)
 	activate Transaction
-	Transaction -> Transaction : status = Cancel
+	Transaction -> Transaction : status = Success
 	Transaction -> GameStore : Updated
 	deactivate Transaction
 

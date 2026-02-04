@@ -1,0 +1,54 @@
+@startuml UsecaseSequenceDiagram
+
+Customer -> GameStore : Create booking (Room ID)
+activate Customer
+activate GameStore
+
+alt booking success
+
+	loop get room by id
+
+		GameStore -> Room : Get room
+		activate Room
+
+		Room -> GameStore : Room
+		deactivate Room
+
+	end
+
+	GameStore -> Room : Set booking
+	activate Room
+
+	Room -> Reservation : Create Reservation(customer, room, room_type)
+	activate Reservation
+	Reservation -> Reservation : status = Pending
+	Reservation -> Room : Created(reservation_id)
+	deactivate Reservation
+
+	Room -> GameStore : Reservation
+	deactivate Room
+
+	GameStore -> Transaction : Create Transaction(reservation_id)
+	activate Transaction
+	Transaction -> Transaction : status = Pending
+	Transaction -> GameStore : Transaction Instance
+	deactivate Transaction
+
+	GameStore -> Customer : Success
+
+else booking fail (fail to get rooms)
+
+	Room -> GameStore : Fail (fail to get rooms)
+	GameStore -> Customer : Fail (fail to get rooms)
+
+else booking fail (fail to create reservation)
+
+	Room -> GameStore : Fail (fail to create reservation)
+	GameStore -> Customer : Fail (fail to create reservation)
+
+	deactivate GameStore
+	deactivate Customer
+
+end
+
+@enduml
