@@ -26,11 +26,8 @@ else No available rooms
 	GameStore -> Customer : No available rooms
 	deactivate GameStore
 	deactivate Customer
-	
-	destroy Customer
 
 end
-
 
 Customer -> GameStore : Create booking
 activate Customer
@@ -64,8 +61,6 @@ else booking fail
 	GameStore -> Customer : Fail
 	deactivate GameStore
 	deactivate Customer
-	
-	destroy Customer
 
 end
 
@@ -100,9 +95,7 @@ else payment fail
 	Payment -> GameStore : Fail
 	GameStore -> Customer : Fail
 	deactivate GameStore
-	deactivate Customer
-
-	destroy Customer
+	deactivate Custome
 
 	GameStore -> Reservation : Update Reservation (Set status Cancel)
 	activate Reservation
