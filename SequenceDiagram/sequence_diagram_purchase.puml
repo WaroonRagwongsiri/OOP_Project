@@ -1,0 +1,56 @@
+@startuml E
+
+Customer -> Staff : Purchase (Product Serial Number)
+activate Customer
+activate Staff
+
+Staff -> Customer : Get products in cart
+Customer -> Staff : Products in cart
+
+Staff -> Staff : Check if purchasing products are in customer's cart
+activate Staff
+deactivate Staff
+
+alt Purchase products is in cart
+    Staff -> GameStore : Get all available products
+    activate GameStore
+    GameStore -> Staff : Return all available products
+    deactivate GameStore
+
+    Staff -> Staff : Check if purchasing products are available
+    activate Staff
+    deactivate Staff
+
+    alt Purchasing products are available
+        Staff -> Customer : Get customer's prefer payment method
+        Customer -> Staff : Return payment method
+
+        Staff -> PaymentMethod : Try to make transaction
+        activate PaymentMethod
+        PaymentMethod -> GameStore : Transfer money to game store
+        deactivate PaymentMethod
+
+        alt Payment is successful
+            Staff -> GameStore : Remove product from game store
+            activate GameStore
+
+            Staff -> History : Create purchase history
+            activate History
+            History -> GameStore : Purchase Bill
+            deactivate GameStore
+            History -> Customer : Purchase bill
+            deactivate History
+
+            Staff -> Customer : Purchase Success
+        else
+            Payment -> Customer : Fail (Payment gone wrong)
+        end
+    else Products are unavailable
+        Staff -> Customer : Fail (Products are unavailable)
+    end
+
+else Customer doesn't have purchasing products in cart
+    Staff -> Customer: Fail (Customer doesn't have purchasing products in cart)
+end
+
+@enduml
