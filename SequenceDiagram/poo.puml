@@ -1,16 +1,38 @@
 @startuml name
 
 actor Customer
+
 activate Customer
+Customer -> GameStore : CheckIn(customer_id)
 
-Customer -> GameStore : CheckIn(customer_id, staff_id)
+loop
 activate GameStore
+GameStore -> Staff: FindAvailableStaff()
 
-Room
+activate Staff
+Staff -> GameStore: Staff
+deactivate Staff
+end
 
+GameStore -> Reservation: CheckIn(customer, staff)
+activate Reservation
+Reservation -> GameStore: Reservation
+deactivate Reservation
+
+GameStore -> Room: SetRoomStatus()
+activate Room
+Room -> Room: Occupied?
+Room -> GameStore: Room
+deactivate Room
+
+GameStore -> Transaction: CreateTransaction(customer, reservation)
+activate Transaction
+Transaction -> GameStore: Transaction
+deactivate Transaction
 
 GameStore -> Customer : CheckInResponse(status)
+deactivate GameStore
 
-
+deactivate Customer
 
 @enduml
