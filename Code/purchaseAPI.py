@@ -10,16 +10,22 @@ store = GameStore("Stream", store_payment)
 def connection():
     return "SDIYBT"
 
+<<<<<<< HEAD
 
 
+=======
+>>>>>>> 38fd179 (purchase stuff)
 @app.get("/customer_list")
 def customer_list():
     return store.customers
 
+<<<<<<< HEAD
 @app.post("/create_customer")
 def create_customer(name : str):
     return store.create_customer(name)
 
+=======
+>>>>>>> 38fd179 (purchase stuff)
 @app.post("/add_product_to_cart")
 def add_product_to_cart(customer_id : str, product_id : str):
     return store.add_product_to_customer(customer_id, product_id)
@@ -30,6 +36,13 @@ def select_product(customer_id : str, product_id : str):
 
 
 
+<<<<<<< HEAD
+=======
+@app.post("/create_customer")
+def create_customer(id : str):
+    return store.create_customer(id)
+
+>>>>>>> 38fd179 (purchase stuff)
 @app.get("/list_stock")
 def list_stock():
     return store.stock
@@ -38,8 +51,11 @@ def list_stock():
 def add_product_to_store(product_id : str, product_sn : str, product_price : int):
     return store.add_product(product_id, product_sn, product_price)
 
+<<<<<<< HEAD
 
 
+=======
+>>>>>>> 38fd179 (purchase stuff)
 @app.post("/purchase")
 def purchase(customer_id : str, payment_method_name : str):
     return store.purchase(customer_id, payment_method_name, [])
