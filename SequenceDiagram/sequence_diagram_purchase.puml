@@ -1,5 +1,6 @@
 @startuml E
 
+<<<<<<< HEAD
 actor Customer as CustomerA
 
 CustomerA -> GameStore : Purchase (Customer id, Preferred payment method, Payment info)
@@ -84,11 +85,68 @@ alt Store did have that customer instance
     end
 else
     GameStore -> CustomerA : Failed (You don't exist)
+=======
+actor Customer
+
+Customer -> GameStore : Purchase (Customer id)
+activate Customer
+activate GameStore
+
+loop Get customer instance by id
+    activate GameStore
+    GameStore -> GameStore
+    deactivate GameStore
+end
+
+GameStore -> Cart : Get customer selected products
+activate Cart
+loop get selected products 
+    activate ProductItem
+    Cart -> ProductItem
+    ProductItem -> Cart
+    deactivate ProductItem
+end
+Cart -> GameStore : Return selected product list
+deactivate Cart
+
+loop Check if product selected product is available
+    GameStore -> GameStore
+    activate GameStore
+    deactivate GameStore
+end
+
+alt Products are available
+    GameStore -> PaymentMethod : Create transaction
+    activate PaymentMethod 
+    PaymentMethod -> GameStore : Status
+    deactivate PaymentMethod
+    
+    alt Payment Successful
+        loop Remove products from stock
+            GameStore -> GameStore
+        end
+
+        GameStore -> History : Create purchase record
+        activate History
+        History -> GameStore : History
+        deactivate History
+
+        GameStore -> Customer : Purchase bill + Products serial number
+    else
+        GameStore -> Customer : Failed (Payment)
+    end
+else
+    GameStore -> Customer : Failed (Product availability)
+>>>>>>> 64b97bd (purchase stuff)
 end
 
 
 
 deactivate GameStore
+<<<<<<< HEAD
 deactivate CustomerA
+=======
+deactivate Customer
+>>>>>>> 64b97bd (purchase stuff)
 
 @enduml
