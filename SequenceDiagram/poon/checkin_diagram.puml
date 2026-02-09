@@ -3,34 +3,34 @@
 actor Customer
 
 activate Customer
-Customer -> GameStore : CheckIn(customer_id)
+Customer -> GameStore : check_in(customer_id)
 
 loop
 activate GameStore
-GameStore -> Staff: FindAvailableStaff()
+GameStore -> Staff: find_available_staff()
 
 activate Staff
 Staff -> GameStore: Staff
 deactivate Staff
 end
 
-GameStore -> Reservation: CheckIn(customer, staff)
+GameStore -> Reservation: check_in(customer, staff)
 activate Reservation
 Reservation -> GameStore: Reservation
 deactivate Reservation
 
-GameStore -> Room: SetRoomStatus()
+GameStore -> Room: set_room_status()
 activate Room
-Room -> Room: Occupied?
+Room -> Room: occupied?
 Room -> GameStore: Room
 deactivate Room
 
-GameStore -> Transaction: CreateTransaction(customer, reservation)
+GameStore -> Transaction: create_transaction(customer, reservation)
 activate Transaction
 Transaction -> GameStore: Transaction
 deactivate Transaction
 
-GameStore -> Customer : CheckInResponse(status)
+GameStore -> Customer : check_in_response(status)
 deactivate GameStore
 
 deactivate Customer
