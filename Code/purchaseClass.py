@@ -2,7 +2,7 @@ class Customer:
     def __init__(self, id : str):
         self.__id : str = id
         self.__cart : "Cart" = Cart()
-        self.__histories : list["History"] = None
+        self.__histories : list["History"] = []
 
     @property
     def id(self):
@@ -15,6 +15,10 @@ class Customer:
     @property
     def selected_product(self):
         return self.__cart.selected_product
+    
+    @property
+    def histories(self):
+        return self.__histories
     
     def add_prodcut_to_cart(self, product_id : str):
         self.product_in_cart.append(product_id)
@@ -31,6 +35,7 @@ class GameStore:
         self.__payment : "PaymentMethod" = payment
         self.__customers : list[Customer] = customers
         self.__stock : list["ProductItem"] = stock
+        self.__histories : list["History"] = []
 
     @property
     def customers(self):
@@ -70,36 +75,52 @@ class GameStore:
         if not customer_instance:
             raise Exception("Customer doesn't exist in store.")
         
+        cart_products_id = customer_instance.product_in_cart
         selected_products_id = customer_instance.selected_product
+
+        # Product selecting validation
+        for id in selected_products_id:
+            if id not in cart_products_id:
+                raise Exception("Customer some how select product that is not in their cart.")
 
         # Get stock of each product that user selected
         selected_products_stock_instances = [self.search_product(id) for id in selected_products_id]
 
+        # Check if stock does have enough product to sell to customer
         for product_id in selected_products_id:
-            product_stock_count = 0
+            customer_request_count = cart_products_id.count(product_id)
+
+            available_stock_count = 0
             for stock_products in selected_products_stock_instances:
                 if len(stock_products) > 0 and stock_products[0].id == product_id:
-                    product_stock_count = len(stock_products)
+                    available_stock_count = len(stock_products)
                     break
 
-            if product_stock_count < selected_products_id.count(product_id):
+            if available_stock_count < customer_request_count:
                 raise Exception("Store doesn't have this / enough product.")
             
+        # Payment
         total_pricing = 0
         for products in selected_products_stock_instances:
-            total_pricing += (products[0].price * selected_products_id.count(products[0].id))
+            product_sample = products[0]
+            total_pricing += (product_sample.price * cart_products_id.count(product_sample.id))
         status = self.__payment.create_transaction(total_pricing)
         if not status:
             raise Exception("Payment Failed.")
 
+        # Giving the customer their product
         products_given_to_customer = []
         for products in selected_products_stock_instances:
-            remove_count = selected_products_id.count(products[0].id)
+            remove_count = cart_products_id.count(products[0].id)
             for i in range(remove_count):
                 products_given_to_customer.append(products[i])
                 self.__stock.remove(products[i])
+                cart_products_id.remove(products[i].id)
+            selected_products_id.remove(products[0].id)
 
         history = History(products_given_to_customer, total_pricing)
+        self.__histories.append(history)
+        customer_instance.histories.append(history)
 
         product_sn_list = [product.sn for product in products_given_to_customer]
         return [history, product_sn_list]
