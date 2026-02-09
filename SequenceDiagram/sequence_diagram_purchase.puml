@@ -1,56 +1,61 @@
 @startuml E
 
-Customer -> Staff : Purchase (Product Serial Number)
+actor Customer
+
+Customer -> GameStore : Purchase (Customer id)
 activate Customer
-activate Staff
+activate GameStore
 
-Staff -> Customer : Get products in cart
-Customer -> Staff : Products in cart
-
-Staff -> Staff : Check if purchasing products are in customer's cart
-activate Staff
-deactivate Staff
-
-alt Purchase products is in cart
-    Staff -> GameStore : Get all available products
+loop Get customer instance by id
     activate GameStore
-    GameStore -> Staff : Return all available products
+    GameStore -> GameStore
     deactivate GameStore
-
-    Staff -> Staff : Check if purchasing products are available
-    activate Staff
-    deactivate Staff
-
-    alt Purchasing products are available
-        Staff -> Customer : Get customer's prefer payment method
-        Customer -> Staff : Return payment method
-
-        Staff -> PaymentMethod : Try to make transaction
-        activate PaymentMethod
-        PaymentMethod -> GameStore : Transfer money to game store
-        deactivate PaymentMethod
-
-        alt Payment is successful
-            Staff -> GameStore : Remove product from game store
-            activate GameStore
-
-            Staff -> History : Create purchase history
-            activate History
-            History -> GameStore : Purchase Bill
-            deactivate GameStore
-            History -> Customer : Purchase bill
-            deactivate History
-
-            Staff -> Customer : Purchase Success
-        else
-            Payment -> Customer : Fail (Payment gone wrong)
-        end
-    else Products are unavailable
-        Staff -> Customer : Fail (Products are unavailable)
-    end
-
-else Customer doesn't have purchasing products in cart
-    Staff -> Customer: Fail (Customer doesn't have purchasing products in cart)
 end
+
+GameStore -> Cart : Get customer selected products
+activate Cart
+loop get selected products 
+    activate ProductItem
+    Cart -> ProductItem
+    ProductItem -> Cart
+    deactivate ProductItem
+end
+Cart -> GameStore : Return selected product list
+deactivate Cart
+
+loop Check if product selected product is available
+    GameStore -> GameStore
+    activate GameStore
+    deactivate GameStore
+end
+
+alt Products are available
+    GameStore -> PaymentMethod : Create transaction
+    activate PaymentMethod 
+    PaymentMethod -> GameStore : Status
+    deactivate PaymentMethod
+    
+    alt Payment Successful
+        loop Remove products from stock
+            GameStore -> GameStore
+        end
+
+        GameStore -> History : Create purchase record
+        activate History
+        History -> GameStore : History
+        deactivate History
+
+        GameStore -> Customer : Purchase bill + Products serial number
+    else
+        GameStore -> Customer : Failed (Payment)
+    end
+else
+    GameStore -> Customer : Failed (Product availability)
+end
+
+
+
+deactivate GameStore
+deactivate Customer
 
 @enduml
