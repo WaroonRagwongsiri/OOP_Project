@@ -6,7 +6,7 @@ left to right direction
 ' =========================
 actor "Customer" as A_Customer
 actor "Member" as A_Member
-actor "Publisher" as A_Publisher
+actor "Manufacturer" as A_Manufacturer
 actor "Staff" as A_Staff
 actor "Manager" as A_Manager
 
@@ -28,7 +28,6 @@ rectangle "Store" {
 	'Payment'
 	usecase "StartPayment" as UC_StartPayment
 	usecase "PayViaCard" as UC_PayViaCard
-	usecase "PayViaCash" as UC_PayViaCash
 	usecase "PayViaQR" as UC_PayViaQR
 
 	'Member'
@@ -36,7 +35,7 @@ rectangle "Store" {
 	usecase "VerifyMember" as UC_VerifyMember
 	usecase "Unsubscribe" as UC_Unsubscribe
 
-	'Publisher'
+	'Manufacturer'
 	usecase "PublishProduct" as UC_PublishProduct
 	usecase "ViewPublishedProduct" as UC_ViewPublishedProduct
 	usecase "ViewPublishedProductDetail" as UC_ViewPublishedProductDetail
@@ -105,10 +104,10 @@ A_Member --> UC_Unsubscribe
 
 UC_ApplyMemberBenefit ..> UC_VerifyMember : <<include>>
 
-'Publisher'
-A_Publisher --> UC_PublishProduct
-A_Publisher --> UC_ViewPublishedProduct
-A_Publisher --> UC_ViewOrder
+'Manufacturer'
+A_Manufacturer --> UC_PublishProduct
+A_Manufacturer --> UC_ViewPublishedProduct
+A_Manufacturer --> UC_ViewOrder
 
 UC_ViewOrder <.. UC_ApproveOrder : <<extend>>
 UC_ViewOrder <.. UC_RejectOrder : <<extend>>

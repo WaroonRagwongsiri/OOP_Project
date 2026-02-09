@@ -1,10 +1,12 @@
-@startuml n
-' Service
-class GameStore {
-	- name: String
-	- id: String
+@startuml ClassDiagram
 
-	- shelf_list: List<Shelf>
+' Service
+class GameStore
+{
+	- id: String
+	- name: String
+
+	- shelf_list : List<Shelf>
 	- stock_product_list: List<StockProduct>
 
 	- room_list: List<Room>
@@ -14,94 +16,161 @@ class GameStore {
 	- staff_list: List<Staff>
 
 	- payment_method_list: List<PaymentMethod>
-
 	- product_proposal_list: List<Product>
 
-	+ make_reservation(customer, room, machines)
+	- room_transaction_list: List<RoomTransaction>
+	- product_transaction_list: List<ProductTransaction>
+
+	+ make_reservation(customer: Customer, room: Room)
+	+ create_customer(name: str)
+	+ create_member_plus(customer: Customer)
+	+ create_transaction()
+	+ start_payment()
+	+ apply_discount()
 }
 
 ' Shelf
-class Shelf {
+class Shelf
+{
 	- max_capacity: int
 	- product_on_shelf: List<ProductItem>
+
+	+ view_shelf()
+	+ item_to_cart(item_id: str, cart: Cart)
+	+ fill_product(product_item_list: List<ProductItem>)
 }
 
 ' Product
-class StockProduct {
+class StockProduct
+{
 	- product: Product
 	- product_item_list: List<ProductItem>
 }
-abstract class Product {
+
+abstract class Product
+{
 	- name: String
 	- id: String
-
 	- manufacturer: Manufacturer
-
 	- sell_price: int
-	- rental_price: int
 }
-class ProductItem {
+
+class ProductItem
+{
 	- product: Product
 	- serial_number: String
-	- status: String    ' Waiting_For_Approval, Selling, For_Rental, Unavailable, Removed
-	- condition: String ' New, Second_Hand, Refurbish
+	- status: String
+	' Waiting_For_Approval, Selling, For_Rental, Unavailable, Removed
+	- condition: String
+	' New, Second_Hand, Refurbish
 }
 
 ' Game
-abstract class Game {
+abstract class Game
+{
 	- genre: List<String>
 	- supported_platform: List<String>
+	- status: String
+	' Waiting_For_Approval, Selling, For_Rental, Unavailable, Under_Maintainace, Removed
+
+	+ play()
 }
-class GameDisc {
+
+class GameDisc
+{
+	+ play()
 }
-class GameKeyCard {
+
+class GameKeyCard
+{
+	+ play()
 }
-class GameCartridge {
-	- status: String    ' Waiting_For_Approval, Selling, For_Rental, Unavailable, Under_Maintainace, Removed
+
+class GameCartridge
+{
+	+ play()
 }
 
 ' Room
-class Room {
+class Room
+{
 	- id: String
 	- max_customer: int
 	- serivce_price: int
 
-	- status: String    ' Available, Reserved, Being-Use, Under-Maintainace
+	- status: String
+	' Available, Reserved, Being-Use, Under-Maintainace
+	
+	+ set_status(status: Enum)
+	+ create_reservation(self, customer: Customer) -> Reservation
 }
-class VipRoom {
+
+Enum RoomStatus
+{
+	- AVAILABLE
+	- RESERVED
+	- MAINTAINACE
+	- IN_USE
+}
+
+class VipRoom
+{
 	- max_customer: int
 	- serivce_price: int
 }
 
 ' Reservation
-class Reservation {
+class Reservation
+{
 	- id: String
 
 	- customer: Customer
-	- room_type: String ' Normal, VIP
+	- room_type: String
+	' Normal, VIP
 	- room: Room
 
-	- status: String    ' Pending, Paid, Serivced, Cancel
+	- status: String
+	' Pending, Paid, Serivced, Cancel
+
+	+ set_status(status: Enum)
 }
 
 ' Machine
-abstract class Machine {
-	- status: String    ' Waiting_For_Approval, Selling, For_Rental, Unavailable, Under_Maintainace, Removed
+abstract class Machine
+{
+	- status: String
+	' Waiting_For_Approval, Selling, For_Rental, Unavailable, Under_Maintainace, Removed
+
+	+ run_game()
 }
-class PC {
+
+class PC
+{
 	- cpu: String
 	- gpu: String
 	- mem: int
-}
-class Switch {
 
+	+ run_game()
 }
-class GameBoi {
 
+class Playstation
+{
+	+ run_game()
+}
+
+class Switch
+{
+	+ run_game()
+}
+
+class GameBoi
+{
+	+ run_game()
 }
 
 ' Role
-class Customer {
+class Customer
+{
 	- name: String
 	- id: String
 
@@ -110,82 +179,138 @@ class Customer {
 
 	- cart: Cart
 	- reservation: Reservation
-	- service_history: List<History>
+	- service_history: List<Transaction>
 
-	+ add_to_cart(product)
-	+ remove_from_cart(product)
+	+ add_to_cart(productId: str)
+	+ remove_from_cart(productId: str)
 
 	+ buy_product()
-	+ rent_product()
-	+ refund_product(self, product)
+	+ refund_product(productItem: ProductItem)
 
-	+ reserve_room(self, room_type)
+	+ reserve_room(roomId: str)
+	+ check_in()
+	+ check_out()
+
+	+ discount()
 }
-class Member {
+
+class Member
+{
 	- store: GameStore
 	- member_expire_date: Datetime
 	- member_stamp: MemberStamp
+	- member_discount: float
+	' 5% or something
+
+	+ unsubscribe()
+	+ stamp(staffId: str)
+	+ discount()
 }
 
-class Staff {
+class Staff
+{
 	- name: String
 	- id: String
 	- store: GameStore
 
-	+ shelf_restock(shelf, game_list)
-	+ approve_customer_buy_order(order)
-	+ approve_customer_refund_order(order)
-}
-class Manager {
-	+ approve_product_proposal(self)
-	+ order_game(publisher, store, game, game_type, quantity)
+	+ shelf_restock(shelf: Shelf, product: Product, amount: int)
+	+ check_in()
+	+ check_out()
 }
 
-class Manufacturer {
+class Manager
+{
+	+ approve_product_proposal(product : Product)
+	+ order_product(manufacturer: Manufacturer, store: GameStore, product: Product, quantity: int)
+}
+
+class Manufacturer
+{
 	- name: String
 	- id: String
 	- product_list: List<Product>
+	- product_item_list: List<ProductItem>
 
 	+ propose_product(store, product)
-	+ supply_product(store, product, quantity)
+	+ supply_product(store: GameStore, product: Product, quantity: int)
+	+ create_product_item(product: Product, amount: int)
+	' Create Product Item (unique item)
+	+ create_game(name: str, supported_platform: Machine)
+	' Create Game
+	+ create_machine(name: str)
+	' Create Machine
 }
 
 ' Cart
-class Cart {
+class Cart
+{
 	- owner: Customer
-	- product_item_list: List<ProductItem>
+	- cart_item_list: list<CartItem>
+
+	+ add_item(product: ProductItem)
+	+ remove_item(product: ProductItem)
+}
+
+class CartItem
+{
+	- is_buy: bool
+	- productId: String
+	- amount: int
 }
 
 ' Discount
-abstract class Discount {
+abstract class Discount
+{
 	- owner: Customer
 	- discount: int
 	- expire_date: Datetime
 }
-class MemberStamp {
+
+class MemberStamp
+{
 	- points: int
 	- max_point: int
+
+	+ add_point(amount: )
 }
-class Coupon {
+
+class Coupon
+{
 	- minimum_spending: int
 }
 
 ' Payment Method
-abstract class PaymentMethod {
+abstract class PaymentMethod
+{
 	- id: String
-	- status: String    ' Active/Expired/Blocked
-}
-class QrCode {
-	+bank_name: String
-	+qr_ref: String
-}
-class Card {
-	+brand: String
-	+token_ref: String
+	- status: String
+	' Active/Expired/Blocked
+
+	+ authenticate()
+	+ pay()
 }
 
-' History
-abstract class History {
+class QrCode
+{
+	- bank_name: String
+	- qr_ref: String
+	
+	+ authenticate()
+	+ pay()
+}
+
+class Card
+{
+	- brand: String
+	- token_ref: String
+
+	+ authenticate()
+	+ pay()
+}
+
+' Transaction
+abstract class Transaction
+{
 	- customer: Customer
 
 	- discount: Discount
@@ -193,22 +318,22 @@ abstract class History {
 	- payment_method: PaymentMethod
 
 	- date: Datetime
-	- rent_duration: int    ' hr
-}
-class ProductHistory {
-	- product_list: List<Product>
-	- action: String    ' Buy, Rent, Refund
-}
-class RoomHistory {
-	- room: Room
-	- room_type: String ' Normal, VIP
+	- rent_duration: int
+	' hr
 }
 
-' Order
-class Order {
-	- order_type: String    ' Buy, Rent
-	- product_item_list: List<ProductItem>
-	- date: Datetime
+class ProductTransaction
+{
+	- product_list: List<Product>
+	- action: String
+	' Buy, Rent, Refund
+}
+
+class RoomTransaction
+{
+	- room: Room
+	- room_type: String
+	' Normal, VIP
 }
 
 ' Relation
@@ -230,7 +355,7 @@ Product <|-- Machine
 Product "1" --o "o..*" Manufacturer
 Product --o "0..*" Cart
 
-Product <-- ProductItem
+ProductItem --> Product
 
 Game <|-- GameDisc
 Game <|-- GameKeyCard
@@ -238,6 +363,7 @@ Game <|-- GameCartridge
 
 Room <|-- VipRoom
 Room o-- Reservation
+Room --> RoomStatus
 
 Reservation "1" --> Room
 Reservation "1" <-> "1" Customer
@@ -245,34 +371,33 @@ Reservation "1" <-> "1" Customer
 Machine <|-- PC
 Machine <|-- Switch
 Machine <|-- GameBoi
+Machine <|-- Playstation
 
 Customer "0..*" *-- Coupon
 Customer "1" <-> "1" Cart
 Customer <|-- Member
-Customer "0..*" o-- History
+Customer "0..*" o-- Transaction
 
 Member --> "1" MemberStamp
 
 Staff <|-- Manager
 
-Cart o-- ProductItem
+Cart o-- CartItem
 
 Discount <|-- MemberStamp
 Discount <|-- Coupon
 Discount --> "1" Customer
-Discount "1" <-- History
+Discount "1" <-- Transaction
 
 PaymentMethod <|-- QrCode
 PaymentMethod <|-- Card
 
-History <|-- ProductHistory
-History <|-- RoomHistory
-History --> PaymentMethod
+Transaction <|-- ProductTransaction
+Transaction <|-- RoomTransaction
+Transaction --> PaymentMethod
 
-ProductHistory "1..*" o-- Product
+ProductTransaction "1..*" o-- Product
 
-RoomHistory "1" --> Room
-
-Order "1..*" o-- ProductItem
+RoomTransaction "1" --> Room
 
 @enduml
