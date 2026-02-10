@@ -312,28 +312,68 @@ class Card
 }
 
 ' Logs
-abstract class Logs
+abstract class Log
 {
-	- customer: Customer
+	- id: String
+}
 
-	- discount: Discount
-	- total_pricing: int
+class CustomerLog
+{
+	- actor: Customer
+	- action: CustomerLogAction
+}
+
+Enum CustomerLogAction
+{
+	- BUY
+	- RENT
+	- RESERVE
+	- CANCEL_RESERVE
+	- REFUND
+}
+
+class StaffLog
+{
+	- actor: Staff
+	- action: StaffLogAction
+}
+
+Enum StaffLogAction
+{
+	- CHECK_IN
+	- CHECK_OUT
+	- REFILL_SHELF
+}
+
+class ManagerLog
+{
+	- actor: Manager
+	- action: ManagerLogAction
+}
+
+Enum ManagerLogAction
+{
+	- APPROVE_PRODUCT
+	- DISAPPROVE_PRODUCT
+	- ORDER_PRODUCT
+}
+
+abstract class Transaction
+{
+	- id: String
+	- timestamp: Datetime
 	- payment_method: PaymentMethod
-
-	- date: Datetime
+	- amount: float
 }
 
-class ProductLogs
+class ProductTransaction
 {
-	- product_list: List<Product>
-	- status: Enum
-	' Buy, Rent, Refund
+	- product_item_list: List<ProductItemList>
 }
 
-class RoomLogs
+class RoomTransaction
 {
 	- reservation: Reservation
-	- status: LogsEnum
 }
 
 ' Relation
@@ -344,7 +384,8 @@ GameStore "1" o-- "0..*" Customer
 GameStore "1" *-- "0..*" Member
 GameStore "1" o-- "1..*" Staff
 GameStore "1" o-- "1..*" PaymentMethod
-GameStore "1" o-- "0..*" Logs
+GameStore "1" o-- "0..*" Log
+GameStore "1" o-- "0..*" Transaction
 
 Shelf "0" o-- ProductItem
 
@@ -374,6 +415,7 @@ Machine <|-- Playstation
 Customer "0..*" *-- Coupon
 Customer "1" <-> "1" Cart
 Customer o-- Reservation
+Customer o-- Transaction
 Customer <|-- Member
 
 Member --> "1" MemberStamp
@@ -392,13 +434,19 @@ Discount "1" <-- Logs
 PaymentMethod <|-- QrCode
 PaymentMethod <|-- Card
 
-Logs <|-- ProductLogs
-Logs <|-- RoomLogs
-Logs --> PaymentMethod
+Log <|-- CustomerLog
+Log <|-- StaffLog
+Log <|-- ManagerLog
 
-ProductLogs "1..*" o-- Product
+CustomerLog --> CustomerLogAction
+StaffLog --> StaffLogAction
+ManagerLog --> ManagerLogAction
 
-RoomLogs "1" --> Reservation
+StaffLogAction <|-- ManagerLogAction
+
 Reservation --> Room
+
+Transaction <|-- ProductTransaction
+Transaction <|-- RoomTransaction
 
 @enduml
