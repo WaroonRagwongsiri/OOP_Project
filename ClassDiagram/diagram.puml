@@ -18,13 +18,13 @@ class GameStore
 	- payment_method_list: List<PaymentMethod>
 	- product_proposal_list: List<Product>
 
-	- room_transaction_list: List<RoomTransaction>
-	- product_transaction_list: List<ProductTransaction>
+	- room_Logs_list: List<RoomLogs>
+	- product_Logs_list: List<ProductLogs>
 
 	+ make_reservation(customer: Customer, room: Room)
 	+ create_customer(name: str)
 	+ create_member_plus(customer: Customer)
-	+ create_transaction()
+	+ create_Logs()
 	+ start_payment()
 	+ apply_discount()
 }
@@ -97,12 +97,21 @@ class Room
 	- id: String
 	- max_customer: int
 	- serivce_price: int
+	- room_type: RoomTypeEnum
 
 	- status: String
 	' Available, Reserved, Being-Use, Under-Maintainace
-	
+
+	- available_product: List<ProductItem>
+
 	+ set_status(status: Enum)
 	+ create_reservation(self, customer: Customer) -> Reservation
+}
+
+Enum RoomType
+{
+	- NORMAL
+	- VIP
 }
 
 Enum RoomStatus
@@ -113,24 +122,18 @@ Enum RoomStatus
 	- IN_USE
 }
 
-class VipRoom
-{
-	- max_customer: int
-	- serivce_price: int
-}
-
 ' Reservation
 class Reservation
 {
 	- id: String
 
 	- customer: Customer
-	- room_type: String
-	' Normal, VIP
 	- room: Room
 
 	- status: String
 	' Pending, Paid, Serivced, Cancel
+	- time_start: Datetime
+	- end_start: Datetime
 
 	+ set_status(status: Enum)
 }
@@ -179,7 +182,8 @@ class Customer
 
 	- cart: Cart
 	- reservation: Reservation
-	- service_history: List<Transaction>
+	- service_history: List<Logs>
+	- bought_product: List<ProductItem>
 
 	+ add_to_cart(productId: str)
 	+ remove_from_cart(productId: str)
@@ -254,8 +258,7 @@ class Cart
 class CartItem
 {
 	- is_buy: bool
-	- productId: String
-	- amount: int
+	- productItem: ProductItem
 }
 
 ' Discount
@@ -308,8 +311,8 @@ class Card
 	+ pay()
 }
 
-' Transaction
-abstract class Transaction
+' Logs
+abstract class Logs
 {
 	- customer: Customer
 
@@ -318,22 +321,19 @@ abstract class Transaction
 	- payment_method: PaymentMethod
 
 	- date: Datetime
-	- rent_duration: int
-	' hr
 }
 
-class ProductTransaction
+class ProductLogs
 {
 	- product_list: List<Product>
-	- action: String
+	- status: Enum
 	' Buy, Rent, Refund
 }
 
-class RoomTransaction
+class RoomLogs
 {
-	- room: Room
-	- room_type: String
-	' Normal, VIP
+	- reservation: Reservation
+	- status: LogsEnum
 }
 
 ' Relation
@@ -344,6 +344,7 @@ GameStore "1" o-- "0..*" Customer
 GameStore "1" *-- "0..*" Member
 GameStore "1" o-- "1..*" Staff
 GameStore "1" o-- "1..*" PaymentMethod
+GameStore "1" o-- "0..*" Logs
 
 Shelf "0" o-- ProductItem
 
@@ -353,7 +354,6 @@ StockProduct o-- ProductItem
 Product <|-- Game
 Product <|-- Machine
 Product "1" --o "o..*" Manufacturer
-Product --o "0..*" Cart
 
 ProductItem --> Product
 
@@ -361,12 +361,10 @@ Game <|-- GameDisc
 Game <|-- GameKeyCard
 Game <|-- GameCartridge
 
-Room <|-- VipRoom
 Room o-- Reservation
 Room --> RoomStatus
-
-Reservation "1" --> Room
-Reservation "1" <-> "1" Customer
+Room --> RoomType
+Room o-- ProductItem
 
 Machine <|-- PC
 Machine <|-- Switch
@@ -375,8 +373,8 @@ Machine <|-- Playstation
 
 Customer "0..*" *-- Coupon
 Customer "1" <-> "1" Cart
+Customer o-- Reservation
 Customer <|-- Member
-Customer "0..*" o-- Transaction
 
 Member --> "1" MemberStamp
 
@@ -384,20 +382,23 @@ Staff <|-- Manager
 
 Cart o-- CartItem
 
+CartItem --> ProductItem
+
 Discount <|-- MemberStamp
 Discount <|-- Coupon
 Discount --> "1" Customer
-Discount "1" <-- Transaction
+Discount "1" <-- Logs
 
 PaymentMethod <|-- QrCode
 PaymentMethod <|-- Card
 
-Transaction <|-- ProductTransaction
-Transaction <|-- RoomTransaction
-Transaction --> PaymentMethod
+Logs <|-- ProductLogs
+Logs <|-- RoomLogs
+Logs --> PaymentMethod
 
-ProductTransaction "1..*" o-- Product
+ProductLogs "1..*" o-- Product
 
-RoomTransaction "1" --> Room
+RoomLogs "1" --> Reservation
+Reservation --> Room
 
 @enduml
