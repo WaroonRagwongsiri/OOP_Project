@@ -206,6 +206,7 @@ class Customer
 
 class Member
 {
+	- member_id: Str
 	- member_expire_date: Datetime
 	- member_stamp: MemberStamp
 	- member_discount: float
@@ -367,11 +368,11 @@ Enum ManagerLogAction
 	- ORDER_PRODUCT
 }
 
-abstract class Bill
+class Bill
 {
 	- id: String
 	- timestamp: Datetime
-	- payment_method: PaymentMethod
+	- payment_gateway: PaymentGateway
 	- amount: float
 }
 
@@ -459,6 +460,7 @@ Manufacturer o-- Product
 Manufacturer o-- Bill
 Manufacturer o-- StockProduct
 
+Bill o-- PaymentGateway
 Bill <|-- ProductBill
 Bill <|-- RoomBill
 
