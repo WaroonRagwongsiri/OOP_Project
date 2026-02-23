@@ -238,7 +238,8 @@ class Manufacturer
 {
 	- name: String
 	- id: String
-	- product_stock: List<StockProduct>
+	- product_list: List<Product>
+	- product_stock_lsit: List<StockProduct>
 	- bill: Bill
 
 	+ propose_product(store, product)
@@ -455,6 +456,7 @@ StaffLogAction <|-- ManagerLogAction
 
 Reservation --> Room
 
+Manufacturer o-- Product
 Manufacturer o-- Bill
 Manufacturer o-- StockProduct
 
