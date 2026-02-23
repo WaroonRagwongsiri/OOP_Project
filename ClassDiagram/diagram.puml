@@ -21,6 +21,8 @@ class GameStore
 	- room_Logs_list: List<RoomLogs>
 	- product_Logs_list: List<ProductLogs>
 
+	- bill: Bill
+
 	+ make_reservation(customer: Customer, room: Room)
 	+ create_customer(name: str)
 	+ create_member_plus(customer: Customer)
@@ -68,6 +70,8 @@ class ProductItem
 ' Game
 abstract class Game
 {
+	- name: String
+	- description: String
 	- genre: List<String>
 	- supported_platform: List<String>
 	- status: String
@@ -185,6 +189,8 @@ class Customer
 	- service_history: List<Logs>
 	- bought_product: List<ProductItem>
 
+	- bill: Bill
+
 	+ add_to_cart(productId: str)
 	+ remove_from_cart(productId: str)
 
@@ -233,6 +239,7 @@ class Manufacturer
 	- name: String
 	- id: String
 	- product_stock: List<StockProduct>
+	- bill: Bill
 
 	+ propose_product(store, product)
 	+ supply_product(store: GameStore, product: Product, quantity: int)
@@ -447,6 +454,9 @@ ManagerLog --> ManagerLogAction
 StaffLogAction <|-- ManagerLogAction
 
 Reservation --> Room
+
+Manufacturer o-- Bill
+Manufacturer o-- StockProduct
 
 Bill <|-- ProductBill
 Bill <|-- RoomBill

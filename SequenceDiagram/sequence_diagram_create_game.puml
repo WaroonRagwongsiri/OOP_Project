@@ -1,0 +1,9 @@
+@startuml SequenceDiagramCreateGame
+
+actor Manufacturer as A_Manufacturer
+
+participant Manufacturer as P_Manufacturer
+
+A_Manufacturer -> P_Manufacturer : create_game(name, description, genre, supported_platform)
+
+@enduml
