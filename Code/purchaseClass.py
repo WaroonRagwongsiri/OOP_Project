@@ -1,8 +1,11 @@
+import datetime
+import uuid
+
 class Customer:
     def __init__(self, id : str):
         self.__id : str = id
         self.__cart : "Cart" = Cart()
-        self.__histories : list["History"] = []
+        self.__transactions : list["Bill"] = []
 
     @property
     def id(self):
@@ -11,31 +14,31 @@ class Customer:
     @property
     def product_in_cart(self):
         return self.__cart.products
-
-    @property
-    def selected_product(self):
-        return self.__cart.selected_product
     
     @property
-    def histories(self):
-        return self.__histories
+    def transactions(self):
+        return self.__transactions
     
-    def add_prodcut_to_cart(self, product_id : str):
-        self.product_in_cart.append(product_id)
+    def add_prodcut_to_cart(self, product_instance : "ProductItem"):
+        self.product_in_cart.append(product_instance)
         return self.product_in_cart
 
     def select_product(self, product_id : str):
-        if product_id not in self.selected_product:
-            self.selected_product.append(product_id)
-        return self.selected_product
+        select_list = []
+        for product in self.product_in_cart:
+            if product.id == product_id:
+                product.is_selected = not product.is_selected
+                select_list.append(product)
+        return select_list
 
 class GameStore:
-    def __init__(self, store_name : str, payment : "PaymentMethod", customers : list[Customer] = [], stock : list["ProductItem"] = []):
+    def __init__(self, store_name : str, payment_list : list["PaymentMethod"], customers : list[Customer] = [], stock : list["ProductItem"] = []):
         self.__store_name : str = store_name
-        self.__payment : "PaymentMethod" = payment
+        self.__payment_methods : list["PaymentMethod"] = payment_list
         self.__customers : list[Customer] = customers
         self.__stock : list["ProductItem"] = stock
-        self.__histories : list["History"] = []
+        self.__logs : list["Log"] = []
+        self.__transactions : list["Bill"] = []
 
     @property
     def customers(self):
@@ -65,83 +68,79 @@ class GameStore:
             if customer.id == customer_id:
                 return customer
 
+    def add_product_to_customer(self, customer_id : str, product_id : str):
+        found_product = self.search_product(product_id)
+        available_product = [x for x in found_product if not x.is_selected]
+        customer_instance = self.search_customer(customer_id)
+        cart_product_ids = [x.id for x in customer_instance.product_in_cart]
+        return customer_instance.add_prodcut_to_cart(available_product[cart_product_ids.count(product_id)])
+
     def add_product(self, product_id : str, product_sn : str, product_price : int):
         new_product = ProductItem(product_id, product_sn, product_price)
         self.__stock.append(new_product)
         return new_product
 
-    def purchase(self, customer_id : str):
+    def purchase(self, customer_id : str, payment_method_name : str, payment_info : list):
         customer_instance = self.search_customer(customer_id)
         if not customer_instance:
-            raise Exception("Customer doesn't exist in store.")
-        
-        cart_products_id = customer_instance.product_in_cart
-        selected_products_id = customer_instance.selected_product
+            raise Exception("Customer doesn't exist")
 
-        # Product selecting validation
-        for id in selected_products_id:
-            if id not in cart_products_id:
-                raise Exception("Customer some how select product that is not in their cart.")
+        payment_method = None
+        for method in self.__payment_methods:
+            if method.name == payment_method_name:
+                payment_method = method
+        if not payment_method:
+            raise Exception("Payment method not found")
 
-        # Get stock of each product that user selected
-        selected_products_stock_instances = [self.search_product(id) for id in selected_products_id]
+        cart_product_instances = customer_instance.product_in_cart
 
-        # Check if stock does have enough product to sell to customer
-        for product_id in selected_products_id:
-            customer_request_count = cart_products_id.count(product_id)
-
-            available_stock_count = 0
-            for stock_products in selected_products_stock_instances:
-                if len(stock_products) > 0 and stock_products[0].id == product_id:
-                    available_stock_count = len(stock_products)
-                    break
-
-            if available_stock_count < customer_request_count:
-                raise Exception("Store doesn't have this / enough product.")
+        # Check if stock does still have that instance
+        for product_instance in cart_product_instances:
+            if product_instance.is_selected and (not product_instance in self.__stock):
+                raise Exception("Store already sold that product")
             
         # Payment
         total_pricing = 0
-        for products in selected_products_stock_instances:
-            product_sample = products[0]
-            total_pricing += (product_sample.price * cart_products_id.count(product_sample.id))
-        status = self.__payment.create_transaction(total_pricing)
+        for product_instance in cart_product_instances:
+            if product_instance.is_selected:
+                total_pricing += product_instance.price
+        status = payment_method.create_transaction(total_pricing, payment_info)
         if not status:
             raise Exception("Payment Failed.")
 
         # Giving the customer their product
         products_given_to_customer = []
-        for products in selected_products_stock_instances:
-            remove_count = cart_products_id.count(products[0].id)
-            for i in range(remove_count):
-                products_given_to_customer.append(products[i])
-                self.__stock.remove(products[i])
-                cart_products_id.remove(products[i].id)
-            selected_products_id.remove(products[0].id)
+        for product_instances in cart_product_instances:
+            if product_instance.is_selected:
+                products_given_to_customer.append(product_instances)
+                self.__stock.remove(product_instances)
+        
+        for product in products_given_to_customer:
+            cart_product_instances.remove(product)
 
-        history = History(products_given_to_customer, total_pricing)
-        self.__histories.append(history)
-        customer_instance.histories.append(history)
+        transaction = Bill(self.__payment_methods, total_pricing, products_given_to_customer)
+        self.__transactions.append(transaction)
+        customer_instance.transactions.append(transaction)
+
+        log = Log(customer_instance, "Purchase")
+        self.__logs.append(log)
 
         product_sn_list = [product.sn for product in products_given_to_customer]
-        return [history, product_sn_list]
+        return [transaction, product_sn_list]
 
 class Cart:
-    def __init__(self, products : list["ProductItem"] = [], selected_products : list["ProductItem"] = []):
+    def __init__(self, products : list["ProductItem"] = []):
         self.__products : list["ProductItem"] = products
-        self.__selected_product : list["ProductItem"] = selected_products
 
     @property
     def products(self):
         return self.__products
-    
-    @property
-    def selected_product(self):
-        return self.__selected_product
 
 class ProductItem:
     def __init__(self, id : str, sn : str, price : int):
         self.__id : str = id
         self.__sn : str = sn
+        self.__is_selected : bool = False
         self.__price : int = price
 
     @property
@@ -153,21 +152,44 @@ class ProductItem:
         return self.__sn
     
     @property
+    def is_selected(self):
+        return self.__is_selected
+    @is_selected.setter
+    def is_selected(self, value : bool):
+        self.__is_selected = value
+
+    @property
     def price(self):
         return self.__price
 
 class PaymentMethod:
-    def __init__(self):
-        pass
+    def __init__(self, name : str):
+        self.__name = name
 
-    def create_transaction(self, total : int):
+    @property
+    def name(self):
+        return self.__name
+
+    def create_transaction(self, total : int, payment_info : list):
         return True
 
-class History:
-    def __init__(self, products : list[ProductItem], total_price : int):
-        self.__products = products
-        self.__total_price = total_price
+class Log:
+    def __init__(self, customer : Customer, action : str):
+        self.__customer = customer
+        self.__action = action
 
     @property
     def data(self):
-        return [self.__products, self.__total_price]
+        return [self.__customer, self.__action]
+    
+class Bill:
+    def __init__(self, payment_method : PaymentMethod, amount : float, product_item_list):
+        self.__id = uuid.uuid4()
+        self.__timestamp = datetime.datetime.now()
+        self.__payment_method = payment_method
+        self.__amount = amount
+        self.__product_item_list = product_item_list
+
+    @property
+    def data(self):
+        return [self.__id, self.__timestamp, self.__payment_method, self.__amount, self.__product_item_list]

@@ -358,7 +358,7 @@ Enum ManagerLogAction
 	- ORDER_PRODUCT
 }
 
-abstract class Transaction
+abstract class Bill
 {
 	- id: String
 	- timestamp: Datetime
@@ -366,12 +366,12 @@ abstract class Transaction
 	- amount: float
 }
 
-class ProductTransaction
+class ProductBill
 {
 	- product_item_list: List<ProductItemList>
 }
 
-class RoomTransaction
+class RoomBill
 {
 	- reservation: Reservation
 }
@@ -385,7 +385,7 @@ GameStore "1" *-- "0..*" Member
 GameStore "1" o-- "1..*" Staff
 GameStore "1" o-- "1..*" PaymentMethod
 GameStore "1" o-- "0..*" Log
-GameStore "1" o-- "0..*" Transaction
+GameStore "1" o-- "0..*" Bill
 
 Shelf "0" o-- ProductItem
 
@@ -415,7 +415,7 @@ Machine <|-- Playstation
 Customer "0..*" *-- Coupon
 Customer "1" <-> "1" Cart
 Customer o-- Reservation
-Customer o-- Transaction
+Customer o-- Bill
 Customer <|-- Member
 
 Member --> "1" MemberStamp
@@ -446,7 +446,7 @@ StaffLogAction <|-- ManagerLogAction
 
 Reservation --> Room
 
-Transaction <|-- ProductTransaction
-Transaction <|-- RoomTransaction
+Bill <|-- ProductBill
+Bill <|-- RoomBill
 
 @enduml
