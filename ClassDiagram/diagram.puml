@@ -232,16 +232,18 @@ class Manufacturer
 {
 	- name: String
 	- id: String
-	- product_list: List<Product>
-	- product_item_list: List<ProductItem>
+	- product_stock: List<StockProduct>
 
 	+ propose_product(store, product)
 	+ supply_product(store: GameStore, product: Product, quantity: int)
 	+ create_product_item(product: Product, amount: int)
+	+ view_product_stock()
 	' Create Product Item (unique item)
 	+ create_game(name: str, supported_platform: Machine)
+	+ refill_game_stock(product_stock: List<StockProduct>, amount: int)
 	' Create Game
 	+ create_machine(name: str)
+	+ refill_machine_stock(product_stock: List<StockProduct>, amount: int)
 	' Create Machine
 }
 

@@ -37,13 +37,15 @@ rectangle "Store" {
 
 	'Manufacturer'
 	usecase "PublishProduct" as UC_PublishProduct
-	usecase "ViewPublishedProduct" as UC_ViewPublishedProduct
-	usecase "ViewPublishedProductDetail" as UC_ViewPublishedProductDetail
+	usecase "ViewProductStock" as UC_ViewProductStock
+	usecase "ViewProductDetail" as UC_ViewProductDetail
 	usecase "RemoveProduct" as UC_RemoveProduct
 	usecase "FileAppeal" as UC_FileAppeal
 	usecase "ViewOrder" as UC_ViewOrder
 	usecase "ApproveOrder" as UC_ApproveOrder
 	usecase "RejectOrder" as UC_RejectOrder
+	usecase "CreateProduct" as UC_CreateProduct
+	usecase "RefillStock" as UC_RefillStock
 
 	'Staff'
 	usecase "Checkout" as UC_Checkout
@@ -106,15 +108,17 @@ UC_ApplyMemberBenefit ..> UC_VerifyMember : <<include>>
 
 'Manufacturer'
 A_Manufacturer --> UC_PublishProduct
-A_Manufacturer --> UC_ViewPublishedProduct
+A_Manufacturer --> UC_ViewProductStock
 A_Manufacturer --> UC_ViewOrder
+A_Manufacturer --> UC_CreateProduct
 
 UC_ViewOrder <.. UC_ApproveOrder : <<extend>>
 UC_ViewOrder <.. UC_RejectOrder : <<extend>>
 
-UC_ViewPublishedProduct <.. UC_RemoveProduct : <<extend>>
-UC_ViewPublishedProduct <.. UC_ViewPublishedProductDetail : <<extend>>
-UC_ViewPublishedProduct <.. UC_FileAppeal : <<extend>>
+UC_ViewProductStock <.. UC_RemoveProduct : <<extend>>
+UC_ViewProductStock <.. UC_ViewProductDetail : <<extend>>
+UC_ViewProductStock <.. UC_FileAppeal : <<extend>>
+UC_ViewProductStock <.. UC_RefillStock : <<extend>>
 
 'Staff'
 A_Staff --> UC_Checkout
