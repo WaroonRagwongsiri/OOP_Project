@@ -206,7 +206,6 @@ class Customer
 
 class Member
 {
-	- store: GameStore
 	- member_expire_date: Datetime
 	- member_stamp: MemberStamp
 	- member_discount: float

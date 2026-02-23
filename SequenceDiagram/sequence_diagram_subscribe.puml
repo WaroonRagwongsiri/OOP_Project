@@ -1,0 +1,62 @@
+@startuml UsecaseSequenceDiagram
+
+actor Customer as A_Customer
+participant GameStore
+participant Customer as P_Customer
+participant Member
+participant PaymentGateway
+participant Bill
+
+A_Customer -> GameStore : subscribe(user_id, payment_gateway, payment_information)
+activate GameStore
+
+loop get_user_from_id
+
+	GameStore -> P_Customer : get_customer()
+	activate P_Customer
+
+	P_Customer -> GameStore : Customer
+	deactivate P_Customer
+
+end
+
+alt Found User
+
+	GameStore -> PaymentGateway : start_transaction(payment_information)
+	activate PaymentGateway
+
+	alt Success
+
+		PaymentGateway -> GameStore : transaction_id
+
+	else Fail
+
+		PaymentGateway -> GameStore : Failed
+		deactivate PaymentGateway
+
+		GameStore -> A_Customer : Payment Failed
+
+	end
+
+	GameStore -> Bill : create_bill(user, transaction_id)
+	activate Bill
+
+	Bill -> GameStore : Bill
+	deactivate Bill
+
+	GameStore -> Member : create_member(user)
+	activate Member
+
+	Member -> GameStore : Member
+	deactivate Member
+
+	GameStore -> Customer : member_id
+
+else Not found user
+
+	GameStore -> A_Customer : Fail to find user
+	deactivate GameStore
+
+end
+
+@enduml

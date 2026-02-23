@@ -24,6 +24,7 @@ rectangle "Store" {
 	usecase "Purchase" as UC_Purchase
 	usecase "UseCoupon" as UC_UseCoupon
 	usecase "ConfirmOrder" as UC_ConfirmOrder
+	usecase "Subscribe" as UC_Subscribe
 
 	'Payment'
 	usecase "StartPayment" as UC_StartPayment
@@ -84,6 +85,7 @@ A_Customer --> UC_ViewCart
 A_Customer --> UC_ViewStore
 A_Customer --> UC_Purchase
 A_Customer --> UC_ConfirmOrder
+A_Customer --> UC_Subscribe
 
 UC_ViewStore <.. UC_AddProductToCart : <<extend>>
 UC_ViewStore <.. UC_ViewProductDetail : <<extend>>
