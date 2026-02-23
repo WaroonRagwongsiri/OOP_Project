@@ -6,11 +6,12 @@ participant Customer as P_Customer
 participant Member
 participant PaymentGateway
 participant Bill
+participant Logs
 
-A_Customer -> GameStore : subscribe(user_id, payment_gateway, payment_information)
+A_Customer -> GameStore : subscribe(customer_id, payment_gateway, payment_information)
 activate GameStore
 
-loop get_user_from_id
+loop get_customer_from_id
 
 	GameStore -> P_Customer : get_customer()
 	activate P_Customer
@@ -22,12 +23,12 @@ end
 
 alt Found User
 
-	GameStore -> PaymentGateway : start_transaction(payment_information)
+	GameStore -> PaymentGateway : start_transaction(payment_information, amount)
 	activate PaymentGateway
 
 	alt Success
 
-		PaymentGateway -> GameStore : transaction_id
+		PaymentGateway -> GameStore : Success
 
 	else Fail
 
@@ -38,19 +39,31 @@ alt Found User
 
 	end
 
-	GameStore -> Bill : create_bill(user, transaction_id)
+	GameStore -> Bill : create_bill(Customer, amount)
 	activate Bill
 
 	Bill -> GameStore : Bill
 	deactivate Bill
 
-	GameStore -> Member : create_member(user)
+	GameStore -> P_Customer : add_bill(Bill)
+	activate P_Customer
+
+	P_Customer -> GameStore
+	deactivate P_Customer
+
+	GameStore -> Member : create_member(Customer)
 	activate Member
 
 	Member -> GameStore : Member
 	deactivate Member
 
-	GameStore -> Customer : member_id
+	GameStore -> Logs : create_logs(Customer)
+	activate Logs
+
+	Logs -> GameStore : Log
+	deactivate Logs
+
+	GameStore -> A_Customer : member_id
 
 else Not found user
 
