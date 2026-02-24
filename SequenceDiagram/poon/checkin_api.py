@@ -7,17 +7,17 @@ app = FastAPI()
 store = GameStore("Microslop Store")
 
 # Test
-store.add_customer("C1")
-store.add_room("R1", "VIP", 4, 100.0)
 store.add_staff("S1")
+store.add_staff("S2")
+store.add_staff("S3")
 
 @app.get("/")
 def test_connection():
     return {"message": "Hello World"}
 
 @app.post("/create_customer")
-def create_customer(customer_id: str):
-    customer = store.add_customer(customer_id)
+def create_customer(Name: str):
+    customer = store.add_customer(Name)
     return {"customer_id": customer.id}
 
 @app.get("/get_all_customers")
@@ -26,8 +26,8 @@ def get_all_customers():
     return [{"customer_id": c.id} for c in customers]
 
 @app.post("/create_room")
-def create_room(room_id: str, room_type: str, max_customer: int, price: float):
-    room = store.add_room(room_id, room_type, max_customer, price)
+def create_room(room_type: str, max_customer: int, price: float):
+    room = store.add_room(room_type, max_customer, price)
     return {"room_id": room.id}
 
 @app.get("/available_rooms")
@@ -45,14 +45,14 @@ def create_reservation(customer_id: str, room_id: str):
 
 @app.get("/check_reservation")
 def check_reservation(customer_id: str):
-    customer = store.get_customer(customer_id)
+    customer = store.get_customer_by_id(customer_id)
     if not customer or not customer.reservation:
         raise Exception("No reservation found")
     return {"reservation_id": customer.reservation.id}
 
 @app.post("/check_in")
-def check_in(customer_id: str):
-    result = store.check_in(customer_id)
+def check_in(customer_id: str, reservation_id: str):
+    result = store.check_in(customer_id, reservation_id)
     if result != "CheckIn successful":
         raise Exception(result)
     return {"message": result}

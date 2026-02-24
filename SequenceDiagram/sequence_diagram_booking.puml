@@ -28,11 +28,11 @@ alt booking success
 	Room -> GameStore : Reservation
 	deactivate Room
 
-	GameStore -> Transaction : Create Transaction(reservation_id)
-	activate Transaction
-	Transaction -> Transaction : status = Pending
-	Transaction -> GameStore : Transaction Instance
-	deactivate Transaction
+	GameStore -> Log : Create Log(reservation_id)
+	activate Log
+	Log -> Log : status = Pending
+	Log -> GameStore : Log Instance
+	deactivate Log
 
 	GameStore -> Customer : Success
 

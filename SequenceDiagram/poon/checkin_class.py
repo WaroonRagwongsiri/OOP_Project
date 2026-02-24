@@ -1,14 +1,16 @@
+from datetime import datetime
+import uuid
 
-def generate_id():
-    return "example_id"
+def generate_id(prefix=""):
+    return f"{prefix}-{str(uuid.uuid4())[:4]}"
 
 class GameStore:
     def __init__(self, store_name):
         self.__store_name = store_name
-        self.__store_id = generate_id()
+        self.__store_id = generate_id("S")
         self.__customer_list = []
         self.__room_list = []
-        self.__transaction_list = []
+        self.__log_list = []
         self.__staff_list = []
 
     def find_available_staff(self):
@@ -17,7 +19,7 @@ class GameStore:
                 return staff
         return None
 
-    def get_customer(self, customer_id):
+    def get_customer_by_id(self, customer_id):
         for customer in self.__customer_list:
             if customer._Customer__customer_id == customer_id:
                 return customer
@@ -26,14 +28,14 @@ class GameStore:
     def get_available_rooms(self):
         return [room for room in self.__room_list if not room.is_occupied()]
 
-    def check_in(self, customer_id):
-        customer = self.get_customer(customer_id)
+    def check_in(self, customer_id, reservation_id):
+        customer = self.get_customer_by_id(customer_id)
         if not customer:
             return "Customer not found"
         
-        reservation = customer.get_pending_reservation()
+        reservation = customer.get_reservation_by_id(reservation_id)
         if not reservation:
-            return "No pending reservation found"
+            return "Reservation not found"
         
         room = reservation._Reservation__room
         if not room or room.is_occupied():
@@ -43,27 +45,26 @@ class GameStore:
         if not staff:
             return "No staff available"
         
-        reservation._Reservation__staff = staff
         staff.set_busy(True)
         
         room.set_room_status(reservation)
-        reservation.set_status("checked_in")
+        reservation.check_in(staff)
         
-        transaction = Transaction.create_transaction(customer, reservation)
-        self.__transaction_list.append(transaction)
+        log = Log.create_log(customer, reservation)
+        self.__log_list.append(log)
         
         return "CheckIn successful"
 
-    def add_customer(self, customer_id):
-        customer = Customer(customer_id)
+    def add_customer(self, name):
+        customer = Customer(name, generate_id("C"))
         self.__customer_list.append(customer)
         return customer
 
     def get_all_customers(self):
         return self.__customer_list
 
-    def add_room(self, room_id, room_type, max_customer, price):
-        room = Room(room_id, room_type, max_customer, price)
+    def add_room(self, room_type, max_customer, price):
+        room = Room(generate_id("R"), room_type, max_customer, price)
         self.__room_list.append(room)
         return room
 
@@ -73,7 +74,7 @@ class GameStore:
         return staff
 
     def create_reservation(self, customer_id, room_id):
-        customer = self.get_customer(customer_id)
+        customer = self.get_customer_by_id(customer_id)
         if not customer:
             raise Exception("Customer not found")
         
@@ -88,28 +89,27 @@ class GameStore:
         if room.is_occupied():
             raise Exception("Room not available")
         
-        reservation = Reservation.check_in(customer, None)
-        reservation._Reservation__room = room
+        reservation = Reservation(generate_id("E"), customer, room, None, None, None)
         customer.add_reservation(reservation)
         return reservation
 
-class Transaction:
-    def __init__(self, transaction_id, type, customer, room, checkin_date, checkout_date):
-        self.__transaction_id = transaction_id
-        self.__transaction_type = type
+class Log:
+    def __init__(self, log_id, log_type, customer, room, checkin_date, checkout_date):
+        self.__log_id = log_id
+        self.__log_type = log_type
         self.__customer = customer
         self.__room = room
         self.__checkin_date = checkin_date
         self.__checkout_date = checkout_date
 
     @staticmethod
-    def create_transaction(customer, reservation):
-        transaction_id = generate_id()
-        transaction_type = "checkin"
+    def create_log(customer, reservation):
+        log_id = generate_id("L")
+        log_type = "checkin"
         room = reservation._Reservation__room
         checkin_date = reservation._Reservation__checkin_date
         checkout_date = reservation._Reservation__checkout_date
-        return Transaction(transaction_id, transaction_type, customer, room, checkin_date, checkout_date)
+        return Log(log_id, log_type, customer, room, checkin_date, checkout_date)
 
 class Room:
     def __init__(self, room_id, room_type, max_customer, price):
@@ -130,34 +130,33 @@ class Room:
         self.__reservation = reservation
 
 class Reservation:
-    def __init__(self, reservation_id, customer, room, checkin_date, checkout_date, staff=None):
+    def __init__(self, reservation_id, customer, room, staff, checkin_date, checkout_date):
         self.__reservation_id = reservation_id
         self.__customer = customer
         self.__room = room
+        self.__staff = staff
         self.__checkin_date = checkin_date
         self.__checkout_date = checkout_date
-        self.__staff = staff
         self.__status = "pending"
 
     @property
     def id(self):
         return self.__reservation_id
 
-    def get_status(self):
-        return self.__status
-
     def set_status(self, status):
         self.__status = status
 
-    @staticmethod
-    def check_in(customer, staff):
-        reservation_id = generate_id()
-        checkin_date = "09-02-2026"
-        checkout_date = "10-02-2026"
-        return Reservation(reservation_id, customer, None, checkin_date, checkout_date, staff)
+    def get_status(self):
+        return self.__status
+    
+    def check_in(self, staff):
+        self.__checkin_date = datetime.now()
+        self.__staff = staff
+        self.set_status("checked_in")
 
 class Customer:
-    def __init__(self, customer_id):
+    def __init__(self, name, customer_id):
+        self.__customer_name = name
         self.__customer_id = customer_id
         self.__reservation_list = []
         self.reservation = None
@@ -170,9 +169,9 @@ class Customer:
         self.__reservation_list.append(reservation)
         self.reservation = reservation
 
-    def get_pending_reservation(self):
+    def get_reservation_by_id(self, reservation_id):
         for reservation in self.__reservation_list:
-            if reservation.get_status() == "pending":
+            if reservation.id == reservation_id:
                 return reservation
         return None
 
