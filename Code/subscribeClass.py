@@ -181,7 +181,7 @@ class GameStore:
 		return new_customer
 
 	def create_member(self, customer: Customer) -> Member:
-		new_member = Member(make_id('M'), customer.id, customer.name, customer.age)
+		new_member = Member(make_id('ME'), customer.id, customer.name, customer.age)
 		self.__member_list.append(new_member)
 		return new_member
 
