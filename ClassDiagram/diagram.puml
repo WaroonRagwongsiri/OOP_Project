@@ -16,7 +16,6 @@ class GameStore
 	- staff_list: List<Staff>
 
 	- payment_gateway_list: List<PaymentGateway>
-	- product_list: List<Product>
 
 	- staff_logs_list: List<StaffLogs>
 	- manager_logs_list: List<ManagerLogs>
