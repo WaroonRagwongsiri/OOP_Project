@@ -5,6 +5,7 @@ actor Manager as A_Manager
 participant GameStore
 participant Manager as P_Manager
 participant GameDisc
+participant StockProduct
 participant Logs
 
 activate A_Manager
@@ -29,6 +30,12 @@ alt Found Manager
 
 	GameDisc -> GameStore : GameDisc
 	deactivate GameDisc
+
+	GameStore -> StockProduct : create_new_stock_product(product)
+	activate StockProduct
+
+	StockProduct -> GameStore : StockProduct
+	deactivate StockProduct
 
 	GameStore -> Logs : create_manager_log(Manager, manager_action, product)
 	activate Logs

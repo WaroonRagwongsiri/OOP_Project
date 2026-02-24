@@ -26,10 +26,9 @@ class GameStore
 
 	+ make_reservation(customer: Customer, room: Room)
 	+ create_customer(name: str)
-	+ create_member_plus(customer: Customer)
+	+ subscribe(customer: Customer)
 	+ create_Logs()
 	+ start_payment()
-	+ apply_discount()
 }
 
 ' Shelf
@@ -195,8 +194,7 @@ class Customer
 	+ reserve_room(roomId: str)
 	+ check_in()
 	+ check_out()
-
-	+ discount()
+	+ apply_discount()
 }
 
 class Member
@@ -208,8 +206,8 @@ class Member
 	' 5% or something
 
 	+ unsubscribe()
-	+ stamp(staffId: str)
-	+ discount()
+	+ apply_discount()
+	+ stamp()
 }
 
 class Staff
@@ -231,7 +229,7 @@ class Manager
 	+ create_pc()
 	+ create_switch()
 	+ create_playstation()
-	+ order_product()
+	+ refill_stock()
 	+ create_coupon()
 }
 
@@ -241,6 +239,7 @@ class Cart
 	- owner: Customer
 	- cart_item_list: list<CartItem>
 
+	+ select_buy_item(product: ProductItem)
 	+ add_item(product: ProductItem)
 	+ remove_item(product: ProductItem)
 }
@@ -346,7 +345,7 @@ Enum ManagerLogAction
 {
 	- CREATE_GAME
 	- CREATE_MACHINE
-	- ORDER_PRODUCT
+	- REFILL_STOCK
 }
 
 class Bill
@@ -437,7 +436,7 @@ StaffLogAction <|-- ManagerLogAction
 Reservation --> Room
 
 
-Bill o-- PaymentGateway
+Bill --> PaymentGateway
 Bill <|-- ProductBill
 Bill <|-- RoomBill
 Bill --> Discount

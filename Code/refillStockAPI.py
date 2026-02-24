@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from orderProductClass import *
+from refillStockClass import *
 
 app = FastAPI()
 
@@ -23,6 +23,6 @@ def list_manager():
 def create_manager(name : str):
     return store.create_manager(name)
 
-@app.post("/order_product")
-def order_product(manager_id : str, product_id : str, quantity : int):
-    return store.order_product(manager_id, product_id, quantity)
+@app.post("/refill_stock")
+def refill_stock(manager_id : str, product_id : str, quantity : int):
+    return store.refill_stock(manager_id, product_id, quantity)

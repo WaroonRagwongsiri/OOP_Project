@@ -58,7 +58,7 @@ rectangle "Store" {
 	usecase "ViewProductStock" as UC_ViewProductStock
 	usecase "RefillShelf" as UC_RefillShelf
 	usecase "CreateCoupon" as UC_CreateCoupon
-	usecase "OrderProduct" as UC_OrderProduct
+	usecase "RefillStock" as UC_RefillStock
 	usecase "ViewStock" as UC_ViewStock
 
 	'Room Booking'
@@ -127,7 +127,7 @@ A_Manager --> UC_CreateCoupon
 A_Manager --> UC_ViewProductStock
 A_Manager --> UC_CreateGame
 A_Manager --> UC_CreateMachine
-A_Manager --> UC_OrderProduct
+A_Manager --> UC_RefillStock
 
 'Customer / Member booking
 A_Customer --> UC_SearchAvailableRoom
