@@ -73,6 +73,11 @@ class Staff:
 		self.__name: str = name
 		self.__age: int = age
 
+	def get_id(self):
+		return self.__id
+
+	id = property(get_id)
+
 class Manager(Staff):
 	def __init__(self, id, name, age):
 		super().__init__(id, name, age)
@@ -88,6 +93,39 @@ class RoomTypeEnum(Enum):
 	NORMAL = "Normal"
 	VIP = "VIP"
 
+
+class Product:
+	def __init__(self, id: str, name: str, price: float):
+		self._id = id
+		self._name = name
+		self._price = price
+
+	def get_id(self) -> str:
+		return self._id
+
+	id = property(get_id)
+
+class Game(Product):
+	def __init__(self, id: str, name: str, price: float, description: str, genre: str, support_platform: list[Machine]):
+		super().__init__(id, name, price)
+		self.__description: str = description
+		self.__genre: str = genre
+		self.__support_platform: list[Machine] = support_platform
+
+	@abstractmethod
+	def play(self):
+		pass
+
+class GameDisc(Game):
+	def __init__(self, id, name, price, description, genre, support_platform):
+		super().__init__(id, name, price, description, genre, support_platform)
+
+	def play(self):
+		print("Playing...")
+
+class Machine(Product):
+	def __init__(self, id, name, price):
+		super().__init__(id, name, price)
 
 class Room:
 	def __init__(self, room_id: str, max_customer: int, rate_price: float):
@@ -195,13 +233,18 @@ class GameStore:
 	def __init__(self, store_name: str):
 		self.__store_id: str = make_id("S")
 		self.__store_name: str = store_name
+
 		self.__customer_list: list[Customer] = []
-		self.__room_list: list[Room] = []
-		self.__customer_logs_list: list[CustomerLogs] = []
-		self.__bill_list: list[Bill] = []
 		self.__member_list: list[Member] = []
-		self.__payment_gateway_list: list[PaymentGateway] = [QRCode()]
+		self.__room_list: list[Room] = []
 		self.__staff_list: list[Staff] = []
+		self.__product_list: list[Product] = []
+
+		self.__customer_logs_list: list[CustomerLogs] = []
+		self.__staff_logs_list: list[StaffLogs] = []
+		self.__bill_list: list[Bill] = []
+
+		self.__payment_gateway_list: list[PaymentGateway] = [QRCode()]
 
 	def create_customer(self, name: str, age: int) -> Customer:
 		new_customer = Customer(make_id("C"), name, age)
@@ -212,6 +255,11 @@ class GameStore:
 		new_member = Member(make_id('M'), customer.id, customer.name, customer.age)
 		self.__member_list.append(new_member)
 		return new_member
+	
+	def create_manager(self, name: str, age: int) -> Manager:
+		new_manager = Manager(make_id('M'), name, age)
+		self.__staff_list.append(new_manager)
+		return new_manager
 
 	def create_room(self, max_customer: int, rate_price: float) -> Room:
 		new_room = Room(make_id("RO"), max_customer, rate_price)
@@ -236,9 +284,14 @@ class GameStore:
 				return room
 		return None
 
-	def create_customer_logs(self, customer: Customer, action: CustomerAction) -> Logs:
+	def create_customer_logs(self, customer: Customer, action: CustomerAction) -> CustomerLogs:
 		new_log = CustomerLogs(make_id(f"LC-{action}"), customer, action)
 		self.__customer_list.append(new_log)
+		return new_log
+
+	def create_manager_logs(self, manager: Manager, action: ManagerActionLogs, target=None) -> ManagerLogs:
+		new_log = ManagerLogs(make_id(f'LM-{action}'), manager, action, target)
+		self.__staff_logs_list.append(new_log)
 		return new_log
 
 	def create_booking(self, customer_id: str, room_id: str, start_time: datetime, end_time: datetime) -> str:
@@ -288,9 +341,21 @@ class GameStore:
 			if member.member_id == member_id:
 				return member
 		return None
-	
-	def create_game(self, manager_id: str, name: str, description: str, genre: str, support_platform: list[Machine]):
-		pass
+
+	def get_manager_by_id(self, manager_id: str):
+		for staff in self.__staff_list:
+			if isinstance(staff, Manager):
+				if staff.id == manager_id:
+					return staff
+		return None
+
+	def create_game_disc(self, manager_id: str, name: str, price: float, description: str, genre: str, support_platform: list[str]):
+		manager = self.get_manager_by_id(manager_id)
+		if manager is None:
+			raise ValueError("Not found manager")
+		new_game_disc = GameDisc(make_id('G'), name, price, description, genre, support_platform)
+		self.create_manager_logs(manager, ManagerActionLogs.CREATE_GAME)
+		return new_game_disc
 
 class Bill:
 	def __init__(self, payment_gateway: PaymentGateway, amount: float):

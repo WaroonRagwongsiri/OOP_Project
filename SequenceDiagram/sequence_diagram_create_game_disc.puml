@@ -9,7 +9,7 @@ participant Logs
 
 activate A_Manager
 
-A_Manager -> GameStore : create_game_disc(manager_id, name, description, genre, support_platform)
+A_Manager -> GameStore : create_game_disc(manager_id, name, price, description, genre, support_platform)
 activate GameStore
 
 loop Get manager from id
@@ -24,7 +24,7 @@ end
 
 alt Found Manager
 
-	GameStore -> GameDisc : create_game_disc(name, description, genre, support_platform)
+	GameStore -> GameDisc : create_game_disc(name, price, description, genre, support_platform)
 	activate GameDisc
 
 	GameDisc -> GameStore : GameDisc
