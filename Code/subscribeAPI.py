@@ -31,7 +31,7 @@ def subscribe(customer_id: str, payment_gateway_name: str, payment_information: 
 @app.get("/check_member")
 def check_member(member_id: str):
 	try:
-		return store.get_member_by_id(member_id)
+		return store.get_member_by_member_id(member_id)
 	except Exception as e:
 		return {e.__str__()}
 

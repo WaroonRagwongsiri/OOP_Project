@@ -246,6 +246,9 @@ class GameStore:
 	def subscribe(self, customer_id: str, payment_gateway_name: str, payment_information: str):
 		SUBSCRIBE_PRICE = 500
 		customer = self.get_customer_by_id(customer_id)
+		member = self.get_member_by_customer_id(customer_id)
+		if member:
+			raise ValueError("Fail already be a member")
 		payment_gateway = self.get_payment_gateway_by_name(payment_gateway_name)
 		if not payment_gateway.start_transaction(payment_information, SUBSCRIBE_PRICE):
 			raise ValueError("Fail to create")
@@ -255,12 +258,17 @@ class GameStore:
 		log = self.create_customer_logs(customer, CustomerAction.SUBSCRIBE)
 		return new_member.member_id
 	
-	def get_member_by_id(self, member_id: str) -> Member | None:
+	def get_member_by_member_id(self, member_id: str) -> Member | None:
 		for member in self.__member_list:
 			if member.member_id == member_id:
 				return member
 		return None
 
+	def get_member_by_customer_id(self, custoemr_id: str) -> Member | None:
+		for member in self.__member_list:
+			if member.id == custoemr_id:
+				return member
+		return None
 
 class Bill:
 	def __init__(self, payment_gateway: PaymentGateway, amount: float):
