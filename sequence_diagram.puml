@@ -1,0 +1,120 @@
+@startuml UsecaseSequenceDiagram
+
+Customer -> GameStore : Get available Room
+activate Customer
+activate GameStore
+
+alt Have available rooms
+
+	GameStore -> Room : Get available Room
+	activate Room
+
+	loop
+		Room -> Room : is_available()
+	end
+
+	Room -> GameStore : All available rooms
+	deactivate Room
+
+	GameStore -> Customer : All available rooms
+	deactivate GameStore
+	deactivate Customer
+
+else No available rooms
+
+	Room -> GameStore : No available rooms
+	GameStore -> Customer : No available rooms
+	deactivate GameStore
+	deactivate Customer
+	
+	destroy Customer
+
+end
+
+
+Customer -> GameStore : Create booking
+activate Customer
+activate GameStore
+
+alt booking success
+
+	GameStore -> Room : Set booking
+	activate Room
+	Room -> GameStore : Success
+	deactivate Room
+
+	GameStore -> Reservation : Create Reservation(customer, room, room_type)
+	activate Reservation
+	Reservation -> Reservation : status = Pending
+	Reservation -> GameStore : Created(reservation_id)
+	deactivate Reservation
+
+	GameStore -> Customer : Success
+	deactivate GameStore
+	deactivate Customer
+
+	GameStore -> Transaction : Create Transaction(reservation_id)
+	activate Transaction
+	Transaction -> GameStore : Created
+	deactivate Transaction
+
+else booking fail
+
+	Room -> GameStore : Fail
+	GameStore -> Customer : Fail
+	deactivate GameStore
+	deactivate Customer
+	
+	destroy Customer
+
+end
+
+Customer -> GameStore : Start Payment
+activate Customer
+activate GameStore
+
+alt payment success
+
+	GameStore -> Payment : Start Payment
+	activate Payment
+	Payment -> GameStore : Success
+	deactivate Payment
+
+	GameStore -> Customer : Success
+	deactivate GameStore
+	deactivate Customer
+
+	GameStore -> Reservation : Update Reservation (Set status Paid)
+	activate Reservation
+	Reservation -> Reservation : status = Paid
+	Reservation -> GameStore : Updated
+	deactivate Reservation
+
+	GameStore -> Transaction : Update Transaction (Set status Success)
+	activate Transaction
+	Transaction -> GameStore : Updated
+	deactivate Transaction
+
+else payment fail
+
+	Payment -> GameStore : Fail
+	GameStore -> Customer : Fail
+	deactivate GameStore
+	deactivate Customer
+
+	destroy Customer
+
+	GameStore -> Reservation : Update Reservation (Set status Cancel)
+	activate Reservation
+	Reservation -> Reservation : status = Cancel
+	Reservation -> GameStore : Updated
+	deactivate Reservation
+
+	GameStore -> Transaction : Update Transaction (Set status Fail)
+	activate Transaction
+	Transaction -> GameStore : Updated
+	deactivate Transaction
+
+end
+
+@enduml

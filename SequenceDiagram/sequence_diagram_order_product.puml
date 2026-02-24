@@ -1,0 +1,62 @@
+@startuml E
+
+actor Manager as ManagerA
+
+ManagerA -> GameStore : Order product (managerID, productID, quantity)
+activate ManagerA
+activate GameStore
+
+loop Find manager instance by ID
+    GameStore -> Manager
+    activate Manager
+    Manager -> GameStore
+    deactivate Manager
+end
+
+alt Did find manager instance
+    loop Find StockProduct by product id
+        GameStore -> StockProduct
+        activate StockProduct
+        StockProduct -> Product
+        activate Product
+
+        Product -> StockProduct
+        deactivate Product
+        StockProduct -> GameStore
+        deactivate StockProduct
+    end
+
+    alt Did find StockProduct
+        loop Create new product instances and add to StockProduct's ProductItem list
+            GameStore -> ProductItem : Create instance
+            activate ProductItem
+            ProductItem -> GameStore : Return instance
+            deactivate ProductItem
+
+            GameStore -> StockProduct : Add to StockProduct's ProductItem list
+            activate StockProduct
+            StockProduct -> ProductItem
+            activate ProductItem
+            ProductItem -> StockProduct
+            deactivate ProductItem
+            StockProduct -> GameStore
+            deactivate StockProduct
+        end
+
+        GameStore -> Log : Create log
+        activate Log
+        Log -> GameStore : Store log
+        deactivate Log
+
+        GameStore -> ManagerA : Success
+    else Did not find
+        GameStore -> ManagerA : Failed (Invalid product ID)
+    end
+else Did not find manager instance
+    GameStore -> ManagerA : Failed (Invalid manager ID)
+end
+
+deactivate GameStore
+deactivate ManagerA
+
+@enduml

@@ -1,5 +1,6 @@
 @startuml E
 
+<<<<<<< HEAD
 actor Customer as CustomerA
 
 CustomerA -> GameStore : Purchase (Customer id, Preferred payment method, Payment info)
@@ -84,11 +85,101 @@ alt Store did have that customer instance
     end
 else
     GameStore -> CustomerA : Failed (You don't exist)
+=======
+actor Customer
+
+CustomerA -> GameStore : Purchase (Customer id, Preferred payment method, Payment info)
+activate CustomerA
+activate GameStore
+
+loop Get customer instance by id
+    GameStore -> Customer : Get customer
+    activate Customer
+    Customer -> GameStore : Customer
+    deactivate Customer
+end
+
+alt Store did have that customer instance
+    loop Get payment method by name
+        GameStore -> PaymentMethod : Get payment method
+        activate PaymentMethod
+        PaymentMethod -> GameStore : Payment method
+        deactivate PaymentMethod
+    end
+
+    alt Payment method with same name exist
+        GameStore -> Cart : Get product item instances in customer cart
+        activate Cart
+        loop get product item instances in cart
+            Cart -> ProductItem
+            activate ProductItem
+            ProductItem -> Cart
+            deactivate ProductItem
+        end
+        Cart -> GameStore : Return product item instances in customer cart list
+        deactivate Cart
+
+        loop Check if store still have that product instance
+            GameStore -> GameStore
+            activate GameStore
+            deactivate GameStore
+        end
+
+        alt Products are available
+            loop Calculate total value of purchasing products
+                GameStore -> ProductItem : Get value
+                activate ProductItem
+                ProductItem -> GameStore : Value
+                deactivate ProductItem
+            end
+
+            GameStore -> PaymentMethod : Create transaction (Payment info)
+            activate PaymentMethod 
+            PaymentMethod -> GameStore : Status
+            deactivate PaymentMethod
+            
+            alt Payment Successful
+                loop Remove products from stock and customer's cart
+                    GameStore -> GameStore
+                    activate GameStore
+                    deactivate GameStore
+                    GameStore -> Cart : Remove product
+                    activate Cart
+                    deactivate Cart
+                end
+
+                GameStore -> Log : Create purchase record
+                activate Log
+                Log -> GameStore : Purchasing log
+                deactivate Log
+
+                GameStore -> Bill : Create bill
+                activate Bill
+                Bill -> GameStore : Purchasing Bill
+                deactivate Bill
+
+                GameStore -> CustomerA : Purchase bill + Products serial number
+            else
+                GameStore -> CustomerA : Failed (Payment)
+            end
+        else
+            GameStore -> CustomerA : Failed (Product availability)
+        end
+    else
+        GameStore -> CustomerA : Failed (Payment method doesn't exist)
+    end
+else
+    GameStore -> Customer : Failed (Product availability)
+>>>>>>> 64b97bd (purchase stuff)
 end
 
 
 
 deactivate GameStore
+<<<<<<< HEAD
 deactivate CustomerA
+=======
+deactivate Customer
+>>>>>>> 64b97bd (purchase stuff)
 
 @enduml
