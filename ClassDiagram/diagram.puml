@@ -301,6 +301,8 @@ Enum CustomerLogAction
 	- RESERVE
 	- CANCEL_RESERVE
 	- REFUND
+	- CHECK_IN
+	- CHECK_OUT
 }
 
 class StaffLog
@@ -311,8 +313,8 @@ class StaffLog
 
 Enum StaffLogAction
 {
-	- CHECK_IN
-	- CHECK_OUT
+	- CHECK_IN_CUSTOMER
+	- CHECK_OUT_CUSTOMER
 	- REFILL_SHELF
 }
 
@@ -324,8 +326,8 @@ class ManagerLog
 
 Enum ManagerLogAction
 {
-	- APPROVE_PRODUCT
-	- DISAPPROVE_PRODUCT
+	- CREATE_GAME
+	- CREATE_MACHINE
 	- ORDER_PRODUCT
 }
 
