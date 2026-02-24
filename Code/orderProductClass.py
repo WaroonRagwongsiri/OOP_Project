@@ -3,46 +3,65 @@ import uuid
 from enum import Enum
 
 class Staff:
-    def __init__(self, name : str, store : "GameStore"):
+    def __init__(self, name : str):
         self.__id : uuid.UUID = uuid.uuid4()
         self.__name : str = name
-        self.__store : "GameStore" = store
-
     @property
     def id(self):
         return self.__id
 
 class Manager(Staff):
-    def __init__(self, name : str, store : "GameStore"):
-        super.__init__(name, store)
+    def __init__(self, name : str):
+        super().__init__(name)
 
 class GameStore:
-    def __init__(self, store_name : str, stock : list["ProductItem"] = [], staffs : list[Staff]= []):
+    def __init__(self, store_name : str, stock_product_list : list["StockProduct"] = [], staffs : list[Staff]= []):
         self.__store_name : str = store_name
-        self.__stock : "StockProduct" = stock
+        self.__stock_product_list : list["StockProduct"] = stock_product_list
         self.__staff : list [Staff] = staffs
         self.__logs : list["Log"] = []
     
     @property
-    def stock(self):
-        return self.__stock
-    
-    def order_product(self, managerID : str, productID : str, quantity : int):
-        managerUUID = uuid.UUID(managerID)
-        managerInstance = None
+    def stock_product_list(self):
+        return self.__stock_product_list
+
+    @property
+    def managers(self):
+        manager_list = []
         for staff in self.__staff:
-            if staff.id == managerUUID:
-                managerInstance = staff
-        if not staff:
+            if isinstance(staff, Manager):
+                manager_list.append(staff)
+        return manager_list
+
+    def order_product(self, manager_id : str, product_id : str, quantity : int):
+        manager_uuid = uuid.UUID(manager_id)
+        manager_instance = None
+        for staff in self.__staff:
+            if staff.id == manager_uuid:
+                manager_instance = staff
+        if not manager_instance:
             raise Exception("Unable to find manager")
 
-        productUUID = uuid.UUID(productID)
-        productInstance = None
-        for staff in self.__staff:
-            if staff.id == managerUUID:
-                productInstance = staff
-        if not staff:
-            raise Exception("Unable to find manager")
+        product_uuid = uuid.UUID(product_id)
+        stock_product_instance = None
+        for stock_product in self.__stock_product_list:
+            if stock_product.product.id == product_uuid:
+                stock_product_instance = stock_product
+        if not stock_product_instance:
+            raise Exception("Product isn't available in store")
+
+        for _ in range(quantity):
+            new_product_item_instance = ProductItem(stock_product_instance.product)
+            stock_product_instance.product_item_list.append(new_product_item_instance)
+
+        log = StaffLog(manager_instance, StaffLogAction.ORDER_PRODUCT)
+        self.__logs.append(log)
+        return stock_product_instance
+    
+    def create_manager(self, name : str):
+        new_manager = Manager(name)
+        self.__staff.append(new_manager)
+        return new_manager
 
 class Product:
     def __init__(self, name : str, sell_price : int):
@@ -55,22 +74,13 @@ class Product:
         return self.__id
 
 class ProductItem:
-    def __init__(self, product : Product, serial_number : str, condition : str):
+    def __init__(self, product : Product):
         self.__product : Product = product
-        self.__serial_number : str = serial_number
-        self.__condition : str = condition
-
-    @property
-    def id(self):
-        return self.__id
+        self.__serial_number : uuid.UUID = uuid.uuid4()
     
     @property
-    def sn(self):
-        return self.__sn
-    
-    @property
-    def price(self):
-        return self.__price
+    def serial_number(self):
+        return self.__serial_number
 
 class StockProduct:
     def __init__(self, product : Product, product_item_list : list[ProductItem] = []):
@@ -93,8 +103,6 @@ class StaffLogAction(Enum):
     CHECK_IN = 0
     CHECK_OUT = 1
     REFILL_SHELF = 2
-
-class ManagerLogAction(StaffLogAction):
     ORDER_PRODUCT = 3
 
 class StaffLog(Log):
