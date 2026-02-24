@@ -8,7 +8,7 @@ class GameStore {
 	+user_list: List<User>
 	+staff_list: List<Staff>
 	+game_list: List<Game>
-	+transaction_list: List<Transaction>
+	+log_list: List<Log>
 }
 
 ' =========================
@@ -31,7 +31,7 @@ class Customer {
 	+game_copy_list: List<Game>
 	+cart: Cart
 	+payment_method_list: List<PaymentMethod>
-	+transaction_list: List<Transaction>
+	+log_list: List<Log>
 }
 
 class Subscriber {
@@ -107,15 +107,15 @@ class CartItem {
 }
 
 ' =========================
-' Transaction / Order (price snapshot + status table)
+' Log / Order (price snapshot + status table)
 ' =========================
-class Transaction {
+class Log {
 	+id: String              ' ex: O-YYYYMMDD-XXXX
 	+user_id: String
 	+status: String          ' PendingPayment/Processing/Completed/Failed/Cancelled
 	+created_at: DateTime
 
-	+transaction_item_list: List<TransactionItem>
+	+log_item_list: List<LogItem>
 	+sub_total: double
 	+discount_benefit_list: List<DiscountBenefit>
 	+discount_total: double

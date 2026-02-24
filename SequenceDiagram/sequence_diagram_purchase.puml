@@ -25,7 +25,7 @@ alt Purchase products is in cart
         Staff -> Customer : Get customer's prefer payment method
         Customer -> Staff : Return payment method
 
-        Staff -> PaymentMethod : Try to make transaction
+        Staff -> PaymentMethod : Try to make log
         activate PaymentMethod
         PaymentMethod -> GameStore : Transfer money to game store
         deactivate PaymentMethod

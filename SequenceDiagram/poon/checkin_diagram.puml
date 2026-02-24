@@ -1,22 +1,51 @@
 @startuml name
 
-actor Customer
+actor Customer as A_Customer
 
-activate Customer
-Customer -> GameStore : check_in(customer_id)
+A_Customer -> GameStore : check_in(customer_id, reservation_id)
+activate A_Customer
 
 loop
 activate GameStore
-GameStore -> Staff: find_available_staff()
-
+GameStore -> Staff: get_staff()
 activate Staff
 Staff -> GameStore: Staff
 deactivate Staff
-end
+end loop
 
-GameStore -> Reservation: check_in(customer, staff)
+participant Customer as P_Customer
+
+loop
+GameStore -> P_Customer: get_customer_by_id(customer_id)
+activate P_Customer
+P_Customer -> GameStore: Customer
+deactivate P_Customer
+end loop
+
+
+GameStore -> P_Customer: get_reservation_by_id(reservation_id)
+activate P_Customer
+loop get reservation by id
+    P_Customer -> Reservation: Check reservation id
+    activate Reservation
+    Reservation -> P_Customer: Reservation
+    deactivate Reservation
+end
+P_Customer -> GameStore: Reservation
+deactivate P_Customer
+
+GameStore -> Reservation: get_room()
 activate Reservation
-Reservation -> GameStore: Reservation
+Reservation -> Room : get_room()
+activate Room
+Room -> Reservation: Room
+deactivate Room
+Reservation -> GameStore: Room
+deactivate Reservation
+
+GameStore -> Reservation: check_in(staff)
+activate Reservation
+Reservation -> GameStore: check_in_result
 deactivate Reservation
 
 GameStore -> Room: set_room_status()
@@ -25,14 +54,14 @@ Room -> Room: occupied?
 Room -> GameStore: Room
 deactivate Room
 
-GameStore -> Transaction: create_transaction(customer, reservation)
-activate Transaction
-Transaction -> GameStore: Transaction
-deactivate Transaction
+GameStore -> Log: create_log(customer, reservation)
+activate Log
+Log -> GameStore: Log
+deactivate Log
 
-GameStore -> Customer : check_in_response(status)
+GameStore -> A_Customer : "CheckIn Successful"
 deactivate GameStore
 
-deactivate Customer
+deactivate A_Customer
 
 @enduml
