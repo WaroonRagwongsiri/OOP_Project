@@ -21,7 +21,7 @@ class GameStore
 	- room_Logs_list: List<RoomLogs>
 	- product_Logs_list: List<ProductLogs>
 
-	- bill: Bill
+	- bill: List<Bill>
 
 	+ make_reservation(customer: Customer, room: Room)
 	+ create_customer(name: str)
