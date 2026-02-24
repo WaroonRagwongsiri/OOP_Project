@@ -1,0 +1,50 @@
+@startuml SequenceDiagramCreateGame
+
+actor Manager as A_Manager
+
+participant GameStore
+participant Manager as P_Manager
+participant GameDisc
+participant Logs
+
+activate A_Manager
+
+A_Manager -> GameStore : create_game_disc(manager_id, name, description, genre, support_platform)
+activate GameStore
+
+loop Get manager from id
+
+	GameStore -> P_Manager : Get Manager
+	activate P_Manager
+
+	P_Manager -> GameStore : Manager
+	deactivate P_Manager
+
+end
+
+alt Found Manager
+
+	GameStore -> GameDisc : create_game_disc(name, description, genre, support_platform)
+	activate GameDisc
+
+	GameDisc -> GameStore : GameDisc
+	deactivate GameDisc
+
+	GameStore -> Logs : create_manager_log(Manager, manager_action, product)
+	activate Logs
+
+	Logs -> GameStore : Log
+	deactivate Logs
+
+	GameStore -> A_Manager : game_id
+
+else Not found Manager
+
+	GameStore -> A_Manager : Fail to find manager
+	deactivate GameStore
+
+end
+
+deactivate A_Manager
+
+@enduml

@@ -59,7 +59,7 @@ class Customer:
 class Member(Customer):
 	def __init__(self, member_id: str, customer_id: str, name: str, age: int):
 		super().__init__(customer_id, name, age)
-		self.__member_id = member_id
+		self.__member_id: str = member_id
 		self.__expire_date: datetime = datetime.today()
 
 	def get_member_id(self):
@@ -67,6 +67,15 @@ class Member(Customer):
 
 	member_id = property(get_member_id)
 
+class Staff:
+	def __init__(self, id: str, name: str, age: int):
+		self.__id: str = id
+		self.__name: str = name
+		self.__age: int = age
+
+class Manager(Staff):
+	def __init__(self, id, name, age):
+		super().__init__(id, name, age)
 
 class RoomStatusEnum(Enum):
 	AVAILABLE = "Available"
@@ -151,18 +160,36 @@ class Reservation:
 	end_time = property(get_end_time)
 
 class Logs:
-	def __init__(self, transaction_id: str):
-		self.__transaction_id: str = transaction_id
+	def __init__(self, log_id: str):
+		self.__log_id: str = log_id
 
 class CustomerAction(Enum):
 	CREATE_RESERVATION = "Create Reservation"
 	SUBSCRIBE = "Subscribe"
 
 class CustomerLogs(Logs):
-	def __init__(self, transaction_id: str, customer: Customer, action: CustomerAction):
-		super().__init__(transaction_id)
+	def __init__(self, log_id: str, customer: Customer, action: CustomerAction):
+		super().__init__(log_id)
 		self.__customer: Customer = customer
 		self.__action: CustomerAction = action
+
+class StaffActionLogs(Enum):
+	pass
+
+class StaffLogs(Logs):
+	def __init__(self, log_id: str, staff: Staff, action: StaffActionLogs):
+		super().__init__(log_id)
+		self.__staff: Staff = staff
+		self.__action: StaffActionLogs = action
+
+class ManagerActionLogs(Enum):
+	CREATE_GAME = "CreateGame"
+	CREATE_STOCK = "CreateGame"
+
+class ManagerLogs(StaffLogs):
+	def __init__(self, log_id: str, manager: str, action: ManagerActionLogs, target = None):
+		super().__init__(log_id, manager, action)
+		self.__target = target
 
 class GameStore:
 	def __init__(self, store_name: str):
@@ -174,6 +201,7 @@ class GameStore:
 		self.__bill_list: list[Bill] = []
 		self.__member_list: list[Member] = []
 		self.__payment_gateway_list: list[PaymentGateway] = [QRCode()]
+		self.__staff_list: list[Staff] = []
 
 	def create_customer(self, name: str, age: int) -> Customer:
 		new_customer = Customer(make_id("C"), name, age)
@@ -254,13 +282,15 @@ class GameStore:
 		new_member = self.create_member(customer)
 		log = self.create_customer_logs(customer, CustomerAction.SUBSCRIBE)
 		return new_member.member_id
-	
+
 	def get_member_by_id(self, member_id: str) -> Member | None:
 		for member in self.__member_list:
 			if member.member_id == member_id:
 				return member
 		return None
-
+	
+	def create_game(self, manager_id: str, name: str, description: str, genre: str, support_platform: list[Machine]):
+		pass
 
 class Bill:
 	def __init__(self, payment_gateway: PaymentGateway, amount: float):

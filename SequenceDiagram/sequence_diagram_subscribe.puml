@@ -8,6 +8,8 @@ participant PaymentGateway
 participant Bill
 participant Logs
 
+activate A_Customer
+
 A_Customer -> GameStore : subscribe(customer_id, payment_gateway, payment_information)
 activate GameStore
 
@@ -57,7 +59,7 @@ alt Found User
 	Member -> GameStore : Member
 	deactivate Member
 
-	GameStore -> Logs : create_logs(Customer)
+	GameStore -> Logs : create_logs(Customer, customer_action)
 	activate Logs
 
 	Logs -> GameStore : Log
@@ -69,7 +71,8 @@ else Not found user
 
 	GameStore -> A_Customer : Fail to find user
 	deactivate GameStore
-
 end
+
+deactivate A_Customer
 
 @enduml
