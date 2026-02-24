@@ -208,7 +208,7 @@ class GameStore:
 				return room
 		return None
 
-	def create_customer_logs(self, customer: Customer, action: CustomerAction) -> Transaction:
+	def create_customer_logs(self, customer: Customer, action: CustomerAction) -> Logs:
 		new_log = CustomerLogs(make_id(f"LC-{action}"), customer, action)
 		self.__customer_list.append(new_log)
 		return new_log
