@@ -6,7 +6,6 @@ left to right direction
 ' =========================
 actor "Customer" as A_Customer
 actor "Member" as A_Member
-actor "Manufacturer" as A_Manufacturer
 actor "Staff" as A_Staff
 actor "Manager" as A_Manager
 
@@ -54,14 +53,8 @@ rectangle "Store" {
 	usecase "CreateMember" as UC_CreateMember
 
 	'Manager'
-	usecase "ViewPendingProduct" as UC_ViewPendingProduct
-	usecase "ApproveProduct" as UC_ApproveProduct
-	usecase "RejectProduct" as UC_RejectProduct
-	usecase "ViewReportedProduct" as UC_ViewReportedProduct
-	usecase "RevokeProduct" as UC_RevokeProduct
-	usecase "ViewAppealMail" as UC_ViewAppealMail
-	usecase "ApproveAppeal" as UC_ApproveAppeal
-	usecase "RejectAppeal" as UC_RejectAppeal
+	usecase "CreateGame" as UC_CreateGame
+	usecase "CreateMachine" as UC_CreateMachine
 	usecase "ViewProductStock" as UC_ViewProductStock
 	usecase "RefillShelf" as UC_RefillShelf
 	usecase "CreateCoupon" as UC_CreateCoupon
@@ -98,7 +91,6 @@ UC_Purchase <.. UC_UseCoupon : <<extend>>
 UC_Purchase ..> UC_StartPayment : <<include>>
 
 'Payment'
-UC_StartPayment <|-- UC_PayViaCash
 UC_StartPayment <|-- UC_PayViaCard
 UC_StartPayment <|-- UC_PayViaQR
 
@@ -107,12 +99,6 @@ A_Member --> UC_ApplyMemberBenefit
 A_Member --> UC_Unsubscribe
 
 UC_ApplyMemberBenefit ..> UC_VerifyMember : <<include>>
-
-'Manufacturer'
-A_Manufacturer --> UC_PublishProduct
-A_Manufacturer --> UC_ViewProductStock
-A_Manufacturer --> UC_ViewOrder
-A_Manufacturer --> UC_CreateProduct
 
 UC_ViewOrder <.. UC_ApproveOrder : <<extend>>
 UC_ViewOrder <.. UC_RejectOrder : <<extend>>
@@ -137,22 +123,11 @@ UC_Checkout <.. UC_ApplyDiscount : <<extend>>
 UC_ViewProductStock <.. UC_RefillShelf : <<extend>>
 
 'Manager'
-A_Manager --> UC_ViewReportedProduct
-A_Manager --> UC_ViewAppealMail
-A_Manager --> UC_ViewPendingProduct
 A_Manager --> UC_CreateCoupon
-A_Manager --> UC_ViewStock
-
-UC_ViewStock ..> UC_OrderProduct : <<extend>>
-UC_ViewStock ..> UC_RevokeProduct : <<extend>>
-
-UC_ViewReportedProduct <.. UC_RevokeProduct : <<extend>>
-
-UC_ViewAppealMail <.. UC_ApproveAppeal : <<extend>>
-UC_ViewAppealMail <.. UC_RejectAppeal : <<extend>>
-
-UC_ViewPendingProduct <.. UC_ApproveProduct : <<extend>>
-UC_ViewPendingProduct <.. UC_RejectProduct : <<extend>>
+A_Manager --> UC_ViewProductStock
+A_Manager --> UC_CreateGame
+A_Manager --> UC_CreateMachine
+A_Manager --> UC_OrderProduct
 
 'Customer / Member booking
 A_Customer --> UC_SearchAvailableRoom
