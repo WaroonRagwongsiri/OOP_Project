@@ -1,27 +1,57 @@
 @startuml SequenceDiagramCreateGame
 
-actor Manufacturer as A_Manufacturer
+actor Manager as A_Manager
 
-participant Manufacturer as P_Manufacturer
+participant GameStore
+participant Manager as P_Manager
 participant Game
 participant StockProduct
+participant Logs
 
-A_Manufacturer -> P_Manufacturer : create_game(name, description, genre, supported_platform)
-activate P_Manufacturer
+activate A_Manager
 
-P_Manufacturer -> Game : create_game(name, description, genre, supported_platform)
-activate Game
+A_Manager -> GameStore : create_game(manager_id, name, description, genre, support_platform)
+activate GameStore
 
-Game -> P_Manufacturer : Game
-deactivate Game
+loop Get manager from id
 
-P_Manufacturer -> StockProduct : create_new_stock(product)
-activate StockProduct
+	GameStore -> P_Manager : Get Manager
+	activate P_Manager
 
-StockProduct -> P_Manufacturer : StockProduct
-deactivate StockProduct
+	P_Manager -> GameStore : Manager
+	deactivate P_Manager
 
-P_Manufacturer -> A_Manufacturer : game_id
-deactivate P_Manufacturer
+end
+
+alt Found Manager
+
+	GameStore -> Game : create_game(name, description, genre, support_platform)
+	activate Game
+
+	Game -> GameStore : Game
+	deactivate Game
+
+	GameStore -> StockProduct : create_stock(product)
+	activate StockProduct
+
+	StockProduct -> GameStore : StockProduct
+	deactivate StockProduct
+
+	GameStore -> Logs : create_manager_log(Manager, manager_action, product)
+	activate Logs
+
+	Logs -> GameStore : Log
+	deactivate Logs
+
+	GameStore -> A_Manager : game_id
+
+else Not found Manager
+
+	GameStore -> A_Manager : Fail to find manager
+	deactivate GameStore
+
+end
+
+deactivate A_Manager
 
 @enduml
