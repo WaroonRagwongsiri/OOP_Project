@@ -53,7 +53,6 @@ abstract class Product
 {
 	- name: String
 	- id: String
-	- manufacturer: Manufacturer
 	- sell_price: int
 }
 
@@ -231,28 +230,7 @@ class Staff
 class Manager
 {
 	+ approve_product_proposal(product : Product)
-	+ order_product(manufacturer: Manufacturer, store: GameStore, product: Product, quantity: int)
-}
-
-class Manufacturer
-{
-	- name: String
-	- id: String
-	- product_list: List<Product>
-	- product_stock_lsit: List<StockProduct>
-	- bill: Bill
-
-	+ propose_product(store, product)
-	+ supply_product(store: GameStore, product: Product, quantity: int)
-	+ create_product_item(product: Product, amount: int)
-	+ view_product_stock()
-	' Create Product Item (unique item)
-	+ create_game(name: str, supported_platform: Machine)
-	+ refill_game_stock(product_stock: List<StockProduct>, amount: int)
-	' Create Game
-	+ create_machine(name: str)
-	+ refill_machine_stock(product_stock: List<StockProduct>, amount: int)
-	' Create Machine
+	+ order_product(store: GameStore, product: Product, quantity: int)
 }
 
 ' Cart
@@ -404,7 +382,6 @@ StockProduct o-- ProductItem
 
 Product <|-- Game
 Product <|-- Machine
-Product "1" --o "o..*" Manufacturer
 
 ProductItem --> Product
 
@@ -456,9 +433,6 @@ StaffLogAction <|-- ManagerLogAction
 
 Reservation --> Room
 
-Manufacturer o-- Product
-Manufacturer o-- Bill
-Manufacturer o-- StockProduct
 
 Bill o-- PaymentGateway
 Bill <|-- ProductBill
