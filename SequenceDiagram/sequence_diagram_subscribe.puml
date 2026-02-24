@@ -25,47 +25,65 @@ end
 
 alt Found User
 
-	GameStore -> PaymentGateway : start_transaction(payment_information, amount)
-	activate PaymentGateway
+	loop get_member_from_customer_id
 
-	alt Success
+		GameStore -> Member : get_member()
+		activate Member
 
-		PaymentGateway -> GameStore : Success
-
-	else Fail
-
-		PaymentGateway -> GameStore : Failed
-		deactivate PaymentGateway
-
-		GameStore -> A_Customer : Payment Failed
+		Member -> GameStore : Member
+		deactivate Member
 
 	end
 
-	GameStore -> Bill : create_bill(Customer, amount)
-	activate Bill
+	alt Not already member
 
-	Bill -> GameStore : Bill
-	deactivate Bill
+		GameStore -> PaymentGateway : start_transaction(payment_information, amount)
+		activate PaymentGateway
 
-	GameStore -> P_Customer : add_bill(Bill)
-	activate P_Customer
+		alt Success
 
-	P_Customer -> GameStore
-	deactivate P_Customer
+			PaymentGateway -> GameStore : Success
 
-	GameStore -> Member : create_member(Customer)
-	activate Member
+		else Fail
 
-	Member -> GameStore : Member
-	deactivate Member
+			PaymentGateway -> GameStore : Failed
+			deactivate PaymentGateway
 
-	GameStore -> Logs : create_logs(Customer, customer_action)
-	activate Logs
+			GameStore -> A_Customer : Payment Failed
 
-	Logs -> GameStore : Log
-	deactivate Logs
+		end
 
-	GameStore -> A_Customer : member_id
+		GameStore -> Bill : create_bill(Customer, amount)
+		activate Bill
+
+		Bill -> GameStore : Bill
+		deactivate Bill
+
+		GameStore -> P_Customer : add_bill(Bill)
+		activate P_Customer
+
+		P_Customer -> GameStore
+		deactivate P_Customer
+
+		GameStore -> Member : create_member(Customer)
+		activate Member
+
+		Member -> GameStore : Member
+		deactivate Member
+
+		GameStore -> Logs : create_logs(Customer, customer_action)
+		activate Logs
+
+		Logs -> GameStore : Log
+		deactivate Logs
+
+		GameStore -> A_Customer : member_id
+
+	else Already Member
+
+		GameStore -> A_Customer : Fail already member
+
+	end
 
 else Not found user
 
