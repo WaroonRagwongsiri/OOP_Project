@@ -18,8 +18,9 @@ class GameStore
 	- payment_gateway_list: List<PaymentGateway>
 	- product_list: List<Product>
 
-	- room_Logs_list: List<RoomLogs>
-	- product_Logs_list: List<ProductLogs>
+	- staff_logs_list: List<StaffLogs>
+	- manager_logs_list: List<ManagerLogs>
+	- customer_logs_list: List<CustomerLogs>
 
 	- bill: List<Bill>
 
@@ -188,7 +189,7 @@ class Customer
 	- service_history: List<Logs>
 	- bought_product: List<ProductItem>
 
-	- bill: Bill
+	- bill: List<Bill>
 
 	+ add_to_cart(productId: str)
 	+ remove_from_cart(productId: str)
@@ -227,8 +228,14 @@ class Staff
 
 class Manager
 {
-	+ approve_product_proposal(product : Product)
-	+ order_product(store: GameStore, product: Product, quantity: int)
+	+ create_game_disc()
+	+ create_game_catridge()
+	+ create_game_key_card()
+	+ create_pc()
+	+ create_switch()
+	+ create_playstation()
+	+ order_product()
+	+ create_coupon()
 }
 
 ' Cart
