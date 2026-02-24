@@ -218,9 +218,9 @@ class Member
 
 class Staff
 {
-	- name: String
 	- id: String
-	- store: GameStore
+	- name: String
+	- age: int
 
 	+ shelf_restock(shelf: Shelf, product: Product, amount: int)
 	+ check_in()
