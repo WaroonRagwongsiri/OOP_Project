@@ -4,13 +4,12 @@ actor Manager as A_Manager
 
 participant GameStore
 participant Manager as P_Manager
-participant Game
-participant StockProduct
+participant GameDisc
 participant Logs
 
 activate A_Manager
 
-A_Manager -> GameStore : create_game(manager_id, name, description, genre, support_platform)
+A_Manager -> GameStore : create_game_disc(manager_id, name, description, genre, support_platform)
 activate GameStore
 
 loop Get manager from id
@@ -25,17 +24,11 @@ end
 
 alt Found Manager
 
-	GameStore -> Game : create_game(name, description, genre, support_platform)
-	activate Game
+	GameStore -> GameDisc : create_game_disc(name, description, genre, support_platform)
+	activate GameDisc
 
-	Game -> GameStore : Game
-	deactivate Game
-
-	GameStore -> StockProduct : create_stock(product)
-	activate StockProduct
-
-	StockProduct -> GameStore : StockProduct
-	deactivate StockProduct
+	GameDisc -> GameStore : GameDisc
+	deactivate GameDisc
 
 	GameStore -> Logs : create_manager_log(Manager, manager_action, product)
 	activate Logs
