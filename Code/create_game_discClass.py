@@ -127,6 +127,9 @@ class Machine(Product):
 	def __init__(self, id, name, price):
 		super().__init__(id, name, price)
 
+class ProductItem:
+	pass
+
 class Room:
 	def __init__(self, room_id: str, max_customer: int, rate_price: float):
 		self.__room_id: str = room_id
@@ -197,6 +200,16 @@ class Reservation:
 	start_time = property(get_start_time)
 	end_time = property(get_end_time)
 
+class StockProduct:
+	def __init__(self, product: Product, product_item_list: list[ProductItem] = []):
+		self.__product: Product = product
+		self.__product_item_list: list[ProductItem] = product_item_list
+
+	def get_product(self):
+		return self.__product
+
+	product = property(get_product)
+
 class Logs:
 	def __init__(self, log_id: str):
 		self.__log_id: str = log_id
@@ -238,7 +251,7 @@ class GameStore:
 		self.__member_list: list[Member] = []
 		self.__room_list: list[Room] = []
 		self.__staff_list: list[Staff] = []
-		self.__product_list: list[Product] = []
+		self.__stock_product_list: list[StockProduct] = []
 
 		self.__customer_logs_list: list[CustomerLogs] = []
 		self.__staff_logs_list: list[StaffLogs] = []
@@ -358,19 +371,24 @@ class GameStore:
 					return staff
 		return None
 
+	def create_stock_product(self, product: Product, product_item_list: list[ProductItem] = []):
+		new_stock_product = StockProduct(product, product_item_list)
+		self.__stock_product_list.append(new_stock_product)
+		return new_stock_product
+
 	def create_game_disc(self, manager_id: str, name: str, price: float, description: str, genre: str, support_platform: list[str]):
 		manager = self.get_manager_by_id(manager_id)
 		if manager is None:
 			raise ValueError("Not found manager")
 		new_game_disc = GameDisc(make_id('G'), name, price, description, genre, support_platform)
-		self.__product_list.append(new_game_disc)
+		self.create_stock_product(new_game_disc, [])
 		self.create_manager_logs(manager, ManagerActionLogs.CREATE_GAME)
 		return new_game_disc
 	
 	def get_product_by_id(self, product_id: str) -> Product:
-		for product in self.__product_list:
-			if product.id == product_id:
-				return product
+		for stock in self.__stock_product_list:
+			if stock.product.id == product_id:
+				return stock.product
 		return None
 
 class Bill:
