@@ -53,7 +53,6 @@ abstract class Product
 {
 	- name: String
 	- id: String
-	- sell_price: int
 }
 
 class ProductItem
@@ -62,6 +61,7 @@ class ProductItem
 	- serial_number: String
 	- status: String
 	' Waiting_For_Approval, Selling, For_Rental, Unavailable, Removed
+	- sell_price: int
 	- condition: String
 	' New, Second_Hand, Refurbish
 }
