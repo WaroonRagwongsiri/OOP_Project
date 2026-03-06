@@ -207,12 +207,10 @@ class Member
 {
 	- member_id: Str
 	- member_expire_date: Datetime
-	- member_stamp: MemberStamp
 	- member_discount: float
 	' 5% or something
 
 	+ unsubscribe()
-	+ stamp(staffId: str)
 	+ discount()
 }
 
@@ -247,14 +245,6 @@ class CartItem
 {
 	- is_buy: bool
 	- productItem: ProductItem
-}
-
-class MemberStamp
-{
-	- points: int
-	- max_point: int
-
-	+ add_point(amount: )
 }
 
 class Coupon
@@ -399,14 +389,11 @@ Customer o-- Reservation
 Customer o-- Bill
 Customer <|-- Member
 
-Member --> "1" MemberStamp
-
 Staff <|-- Manager
 
 Cart o-- CartItem
 
 CartItem --> ProductItem
-
 
 PaymentGateway <|-- QrCode
 PaymentGateway <|-- Card
@@ -422,7 +409,6 @@ ManagerLog --> ManagerLogAction
 StaffLogAction <|-- ManagerLogAction
 
 Reservation --> Room
-
 
 Bill --> PaymentGateway
 Bill <|-- ProductBill
