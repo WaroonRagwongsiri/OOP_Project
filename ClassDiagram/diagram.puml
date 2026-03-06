@@ -312,6 +312,8 @@ Enum CustomerLogAction
 	- REFUND
 	- CHECK_IN
 	- CHECK_OUT
+	- SUBSCRIBE
+	- UNSUBSCRIBE
 }
 
 class StaffLog

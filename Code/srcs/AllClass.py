@@ -29,12 +29,20 @@ class Customer:
 	def add_reservation(self, reservation: "Reservation"):
 		self.__reservation_list.append(reservation)
 
+	def get_name(self):
+		return self.__name
+
+	def get_age(self):
+		return self.__age
+
+	name = property(get_name)
+	age = property(get_age)
 	reservation_list = property(fget=get_reservation_list)
 	id = property(fget=get_customer_id)
 
 	def check_time_availability(self, start_time: datetime, end_time: datetime) -> bool:
 		for reservation in self.__reservation_list:
-			if start_time < reservation.end_time and end_time > reservation.start_time:
+			if start_time < reservation.end_time and end_time > reservation.start_time and reservation.status != ReservationStatusEnum.CANCEL:
 				return False
 		return True
 
@@ -47,25 +55,35 @@ class Customer:
 	def add_bill(self, bill: Bill):
 		self.__bill_list.append(bill)
 
-	def get_name(self):
-		return self.__name
+	def apply_discount_benefit(self):
+		return 1
 
-	def get_age(self):
-		return self.__age
-	
-	name = property(get_name)
-	age = property(get_age)
+class MemberStatusEnum(Enum):
+	ACTIVE = "Active"
+	INACTIVE = "Inactive"
 
+# Member Always get 15% discount
 class Member(Customer):
 	def __init__(self, member_id: str, customer_id: str, name: str, age: int):
 		super().__init__(customer_id, name, age)
 		self.__member_id: str = member_id
 		self.__expire_date: datetime = datetime.today()
+		self.__status: MemberStatusEnum = MemberStatusEnum.ACTIVE
 
 	def get_member_id(self):
 		return self.__member_id
 
+	def get_status(self):
+		return self.__status
+
+	def set_status(self, status: MemberStatusEnum):
+		self.__status = status
+
 	member_id = property(get_member_id)
+	status = property(get_status, set_status)
+
+	def apply_discount_benefit(self):
+		return 0.85
 
 class Staff:
 	def __init__(self, id: str, name: str, age: int):
@@ -190,7 +208,7 @@ class Room:
 
 	def check_time_availability(self, start_time: datetime, end_time: datetime) -> bool:
 		for reservation in self.__reservation_list:
-			if start_time < reservation.end_time and end_time > reservation.start_time:
+			if start_time < reservation.end_time and end_time > reservation.start_time and reservation.status != ReservationStatusEnum.CANCEL:
 				return False
 		return True
 
@@ -198,7 +216,9 @@ class Room:
 class ReservationStatusEnum(Enum):
 	PENDING = "Pending"
 	SUCCESS = "Success"
-	CANCEL = "CANCEL"
+	CANCEL = "Cancel"
+	CHECK_IN = "CheckIn"
+	CHECK_OUT = "CheckOut"
 
 
 class Reservation:
@@ -249,6 +269,7 @@ class Logs:
 class CustomerAction(Enum):
 	CREATE_RESERVATION = "Create Reservation"
 	SUBSCRIBE = "Subscribe"
+	UNSUBSCRIBE = "Unsubscribe"
 
 class CustomerLogs(Logs):
 	def __init__(self, log_id: str, customer: Customer, action: CustomerAction):
@@ -457,6 +478,33 @@ class GameStore:
 			if stock.product.id == product_id:
 				return stock.product
 		return None
+
+	def cancel_booking(self, customer_id: str, reservation_id: str):
+		try:
+			customer = self.get_customer_by_id(customer_id)
+			if customer is None:
+				raise ValueError("Customer Not Found")
+
+			reservation = customer.get_reservation_from_id(reservation_id)
+			if reservation is None:
+				raise ValueError("Reservaton Not Found")
+
+			reservation.status = ReservationStatusEnum.CANCEL
+			return "Success"
+		except Exception as e:
+			return f"Error: {e.__str__()}"
+
+	def unsubscribe(self, member_id: str):
+		try:
+			member = self.get_member_by_member_id(member_id)
+			if member is None:
+				raise ValueError("Member not found")
+
+			member.status = MemberStatusEnum.INACTIVE
+			self.create_customer_logs(member, CustomerAction.UNSUBSCRIBE)
+			return "Success"
+		except Exception as e:
+			return f"Error: {e.__str__()}"
 
 class Bill:
 	def __init__(self, payment_gateway: PaymentGateway, amount: float):
