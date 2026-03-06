@@ -41,18 +41,14 @@ rectangle "Store" {
 	usecase "CreateMember" as UC_CreateMember
 
 	'Manager'
-	usecase "CreateGameDisc" as UC_CreateGameDisc
-	usecase "CreateGameKeycard" as UC_CreateGameKeycard
-	usecase "CreateGameCartridge" as UC_CreateGameCartridge
-	usecase "CreatePC" as UC_CreatePC
-	usecase "CreateSwitch" as UC_CreateSwitch
-	usecase "CreateGameBoy" as UC_CreateGameBoy
-	usecase "CreatePlaystation" as UC_CreatePlaystation
+	usecase "CreateGame" as UC_CreateGame
+	usecase "CreateMachine" as UC_CreateMachine
 	usecase "ViewProductStock" as UC_ViewProductStock
 	usecase "RefillShelf" as UC_RefillShelf
 	usecase "CreateCoupon" as UC_CreateCoupon
 	usecase "RefillStock" as UC_RefillStock
 	usecase "ViewStock" as UC_ViewStock
+	usecase "OrderProduct" as UC_OrderProduct
 
 	'Room Booking'
 	usecase "SearchAvailableRoom" as UC_SearchAvailableRoom
@@ -111,13 +107,8 @@ UC_ViewProductStock <.. UC_RefillShelf : <<extend>>
 'Manager'
 A_Manager --> UC_CreateCoupon
 A_Manager --> UC_ViewProductStock
-A_Manager --> UC_CreateGameDisc
-A_Manager --> UC_CreateGameKeycard
-A_Manager --> UC_CreateGameCartridge
-A_Manager --> UC_CreatePC
-A_Manager --> UC_CreateSwitch
-A_Manager --> UC_CreateGameBoy
-A_Manager --> UC_CreatePlaystation
+A_Manager --> UC_CreateGame
+A_Manager --> UC_CreateMachine
 A_Manager --> UC_OrderProduct
 
 'Customer / Member booking

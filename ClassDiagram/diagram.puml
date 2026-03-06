@@ -55,8 +55,8 @@ class StockProduct
 
 abstract class Product
 {
-	- name: String
 	- id: String
+	- name: String
 }
 
 class ProductItem
@@ -73,12 +73,11 @@ class ProductItem
 ' Game
 abstract class Game
 {
+	- id: String
 	- name: String
 	- description: String
 	- genre: List<String>
 	- supported_platform: List<String>
-	- status: String
-	' Waiting_For_Approval, Selling, For_Rental, Unavailable, Under_Maintainace, Removed
 
 	+ play()
 }
@@ -148,8 +147,8 @@ class Reservation
 ' Machine
 abstract class Machine
 {
-	- status: String
-	' Waiting_For_Approval, Selling, For_Rental, Unavailable, Under_Maintainace, Removed
+	- id: String
+	- name: String
 
 	+ run_game()
 }
