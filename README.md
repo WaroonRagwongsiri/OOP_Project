@@ -1,5 +1,1 @@
-## Class Diagram
-> ใช้ไฟล์ ***diagram.puml***
-
-## Usecase Diagram
-> ใช้ไฟล์ ***usecase_diagram copy.puml***
+https://docs.google.com/spreadsheets/d/1xwd8XgzYdAHcSk1PN4trBtKPSo9xaeKjfe4jMv_NY3o/edit?usp=sharing
