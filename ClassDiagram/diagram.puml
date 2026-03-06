@@ -335,6 +335,7 @@ class Bill
 	- timestamp: Datetime
 	- payment_gateway: PaymentGateway
 	- amount: float
+	- coupon: Coupon
 	- is_used_to_create_coupon: bool
 }
 
