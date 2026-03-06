@@ -181,7 +181,7 @@ class Customer
 	- id: String
 
 	- coupon_list: List<Coupon>
-	- payment_method_list: List<PaymentGateway>
+	- payment_gateway_list: List<PaymentGateway>
 
 	- cart: Cart
 	- reservation: Reservation
