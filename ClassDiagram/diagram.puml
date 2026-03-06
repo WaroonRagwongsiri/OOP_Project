@@ -169,7 +169,7 @@ class Switch
 	+ run_game()
 }
 
-class GameBoi
+class GameBoy
 {
 	+ run_game()
 }
@@ -181,7 +181,7 @@ class Customer
 	- id: String
 
 	- coupon_list: List<Coupon>
-	- payment_method_list: List<PaymentMethod>
+	- payment_method_list: List<PaymentGateway>
 
 	- cart: Cart
 	- reservation: Reservation
@@ -249,14 +249,6 @@ class CartItem
 	- productItem: ProductItem
 }
 
-' Discount
-abstract class Discount
-{
-	- owner: Customer
-	- discount: int
-	- expire_date: Datetime
-}
-
 class MemberStamp
 {
 	- points: int
@@ -268,10 +260,11 @@ class MemberStamp
 class Coupon
 {
 	- minimum_spending: int
+	- expire_date: Datetime
 }
 
 ' Payment Method
-abstract class PaymentMethod
+abstract class PaymentGateway
 {
 	- id: String
 	- status: String
@@ -352,6 +345,7 @@ class Bill
 	- timestamp: Datetime
 	- payment_gateway: PaymentGateway
 	- amount: float
+	- is_used_to_create_coupon: bool
 }
 
 class ProductBill
@@ -371,7 +365,7 @@ GameStore "1" o-- "1..*" Room
 GameStore "1" o-- "0..*" Customer
 GameStore "1" *-- "0..*" Member
 GameStore "1" o-- "1..*" Staff
-GameStore "1" o-- "1..*" PaymentMethod
+GameStore "1" o-- "1..*" PaymentGateway
 GameStore "1" o-- "0..*" Log
 GameStore "1" o-- "0..*" Bill
 
@@ -396,7 +390,7 @@ Room o-- ProductItem
 
 Machine <|-- PC
 Machine <|-- Switch
-Machine <|-- GameBoi
+Machine <|-- GameBoy
 Machine <|-- Playstation
 
 Customer "0..*" *-- Coupon
@@ -413,13 +407,9 @@ Cart o-- CartItem
 
 CartItem --> ProductItem
 
-Discount <|-- MemberStamp
-Discount <|-- Coupon
-Discount --> "1" Customer
-Discount "1" <-- Logs
 
-PaymentMethod <|-- QrCode
-PaymentMethod <|-- Card
+PaymentGateway <|-- QrCode
+PaymentGateway <|-- Card
 
 Log <|-- CustomerLog
 Log <|-- StaffLog
@@ -434,8 +424,11 @@ StaffLogAction <|-- ManagerLogAction
 Reservation --> Room
 
 
-Bill o-- PaymentGateway
+Bill --> PaymentGateway
 Bill <|-- ProductBill
 Bill <|-- RoomBill
+
+RoomBill --> Reservation
+ProductBill o-- ProductItem
 
 @enduml

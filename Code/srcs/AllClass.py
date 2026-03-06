@@ -247,7 +247,7 @@ class GameStore:
 		SUBSCRIBE_PRICE = 500
 		customer = self.get_customer_by_id(customer_id)
 		payment_gateway = self.get_payment_gateway_by_name(payment_gateway_name)
-		if not payment_gateway.start_transaction(payment_information, SUBSCRIBE_PRICE):
+		if not payment_gateway.start_payment(payment_information, SUBSCRIBE_PRICE):
 			raise ValueError("Fail to create")
 		new_bill = self.create_bill(payment_gateway, SUBSCRIBE_PRICE)
 		customer.add_bill(new_bill)
@@ -286,7 +286,7 @@ class PaymentGateway(ABC):
 		pass
 
 	@abstractmethod
-	def start_transaction():
+	def start_payment():
 		pass
 
 	def get_name(self):
@@ -305,7 +305,7 @@ class QRCode(PaymentGateway):
 	def pay(self, amount):
 		return True
 
-	def start_transaction(self, payment_information, amount):
+	def start_payment(self, payment_information, amount):
 		if not self.authenticate(payment_information):
 			return False
 		if not self.pay(amount):

@@ -22,7 +22,6 @@ rectangle "Store" {
 	usecase "ViewProductDetail" as UC_ViewProductDetail
 	usecase "Purchase" as UC_Purchase
 	usecase "UseCoupon" as UC_UseCoupon
-	usecase "ConfirmOrder" as UC_ConfirmOrder
 	usecase "Subscribe" as UC_Subscribe
 
 	'Payment'
@@ -35,26 +34,20 @@ rectangle "Store" {
 	usecase "VerifyMember" as UC_VerifyMember
 	usecase "Unsubscribe" as UC_Unsubscribe
 
-	'Manufacturer'
-	usecase "PublishProduct" as UC_PublishProduct
-	usecase "ViewProductStock" as UC_ViewProductStock
-	usecase "ViewProductDetail" as UC_ViewProductDetail
-	usecase "RemoveProduct" as UC_RemoveProduct
-	usecase "FileAppeal" as UC_FileAppeal
-	usecase "ViewOrder" as UC_ViewOrder
-	usecase "ApproveOrder" as UC_ApproveOrder
-	usecase "RejectOrder" as UC_RejectOrder
-	usecase "CreateProduct" as UC_CreateProduct
-	usecase "RefillStock" as UC_RefillStock
-
 	'Staff'
 	usecase "Checkout" as UC_Checkout
 	usecase "ApplyDiscount" as UC_ApplyDiscount
+	usecase "CreateCustomer" as UC_CreateCustomer
 	usecase "CreateMember" as UC_CreateMember
 
 	'Manager'
-	usecase "CreateGame" as UC_CreateGame
-	usecase "CreateMachine" as UC_CreateMachine
+	usecase "CreateGameDisc" as UC_CreateGameDisc
+	usecase "CreateGameKeycard" as UC_CreateGameKeycard
+	usecase "CreateGameCartridge" as UC_CreateGameCartridge
+	usecase "CreatePC" as UC_CreatePC
+	usecase "CreateSwitch" as UC_CreateSwitch
+	usecase "CreateGameBoy" as UC_CreateGameBoy
+	usecase "CreatePlaystation" as UC_CreatePlaystation
 	usecase "ViewProductStock" as UC_ViewProductStock
 	usecase "RefillShelf" as UC_RefillShelf
 	usecase "CreateCoupon" as UC_CreateCoupon
@@ -77,7 +70,6 @@ rectangle "Store" {
 A_Customer --> UC_ViewCart
 A_Customer --> UC_ViewStore
 A_Customer --> UC_Purchase
-A_Customer --> UC_ConfirmOrder
 A_Customer --> UC_Subscribe
 
 UC_ViewStore <.. UC_AddProductToCart : <<extend>>
@@ -100,20 +92,14 @@ A_Member --> UC_Unsubscribe
 
 UC_ApplyMemberBenefit ..> UC_VerifyMember : <<include>>
 
-UC_ViewOrder <.. UC_ApproveOrder : <<extend>>
-UC_ViewOrder <.. UC_RejectOrder : <<extend>>
-
-UC_ViewProductStock <.. UC_RemoveProduct : <<extend>>
-UC_ViewProductStock <.. UC_ViewProductDetail : <<extend>>
-UC_ViewProductStock <.. UC_FileAppeal : <<extend>>
-UC_ViewProductStock <.. UC_RefillStock : <<extend>>
-
 'Staff'
 A_Staff --> UC_Checkout
 A_Staff --> UC_ViewProductStock
+A_Staff --> UC_CreateCustomer
 A_Staff --> UC_CreateMember
 A_Staff --> UC_CheckIn
 A_Staff --> UC_CheckoutRoom
+A_Staff --> UC_ViewStock
 
 UC_CheckoutRoom <.. UC_Refund : <<extend>>
 UC_CheckoutRoom <.. UC_ExtendTime : <<extend>>
@@ -125,8 +111,13 @@ UC_ViewProductStock <.. UC_RefillShelf : <<extend>>
 'Manager'
 A_Manager --> UC_CreateCoupon
 A_Manager --> UC_ViewProductStock
-A_Manager --> UC_CreateGame
-A_Manager --> UC_CreateMachine
+A_Manager --> UC_CreateGameDisc
+A_Manager --> UC_CreateGameKeycard
+A_Manager --> UC_CreateGameCartridge
+A_Manager --> UC_CreatePC
+A_Manager --> UC_CreateSwitch
+A_Manager --> UC_CreateGameBoy
+A_Manager --> UC_CreatePlaystation
 A_Manager --> UC_OrderProduct
 
 'Customer / Member booking
