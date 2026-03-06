@@ -95,10 +95,9 @@ class RoomTypeEnum(Enum):
 
 
 class Product:
-	def __init__(self, id: str, name: str, price: float):
+	def __init__(self, id: str, name: str):
 		self._id = id
 		self._name = name
-		self._price = price
 
 	def get_id(self) -> str:
 		return self._id
@@ -106,26 +105,59 @@ class Product:
 	id = property(get_id)
 
 class Game(Product):
-	def __init__(self, id: str, name: str, price: float, description: str, genre: str, support_platform: list[Machine]):
-		super().__init__(id, name, price)
+	def __init__(self, id: str, name: str, description: str, genre: str, support_platform: tuple[Machine]):
+		super().__init__(id, name)
 		self.__description: str = description
 		self.__genre: str = genre
-		self.__support_platform: list[Machine] = support_platform
+		self.__support_platform: tuple[Machine] = support_platform
 
-	@abstractmethod
 	def play(self):
-		pass
+		return f"Playing {self._name}"
+
+	def get_support_platform(self):
+		return self.__support_platform
+
+	support_platform = property(get_support_platform)
 
 class GameDisc(Game):
-	def __init__(self, id, name, price, description, genre, support_platform):
-		super().__init__(id, name, price, description, genre, support_platform)
+	def __init__(self, id, name, description, genre):
+		super().__init__(id, name, description, genre, (PC, Playstation))
 
-	def play(self):
-		print("Playing...")
+class GameCartridge(Game):
+	def __init__(self, id, name, description, genre):
+		super().__init__(id, name, description, genre, (GameBoy))
+
+class GameKeyCard(Game):
+	def __init__(self, id, name, description, genre):
+		super().__init__(id, name, description, genre, (Switch))
 
 class Machine(Product):
-	def __init__(self, id, name, price):
-		super().__init__(id, name, price)
+	def __init__(self, id, name):
+		super().__init__(id, name)
+
+	def run_game(self, game: Game):
+		try:
+			if not isinstance(self, game.support_platform):
+				raise ValueError("This machine cannot play this game")
+			return "Running Game"
+		except Exception as e:
+			return f"Error: {e.__str__()}"
+
+class PC(Machine):
+	def __init__(self, id):
+		super().__init__(id, "PC")
+
+class Playstation(Machine):
+	def __init__(self, id):
+		super().__init__(id, "Playstation")
+
+class Switch(Machine):
+	def __init__(self, id):
+		super().__init__(id, "Switch")
+
+class GameBoy(Machine):
+	def __init__(self, id):
+		super().__init__(id, "GameBoy")
 
 class ProductItem:
 	pass
@@ -376,14 +408,45 @@ class GameStore:
 		self.__stock_product_list.append(new_stock_product)
 		return new_stock_product
 
-	def create_game_disc(self, manager_id: str, name: str, price: float, description: str, genre: str, support_platform: list[str]):
-		manager = self.get_manager_by_id(manager_id)
-		if manager is None:
-			raise ValueError("Not found manager")
-		new_game_disc = GameDisc(make_id('G'), name, price, description, genre, support_platform)
-		self.create_stock_product(new_game_disc, [])
-		self.create_manager_logs(manager, ManagerActionLogs.CREATE_GAME)
-		return new_game_disc
+	def create_game(self, manager_id: str, name: str, description: str, genre: str, game_type: str):
+		try:
+			manager = self.get_manager_by_id(manager_id)
+			if manager is None:
+				raise ValueError("Not found manager")
+
+			if game_type.upper() == "DISC":
+				new_game = GameDisc(make_id('G'), name, description, genre)
+			elif game_type.upper() == "KEYCARD":
+				new_game = GameKeyCard(make_id('G'), name, description, genre)
+			elif game_type.upper() == "CARTRIDGE":
+				new_game = GameCartridge(make_id('G'), name, description, genre)
+			else:
+				raise ValueError("No this type of game available (Available type: DISC, KEYCARD, CARTRIDGE)")
+
+			self.create_stock_product(new_game, [])
+			self.create_manager_logs(manager, ManagerActionLogs.CREATE_GAME)
+			return new_game
+		except Exception as e:
+			return f"Error: {e.__str__()}"
+
+	def create_machine(self, manager_id: str, name: str, machine_type: str):
+		try:
+			manager = self.get_manager_by_id(manager_id)
+			if manager is None:
+				raise ValueError("Not found manager")
+
+			if machine_type.upper() == "PC":
+				new_machine = PC(make_id('M'))
+			elif machine_type.upper() == "PLAYSTATION":
+				new_machine = Playstation(make_id('M'))
+			elif machine_type.upper() == "GAMEBOY":
+				new_machine = GameBoy(make_id('M'))
+			elif machine_type.upper() == "SWITCH":
+				new_machine = Switch(make_id('M'))
+			else:
+				raise ValueError("No this type of machine available (Available type: PC, PLAYSTATION, GAMEBOY, SWITCH)")
+		except Exception as e:
+			return f"Error: {e.__str__()}"
 
 	def get_product_by_id(self, product_id: str) -> Product:
 		for stock in self.__stock_product_list:
