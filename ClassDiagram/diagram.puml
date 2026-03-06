@@ -20,11 +20,16 @@ class GameStore
 	- staff_logs_list: List<StaffLogs>
 	- manager_logs_list: List<ManagerLogs>
 	- customer_logs_list: List<CustomerLogs>
+	- staff_logs_list: List<StaffLogs>
+	- manager_logs_list: List<ManagerLogs>
+	- customer_logs_list: List<CustomerLogs>
 
+	- bill: List<Bill>
 	- bill: List<Bill>
 
 	+ make_reservation(customer: Customer, room: Room)
 	+ create_customer(name: str)
+	+ subscribe(customer: Customer)
 	+ subscribe(customer: Customer)
 	+ create_Logs()
 	+ start_payment()
