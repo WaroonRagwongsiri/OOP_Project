@@ -267,7 +267,7 @@ class StaffLogs(Logs):
 
 class ManagerActionLogs(Enum):
 	CREATE_GAME = "CreateGame"
-	CREATE_STOCK = "CreateGame"
+	CREATE_MACHINE = "CreateMachine"
 
 class ManagerLogs(StaffLogs):
 	def __init__(self, log_id: str, manager: str, action: ManagerActionLogs, target = None):
@@ -445,6 +445,10 @@ class GameStore:
 				new_machine = Switch(make_id('M'))
 			else:
 				raise ValueError("No this type of machine available (Available type: PC, PLAYSTATION, GAMEBOY, SWITCH)")
+
+			self.create_stock_product(new_machine, [])
+			self.create_manager_logs(manager, ManagerActionLogs.CREATE_MACHINE)
+			return new_machine
 		except Exception as e:
 			return f"Error: {e.__str__()}"
 
