@@ -1,1 +1,7 @@
+## TODOLIST
 https://docs.google.com/spreadsheets/d/1xwd8XgzYdAHcSk1PN4trBtKPSo9xaeKjfe4jMv_NY3o/edit?usp=sharing
+
+## Work in Folder
+.
+├── Code
+│	└── srcs
