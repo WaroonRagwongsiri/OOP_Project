@@ -33,7 +33,7 @@ class GameStore:
                 manager_list.append(staff)
         return manager_list
 
-    def order_product(self, manager_id : str, product_id : str, quantity : int):
+    def refill_stock(self, manager_id : str, product_id : str, quantity : int):
         manager_uuid = uuid.UUID(manager_id)
         manager_instance = None
         for staff in self.__staff:

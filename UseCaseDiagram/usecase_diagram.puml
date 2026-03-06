@@ -51,7 +51,7 @@ rectangle "Store" {
 	usecase "ViewProductStock" as UC_ViewProductStock
 	usecase "RefillShelf" as UC_RefillShelf
 	usecase "CreateCoupon" as UC_CreateCoupon
-	usecase "OrderProduct" as UC_OrderProduct
+	usecase "RefillStock" as UC_RefillStock
 	usecase "ViewStock" as UC_ViewStock
 
 	'Room Booking'

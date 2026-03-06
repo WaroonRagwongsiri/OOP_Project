@@ -16,19 +16,23 @@ class GameStore
 	- staff_list: List<Staff>
 
 	- payment_gateway_list: List<PaymentGateway>
-	- product_list: List<Product>
 
-	- room_Logs_list: List<RoomLogs>
-	- product_Logs_list: List<ProductLogs>
+	- staff_logs_list: List<StaffLogs>
+	- manager_logs_list: List<ManagerLogs>
+	- customer_logs_list: List<CustomerLogs>
+	- staff_logs_list: List<StaffLogs>
+	- manager_logs_list: List<ManagerLogs>
+	- customer_logs_list: List<CustomerLogs>
 
-	- bill: Bill
+	- bill: List<Bill>
+	- bill: List<Bill>
 
 	+ make_reservation(customer: Customer, room: Room)
 	+ create_customer(name: str)
-	+ create_member_plus(customer: Customer)
+	+ subscribe(customer: Customer)
+	+ subscribe(customer: Customer)
 	+ create_Logs()
 	+ start_payment()
-	+ apply_discount()
 }
 
 ' Shelf
@@ -188,7 +192,7 @@ class Customer
 	- service_history: List<Logs>
 	- bought_product: List<ProductItem>
 
-	- bill: Bill
+	- bill: List<Bill>
 
 	+ add_to_cart(productId: str)
 	+ remove_from_cart(productId: str)
@@ -199,8 +203,7 @@ class Customer
 	+ reserve_room(roomId: str)
 	+ check_in()
 	+ check_out()
-
-	+ discount()
+	+ apply_discount()
 }
 
 class Member
@@ -227,8 +230,14 @@ class Staff
 
 class Manager
 {
-	+ approve_product_proposal(product : Product)
-	+ order_product(store: GameStore, product: Product, quantity: int)
+	+ create_game_disc()
+	+ create_game_catridge()
+	+ create_game_key_card()
+	+ create_pc()
+	+ create_switch()
+	+ create_playstation()
+	+ refill_stock()
+	+ create_coupon()
 }
 
 ' Cart
@@ -237,6 +246,7 @@ class Cart
 	- owner: Customer
 	- cart_item_list: list<CartItem>
 
+	+ select_buy_item(product: ProductItem)
 	+ add_item(product: ProductItem)
 	+ remove_item(product: ProductItem)
 }
@@ -301,6 +311,8 @@ Enum CustomerLogAction
 	- RESERVE
 	- CANCEL_RESERVE
 	- REFUND
+	- CHECK_IN
+	- CHECK_OUT
 }
 
 class StaffLog
@@ -311,8 +323,8 @@ class StaffLog
 
 Enum StaffLogAction
 {
-	- CHECK_IN
-	- CHECK_OUT
+	- CHECK_IN_CUSTOMER
+	- CHECK_OUT_CUSTOMER
 	- REFILL_SHELF
 }
 
@@ -324,9 +336,9 @@ class ManagerLog
 
 Enum ManagerLogAction
 {
-	- APPROVE_PRODUCT
-	- DISAPPROVE_PRODUCT
-	- ORDER_PRODUCT
+	- CREATE_GAME
+	- CREATE_MACHINE
+	- REFILL_STOCK
 }
 
 class Bill

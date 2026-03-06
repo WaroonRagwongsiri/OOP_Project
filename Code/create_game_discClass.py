@@ -127,6 +127,9 @@ class Machine(Product):
 	def __init__(self, id, name, price):
 		super().__init__(id, name, price)
 
+class ProductItem:
+	pass
+
 class Room:
 	def __init__(self, room_id: str, max_customer: int, rate_price: float):
 		self.__room_id: str = room_id
@@ -197,6 +200,16 @@ class Reservation:
 	start_time = property(get_start_time)
 	end_time = property(get_end_time)
 
+class StockProduct:
+	def __init__(self, product: Product, product_item_list: list[ProductItem] = []):
+		self.__product: Product = product
+		self.__product_item_list: list[ProductItem] = product_item_list
+
+	def get_product(self):
+		return self.__product
+
+	product = property(get_product)
+
 class Logs:
 	def __init__(self, log_id: str):
 		self.__log_id: str = log_id
@@ -238,7 +251,7 @@ class GameStore:
 		self.__member_list: list[Member] = []
 		self.__room_list: list[Room] = []
 		self.__staff_list: list[Staff] = []
-		self.__product_list: list[Product] = []
+		self.__stock_product_list: list[StockProduct] = []
 
 		self.__customer_logs_list: list[CustomerLogs] = []
 		self.__staff_logs_list: list[StaffLogs] = []
@@ -327,6 +340,9 @@ class GameStore:
 	def subscribe(self, customer_id: str, payment_gateway_name: str, payment_information: str):
 		SUBSCRIBE_PRICE = 500
 		customer = self.get_customer_by_id(customer_id)
+		member = self.get_member_by_customer_id(customer_id)
+		if member:
+			raise ValueError("Fail already be a member")
 		payment_gateway = self.get_payment_gateway_by_name(payment_gateway_name)
 		if not payment_gateway.start_transaction(payment_information, SUBSCRIBE_PRICE):
 			raise ValueError("Fail to create")
@@ -336,9 +352,15 @@ class GameStore:
 		log = self.create_customer_logs(customer, CustomerAction.SUBSCRIBE)
 		return new_member.member_id
 
-	def get_member_by_id(self, member_id: str) -> Member | None:
+	def get_member_by_member_id(self, member_id: str) -> Member | None:
 		for member in self.__member_list:
 			if member.member_id == member_id:
+				return member
+		return None
+
+	def get_member_by_customer_id(self, custoemr_id: str) -> Member | None:
+		for member in self.__member_list:
+			if member.id == custoemr_id:
 				return member
 		return None
 
@@ -349,13 +371,25 @@ class GameStore:
 					return staff
 		return None
 
+	def create_stock_product(self, product: Product, product_item_list: list[ProductItem] = []):
+		new_stock_product = StockProduct(product, product_item_list)
+		self.__stock_product_list.append(new_stock_product)
+		return new_stock_product
+
 	def create_game_disc(self, manager_id: str, name: str, price: float, description: str, genre: str, support_platform: list[str]):
 		manager = self.get_manager_by_id(manager_id)
 		if manager is None:
 			raise ValueError("Not found manager")
 		new_game_disc = GameDisc(make_id('G'), name, price, description, genre, support_platform)
+		self.create_stock_product(new_game_disc, [])
 		self.create_manager_logs(manager, ManagerActionLogs.CREATE_GAME)
 		return new_game_disc
+	
+	def get_product_by_id(self, product_id: str) -> Product:
+		for stock in self.__stock_product_list:
+			if stock.product.id == product_id:
+				return stock.product
+		return None
 
 class Bill:
 	def __init__(self, payment_gateway: PaymentGateway, amount: float):

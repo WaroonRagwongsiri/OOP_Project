@@ -27,6 +27,12 @@ def create_game(manager_id: str, name: str, price: float, description: str, genr
 	except Exception as e:
 		return {e.__str__()}
 
+@app.get("/get_product_by_id")
+def get_product_by_id(product_id: str):
+	try:
+		return store.get_product_by_id(product_id)
+	except Exception as e:
+		return {e.__str__()}
 
 if __name__ == "__main__":
 	uvicorn.run("create_game_discAPI:app",host="127.0.0.1",port=8000,reload=True)
