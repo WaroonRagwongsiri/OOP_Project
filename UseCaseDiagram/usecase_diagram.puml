@@ -30,8 +30,7 @@ rectangle "Store" {
 	usecase "PayViaQR" as UC_PayViaQR
 
 	'Member'
-	usecase "ApplyMemberBenefit" as UC_ApplyMemberBenefit
-	usecase "VerifyMember" as UC_VerifyMember
+	usecase "ApplyDiscountBenefit" as UC_ApplyDiscountBenefit
 	usecase "Unsubscribe" as UC_Unsubscribe
 
 	'Staff'
@@ -83,10 +82,8 @@ UC_StartPayment <|-- UC_PayViaCard
 UC_StartPayment <|-- UC_PayViaQR
 
 'Member'
-A_Member --> UC_ApplyMemberBenefit
+A_Member --> UC_ApplyDiscountBenefit
 A_Member --> UC_Unsubscribe
-
-UC_ApplyMemberBenefit ..> UC_VerifyMember : <<include>>
 
 'Staff'
 A_Staff --> UC_Checkout
@@ -117,7 +114,6 @@ A_Customer --> UC_CreateBooking
 A_Customer --> UC_ViewBooking
 A_Customer --> UC_CancelBooking
 
-UC_CreateBooking ..> UC_VerifyMember : <<include>>
 UC_CreateBooking ..> UC_StartPayment : <<include>>
 UC_CreateBooking <.. UC_UseCoupon : <<exclude>>
 
