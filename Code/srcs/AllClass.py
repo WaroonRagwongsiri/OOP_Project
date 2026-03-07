@@ -20,19 +20,19 @@ class Customer:
 		self.__reservation_list: list[Reservation] = []
 		self.__bill_list: list[Bill] = []
 
-	def get_customer_id(self):
+	def get_customer_id(self) -> str:
 		return self.__customer_id
 
-	def get_reservation_list(self):
+	def get_reservation_list(self) -> list[Reservation]:
 		return self.__reservation_list
 
 	def add_reservation(self, reservation: "Reservation"):
 		self.__reservation_list.append(reservation)
 
-	def get_name(self):
+	def get_name(self) -> str:
 		return self.__name
 
-	def get_age(self):
+	def get_age(self) -> int:
 		return self.__age
 
 	name = property(get_name)
@@ -55,7 +55,7 @@ class Customer:
 	def add_bill(self, bill: Bill):
 		self.__bill_list.append(bill)
 
-	def apply_discount_benefit(self):
+	def apply_discount_benefit(self) -> float:
 		return 1
 
 class MemberStatusEnum(Enum):
@@ -70,10 +70,10 @@ class Member(Customer):
 		self.__expire_date: datetime = datetime.today()
 		self.__status: MemberStatusEnum = MemberStatusEnum.ACTIVE
 
-	def get_member_id(self):
+	def get_member_id(self) -> str:
 		return self.__member_id
 
-	def get_status(self):
+	def get_status(self) -> MemberStatusEnum:
 		return self.__status
 
 	def set_status(self, status: MemberStatusEnum):
@@ -82,7 +82,7 @@ class Member(Customer):
 	member_id = property(get_member_id)
 	status = property(get_status, set_status)
 
-	def apply_discount_benefit(self):
+	def apply_discount_benefit(self) -> float:
 		return 0.85
 
 class Staff:
@@ -91,7 +91,7 @@ class Staff:
 		self.__name: str = name
 		self.__age: int = age
 
-	def get_id(self):
+	def get_id(self) -> str:
 		return self.__id
 
 	id = property(get_id)
@@ -132,7 +132,7 @@ class Game(Product):
 	def play(self):
 		return f"Playing {self._name}"
 
-	def get_support_platform(self):
+	def get_support_platform(self) -> tuple[Machine]:
 		return self.__support_platform
 
 	support_platform = property(get_support_platform)
@@ -199,6 +199,11 @@ class Room:
 
 	status = property(fget=get_status)
 
+	def get_rate_price(self) -> float:
+		return self.__rate_price
+
+	rate_price = property(get_rate_price)
+
 	def create_reservation(self, reservation_id: str, customer: Customer, start_time: datetime, end_time: datetime) -> "Reservation":
 		if self.check_time_availability(start_time, end_time) == False:
 			return None
@@ -230,7 +235,7 @@ class Reservation:
 		self.__start_time: datetime = start_time
 		self.__end_time: datetime = end_time
 
-	def get_status(self):
+	def get_status(self) -> ReservationStatusEnum:
 		return self.__status
 
 	def set_status(self, status: ReservationStatusEnum):
@@ -238,26 +243,31 @@ class Reservation:
 
 	status = property(fget=get_status, fset=set_status)
 
-	def get_id(self):
+	def get_id(self) -> str:
 		return self.__id
 
 	id = property(fget=get_id)
 
-	def get_start_time(self):
+	def get_start_time(self) -> datetime:
 		return self.__start_time
 
-	def get_end_time(self):
+	def get_end_time(self) -> datetime:
 		return self.__end_time
 	
 	start_time = property(get_start_time)
 	end_time = property(get_end_time)
+
+	def calculate_price(self) -> float:
+		duration = self.__end_time - self.__start_time
+		hours = duration.total_seconds() / 3600
+		return hours * self.__room.rate_price
 
 class StockProduct:
 	def __init__(self, product: Product, product_item_list: list[ProductItem] = []):
 		self.__product: Product = product
 		self.__product_item_list: list[ProductItem] = product_item_list
 
-	def get_product(self):
+	def get_product(self) -> Product:
 		return self.__product
 
 	product = property(get_product)
@@ -360,7 +370,7 @@ class GameStore:
 		self.__staff_logs_list.append(new_log)
 		return new_log
 
-	def create_booking(self, customer_id: str, room_id: str, start_time: datetime, end_time: datetime) -> str:
+	def create_reservation(self, customer_id: str, room_id: str, start_time: datetime, end_time: datetime) -> str:
 		customer = self.get_customer_by_id(customer_id)
 		if customer is None:
 			raise ValueError("Invalid User")
@@ -390,20 +400,35 @@ class GameStore:
 		self.__bill_list.append(new_bill)
 		return new_bill
 
-	def subscribe(self, customer_id: str, payment_gateway_name: str, payment_information: str):
+	def subscribe(self, customer_id: str, payment_gateway_name: str, payment_information: str) -> Member:
 		SUBSCRIBE_PRICE = 500
+
 		customer = self.get_customer_by_id(customer_id)
+		if customer is None:
+			raise ValueError("Customer not found")
+
 		member = self.get_member_by_customer_id(customer_id)
-		if member:
+		if member and member.status == MemberStatusEnum.ACTIVE:
 			raise ValueError("Fail already be a member")
+
 		payment_gateway = self.get_payment_gateway_by_name(payment_gateway_name)
+		if payment_gateway is None:
+			raise ValueError("Payment gateway not found")
+
 		if not payment_gateway.start_payment(payment_information, SUBSCRIBE_PRICE):
-			raise ValueError("Fail to create")
+			raise ValueError("Fail to payment")
+
 		new_bill = self.create_bill(payment_gateway, SUBSCRIBE_PRICE)
 		customer.add_bill(new_bill)
+
+		if member:
+			member.status = MemberStatusEnum.ACTIVE
+			self.create_customer_logs(customer, CustomerAction.SUBSCRIBE)
+			return member
+
 		new_member = self.create_member(customer)
-		log = self.create_customer_logs(customer, CustomerAction.SUBSCRIBE)
-		return new_member.member_id
+		self.create_customer_logs(customer, CustomerAction.SUBSCRIBE)
+		return new_member
 
 	def get_member_by_member_id(self, member_id: str) -> Member | None:
 		for member in self.__member_list:
@@ -417,19 +442,19 @@ class GameStore:
 				return member
 		return None
 
-	def get_manager_by_id(self, manager_id: str):
+	def get_manager_by_id(self, manager_id: str) -> Manager | None:
 		for staff in self.__staff_list:
 			if isinstance(staff, Manager):
 				if staff.id == manager_id:
 					return staff
 		return None
 
-	def create_stock_product(self, product: Product, product_item_list: list[ProductItem] = []):
+	def create_stock_product(self, product: Product, product_item_list: list[ProductItem] = []) -> StockProduct:
 		new_stock_product = StockProduct(product, product_item_list)
 		self.__stock_product_list.append(new_stock_product)
 		return new_stock_product
 
-	def create_game(self, manager_id: str, name: str, description: str, genre: str, game_type: str):
+	def create_game(self, manager_id: str, name: str, description: str, genre: str, game_type: str) -> Game:
 		try:
 			manager = self.get_manager_by_id(manager_id)
 			if manager is None:
@@ -450,7 +475,7 @@ class GameStore:
 		except Exception as e:
 			return f"Error: {e.__str__()}"
 
-	def create_machine(self, manager_id: str, name: str, machine_type: str):
+	def create_machine(self, manager_id: str, name: str, machine_type: str) -> Machine:
 		try:
 			manager = self.get_manager_by_id(manager_id)
 			if manager is None:
@@ -479,7 +504,7 @@ class GameStore:
 				return stock.product
 		return None
 
-	def cancel_booking(self, customer_id: str, reservation_id: str):
+	def cancel_reservation(self, customer_id: str, reservation_id: str):
 		try:
 			customer = self.get_customer_by_id(customer_id)
 			if customer is None:
@@ -499,6 +524,9 @@ class GameStore:
 			member = self.get_member_by_member_id(member_id)
 			if member is None:
 				raise ValueError("Member not found")
+
+			if member.status == MemberStatusEnum.INACTIVE:
+				raise ValueError("Member already inactive")
 
 			member.status = MemberStatusEnum.INACTIVE
 			self.create_customer_logs(member, CustomerAction.UNSUBSCRIBE)
@@ -533,7 +561,7 @@ class PaymentGateway(ABC):
 	def start_payment():
 		pass
 
-	def get_name(self):
+	def get_name(self) -> str:
 		return self.__name
 
 	name = property(get_name)
@@ -546,10 +574,10 @@ class QRCode(PaymentGateway):
 	def authenticate(self, payment_information) -> bool:
 		return True
 
-	def pay(self, amount):
+	def pay(self, amount) -> bool:
 		return True
 
-	def start_payment(self, payment_information, amount):
+	def start_payment(self, payment_information, amount) -> bool:
 		if not self.authenticate(payment_information):
 			return False
 		if not self.pay(amount):

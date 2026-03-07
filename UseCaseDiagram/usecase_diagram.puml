@@ -49,11 +49,11 @@ rectangle "Store" {
 	usecase "ViewStock" as UC_ViewStock
 	usecase "OrderProduct" as UC_OrderProduct
 
-	'Room Booking'
+	'Room Reservation'
 	usecase "SearchAvailableRoom" as UC_SearchAvailableRoom
-	usecase "CreateBooking" as UC_CreateBooking
-	usecase "ViewBooking" as UC_ViewBooking
-	usecase "CancelBooking" as UC_CancelBooking
+	usecase "CreateReservation" as UC_CreateReservation
+	usecase "ViewReservation" as UC_ViewReservation
+	usecase "CancelReservation" as UC_CancelReservation
 	usecase "CheckIn" as UC_CheckIn
 	usecase "ExtendTime" as UC_ExtendTime
 	usecase "UpgradeRoom" as UC_UpgradeRoom
@@ -108,13 +108,13 @@ A_Manager --> UC_CreateGame
 A_Manager --> UC_CreateMachine
 A_Manager --> UC_OrderProduct
 
-'Customer / Member booking
+'Customer / Member Reservation
 A_Customer --> UC_SearchAvailableRoom
-A_Customer --> UC_CreateBooking
-A_Customer --> UC_ViewBooking
-A_Customer --> UC_CancelBooking
+A_Customer --> UC_CreateReservation
+A_Customer --> UC_ViewReservation
+A_Customer --> UC_CancelReservation
 
-UC_CreateBooking ..> UC_StartPayment : <<include>>
-UC_CreateBooking <.. UC_UseCoupon : <<exclude>>
+UC_CreateReservation ..> UC_StartPayment : <<include>>
+UC_CreateReservation <.. UC_UseCoupon : <<exclude>>
 
 @enduml
