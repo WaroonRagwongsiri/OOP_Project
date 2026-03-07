@@ -264,6 +264,7 @@ class Reservation:
 
 class StockProduct:
 	def __init__(self, product: Product, product_item_list: list[ProductItem] = []):
+		self.__id: str = make_id('ST')
 		self.__product: Product = product
 		self.__product_item_list: list[ProductItem] = product_item_list
 
@@ -271,6 +272,11 @@ class StockProduct:
 		return self.__product
 
 	product = property(get_product)
+
+	def get_id(self) -> str:
+		return self.__id
+
+	id = property(get_id)
 
 class Logs:
 	def __init__(self, log_id: str):
@@ -533,6 +539,15 @@ class GameStore:
 			return "Success"
 		except Exception as e:
 			return f"Error: {e.__str__()}"
+
+	def view_stock(self) -> list[StockProduct]:
+		return self.__stock_product_list
+
+	def get_stock_by_id(self, stock_id: str) -> StockProduct | None:
+		for stock in self.__stock_product_list:
+			if stock.id == stock_id:
+				return stock
+		return None
 
 class Bill:
 	def __init__(self, payment_gateway: PaymentGateway, amount: float):
