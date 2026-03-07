@@ -154,12 +154,9 @@ class Machine(Product):
 		super().__init__(id, name)
 
 	def run_game(self, game: Game):
-		try:
-			if not isinstance(self, game.support_platform):
-				raise ValueError("This machine cannot play this game")
-			return "Running Game"
-		except Exception as e:
-			return f"Error: {e.__str__()}"
+		if not isinstance(self, game.support_platform):
+			raise ValueError("This machine cannot play this game")
+		return "Running Game"
 
 class PC(Machine):
 	def __init__(self, id):
@@ -264,6 +261,7 @@ class Reservation:
 
 class StockProduct:
 	def __init__(self, product: Product, product_item_list: list[ProductItem] = []):
+		self.__id: str = make_id('ST')
 		self.__product: Product = product
 		self.__product_item_list: list[ProductItem] = product_item_list
 
@@ -271,6 +269,22 @@ class StockProduct:
 		return self.__product
 
 	product = property(get_product)
+
+	def get_id(self) -> str:
+		return self.__id
+
+	id = property(get_id)
+
+class Shelf:
+	def __init__(self, max_capacity: int):
+		self.__id: str = make_id('SH')
+		self.__max_capacity: int = max_capacity
+		self.__product_on_shelf: list[ProductItem] = []
+
+	def refill_shelf(self, product_item_list: list[ProductItem]):
+		if len(self.__product_on_shelf) + len(product_item_list) > self.__max_capacity:
+			raise ValueError("Exceed capacity")
+		self.__product_on_shelf.extend(product_item_list)
 
 class Logs:
 	def __init__(self, log_id: str):
@@ -315,6 +329,7 @@ class GameStore:
 		self.__room_list: list[Room] = []
 		self.__staff_list: list[Staff] = []
 		self.__stock_product_list: list[StockProduct] = []
+		self.__shelf_list: list[Shelf] = []
 
 		self.__customer_logs_list: list[CustomerLogs] = []
 		self.__staff_logs_list: list[StaffLogs] = []
@@ -455,48 +470,42 @@ class GameStore:
 		return new_stock_product
 
 	def create_game(self, manager_id: str, name: str, description: str, genre: str, game_type: str) -> Game:
-		try:
-			manager = self.get_manager_by_id(manager_id)
-			if manager is None:
-				raise ValueError("Not found manager")
+		manager = self.get_manager_by_id(manager_id)
+		if manager is None:
+			raise ValueError("Not found manager")
 
-			if game_type.upper() == "DISC":
-				new_game = GameDisc(make_id('G'), name, description, genre)
-			elif game_type.upper() == "KEYCARD":
-				new_game = GameKeyCard(make_id('G'), name, description, genre)
-			elif game_type.upper() == "CARTRIDGE":
-				new_game = GameCartridge(make_id('G'), name, description, genre)
-			else:
-				raise ValueError("No this type of game available (Available type: DISC, KEYCARD, CARTRIDGE)")
+		if game_type.upper() == "DISC":
+			new_game = GameDisc(make_id('G'), name, description, genre)
+		elif game_type.upper() == "KEYCARD":
+			new_game = GameKeyCard(make_id('G'), name, description, genre)
+		elif game_type.upper() == "CARTRIDGE":
+			new_game = GameCartridge(make_id('G'), name, description, genre)
+		else:
+			raise ValueError("No this type of game available (Available type: DISC, KEYCARD, CARTRIDGE)")
 
-			self.create_stock_product(new_game, [])
-			self.create_manager_logs(manager, ManagerActionLogs.CREATE_GAME)
-			return new_game
-		except Exception as e:
-			return f"Error: {e.__str__()}"
+		self.create_stock_product(new_game, [])
+		self.create_manager_logs(manager, ManagerActionLogs.CREATE_GAME)
+		return new_game
 
 	def create_machine(self, manager_id: str, name: str, machine_type: str) -> Machine:
-		try:
-			manager = self.get_manager_by_id(manager_id)
-			if manager is None:
-				raise ValueError("Not found manager")
+		manager = self.get_manager_by_id(manager_id)
+		if manager is None:
+			raise ValueError("Not found manager")
 
-			if machine_type.upper() == "PC":
-				new_machine = PC(make_id('M'))
-			elif machine_type.upper() == "PLAYSTATION":
-				new_machine = Playstation(make_id('M'))
-			elif machine_type.upper() == "GAMEBOY":
-				new_machine = GameBoy(make_id('M'))
-			elif machine_type.upper() == "SWITCH":
-				new_machine = Switch(make_id('M'))
-			else:
-				raise ValueError("No this type of machine available (Available type: PC, PLAYSTATION, GAMEBOY, SWITCH)")
+		if machine_type.upper() == "PC":
+			new_machine = PC(make_id('M'))
+		elif machine_type.upper() == "PLAYSTATION":
+			new_machine = Playstation(make_id('M'))
+		elif machine_type.upper() == "GAMEBOY":
+			new_machine = GameBoy(make_id('M'))
+		elif machine_type.upper() == "SWITCH":
+			new_machine = Switch(make_id('M'))
+		else:
+			raise ValueError("No this type of machine available (Available type: PC, PLAYSTATION, GAMEBOY, SWITCH)")
 
-			self.create_stock_product(new_machine, [])
-			self.create_manager_logs(manager, ManagerActionLogs.CREATE_MACHINE)
-			return new_machine
-		except Exception as e:
-			return f"Error: {e.__str__()}"
+		self.create_stock_product(new_machine, [])
+		self.create_manager_logs(manager, ManagerActionLogs.CREATE_MACHINE)
+		return new_machine
 
 	def get_product_by_id(self, product_id: str) -> Product:
 		for stock in self.__stock_product_list:
@@ -505,34 +514,59 @@ class GameStore:
 		return None
 
 	def cancel_reservation(self, customer_id: str, reservation_id: str):
-		try:
-			customer = self.get_customer_by_id(customer_id)
-			if customer is None:
-				raise ValueError("Customer Not Found")
+		customer = self.get_customer_by_id(customer_id)
+		if customer is None:
+			raise ValueError("Customer Not Found")
 
-			reservation = customer.get_reservation_from_id(reservation_id)
-			if reservation is None:
-				raise ValueError("Reservaton Not Found")
+		reservation = customer.get_reservation_from_id(reservation_id)
+		if reservation is None:
+			raise ValueError("Reservaton Not Found")
 
-			reservation.status = ReservationStatusEnum.CANCEL
-			return "Success"
-		except Exception as e:
-			return f"Error: {e.__str__()}"
+		reservation.status = ReservationStatusEnum.CANCEL
+		return "Success"
 
 	def unsubscribe(self, member_id: str):
-		try:
-			member = self.get_member_by_member_id(member_id)
-			if member is None:
-				raise ValueError("Member not found")
+		member = self.get_member_by_member_id(member_id)
+		if member is None:
+			raise ValueError("Member not found")
 
-			if member.status == MemberStatusEnum.INACTIVE:
-				raise ValueError("Member already inactive")
+		if member.status == MemberStatusEnum.INACTIVE:
+			raise ValueError("Member already inactive")
 
-			member.status = MemberStatusEnum.INACTIVE
-			self.create_customer_logs(member, CustomerAction.UNSUBSCRIBE)
-			return "Success"
-		except Exception as e:
-			return f"Error: {e.__str__()}"
+		member.status = MemberStatusEnum.INACTIVE
+		self.create_customer_logs(member, CustomerAction.UNSUBSCRIBE)
+		return "Success"
+
+	def get_all_stock(self) -> list[StockProduct]:
+		return self.__stock_product_list
+
+	def get_stock_by_id(self, stock_id: str) -> StockProduct | None:
+		for stock in self.__stock_product_list:
+			if stock.id == stock_id:
+				return stock
+		return None
+
+	def create_shelf(self, max_capacity: int) -> Shelf:
+		new_shelf = Shelf(max_capacity)
+
+		self.__shelf_list.append(new_shelf)
+		return new_shelf
+
+	def get_all_shelf(self) -> list[Shelf]:
+		return self.__shelf_list
+
+	def get_shelf_by_id(self, shelf_id: str) -> Shelf | None:
+		for shelf in self.__shelf_list:
+			if shelf.id == shelf_id:
+				return shelf
+		return None
+
+	def refill_shelf(self, shelf_id: str, product_item_list: list[ProductItem]):
+		shelf = self.get_shelf_by_id(shelf_id)
+		if not shelf:
+			raise ValueError("No shelf found")
+
+		shelf.refill_shelf(product_item_list)
 
 class Bill:
 	def __init__(self, payment_gateway: PaymentGateway, amount: float):
