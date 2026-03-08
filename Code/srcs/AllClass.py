@@ -17,11 +17,15 @@ class Customer:
 		self.__customer_id: str = customer_id
 		self.__name: str = name
 		self.__age: int = age
+		self.__cart: "Cart" = Cart(self)
 		self.__reservation_list: list[Reservation] = []
 		self.__bill_list: list[Bill] = []
 
 	def get_customer_id(self) -> str:
 		return self.__customer_id
+
+	def get_cart(self) -> "Cart":
+		return self.__cart
 
 	def get_reservation_list(self) -> list[Reservation]:
 		return self.__reservation_list
@@ -37,6 +41,7 @@ class Customer:
 
 	name = property(get_name)
 	age = property(get_age)
+	cart = property(get_cart)
 	reservation_list = property(fget=get_reservation_list)
 	id = property(fget=get_customer_id)
 
@@ -61,6 +66,31 @@ class Customer:
 class MemberStatusEnum(Enum):
 	ACTIVE = "Active"
 	INACTIVE = "Inactive"
+
+class Cart:
+	def __init__(self, owner: Customer):
+		self.__owner: Customer = owner
+		self.__products: list["CartItem"] = []
+
+	@property
+	def products(self):
+		return self.__products
+	
+class CartItem:
+	def __init__(self, product_item: "ProductItem"):
+		self.__is_buy: bool = False
+		self.__product_item: "ProductItem" = product_item
+
+	@property
+	def is_buy(self):
+		return self.__is_buy
+	@is_buy.setter
+	def is_buy(self, value: bool):
+		self.__is_buy = value
+
+	@property
+	def product_item(self):
+		return self.__product_item
 
 # Member Always get 15% discount
 class Member(Customer):
@@ -171,11 +201,29 @@ class ProductItemStatus(Enum):
 
 class ProductItem:
 	def __init__(self, product: Product, sell_price: float):
-		self.__serail_number: str = make_id("SE")
+		self.__serial_number: str = make_id("SE")
 		self.__product: Product = product
 		self.__status: ProductItemStatus = ProductItemStatus.STOCKED
 		self.__sell_price: float = sell_price
 		self.__condition: float = 1
+
+	def get_product(self) -> Product:
+		return self.__product
+	
+	product = property(get_product)
+
+	@property
+	def serial_number(self) -> str:
+		return self.__serial_number
+	@property
+	def status(self) -> ProductItemStatus:
+		return self.__status
+	@property
+	def sell_price(self) -> float:
+		return self.__sell_price
+	@property
+	def condition(self) -> float:
+		return self.__condition
 
 	def calculate_price(self) -> float:
 		return self.__sell_price * self.__condition
@@ -283,6 +331,11 @@ class StockProduct:
 		return self.__product
 
 	product = property(get_product)
+
+	def get_product_item_list(self) -> list[ProductItem]:
+		return self.__product_item_list
+
+	product_item_list = property(get_product_item_list)
 
 	def get_id(self) -> str:
 		return self.__id
@@ -637,6 +690,50 @@ class GameStore:
 
 		new_log = self.create_manager_logs(manager, ManagerAction.REFILL_STOCK, stock)
 		return stock
+
+	def add_product_to_customer(self, customer_id : str, product_id : str):
+		stock_product = None
+		for stock in self.get_all_stock():
+			if stock.product.id == product_id:
+				stock_product = stock
+		if stock_product is None:
+			raise Exception("No product with matching ID")
+		
+		if len(stock_product.product_item_list) == 0:
+			raise Exception("No product in stock")
+
+		customer_instance = self.get_customer_by_id(customer_id)
+		cart: Cart = customer_instance.cart
+
+		cart.products.append(CartItem(stock_product.product_item_list[0]))
+
+		return cart
+	
+	def view_cart(self, customer_id : str):
+		customer_instance = self.get_customer_by_id(customer_id)
+		cart: Cart = customer_instance.cart
+		return [item for item in cart.products]
+	
+	def remove_item_from_cart(self, customer_id: str, product_id: str):
+		customer_instance = self.get_customer_by_id(customer_id)
+		cart: Cart = customer_instance.cart
+		for cartItem in cart.products:
+			if cartItem.product_item.product.id == product_id:
+				cart.products.remove(cartItem)
+				break
+		return cart
+	
+	def view_product_detail(self, serial_number: str):
+		product = self.get_product_by_id(serial_number)
+		for stock in self.get_all_stock():
+			for product_item in stock.product_item_list:
+				if product_item.serial_number == serial_number:
+					return {
+						"status": product_item.status,
+						"sell_price": product_item.sell_price,
+						"condition": product_item.condition
+					}
+		return None
 
 class Bill:
 	def __init__(self, payment_gateway: PaymentGateway, amount: float):
