@@ -126,19 +126,34 @@ class Staff:
 
 	id = property(get_id)
 
+	def get_name(self) -> str:
+		return self.__name
+
+	name = property(get_name)
+
+	def get_age(self) -> int:
+		return self.__age
+
+	age = property(get_age)
+
 class Manager(Staff):
 	def __init__(self, id, name, age):
 		super().__init__(id, name, age)
 
 class Product:
 	def __init__(self, id: str, name: str):
-		self._id = id
-		self._name = name
+		self.__id = id
+		self.__name = name
 
 	def get_id(self) -> str:
-		return self._id
+		return self.__id
 
 	id = property(get_id)
+
+	def get_name(self) -> str:
+		return self.__name
+
+	name = property(get_name)
 
 class Game(Product):
 	def __init__(self, id: str, name: str, description: str, genre: str, support_platform: tuple[Machine]):
@@ -148,7 +163,7 @@ class Game(Product):
 		self.__support_platform: tuple[Machine] = support_platform
 
 	def play(self):
-		return f"Playing {self._name}"
+		return f"Playing {self.__name}"
 
 	def get_support_platform(self) -> tuple[Machine]:
 		return self.__support_platform
@@ -360,6 +375,11 @@ class Shelf:
 		self.__max_capacity: int = max_capacity
 		self.__product_on_shelf: list[ProductItem] = []
 
+	def get_id(self) -> str:
+		return self.__id
+
+	id = property(get_id)
+
 	def refill_shelf(self, product_item_list: list[ProductItem]):
 		if len(self.__product_on_shelf) + len(product_item_list) > self.__max_capacity:
 			raise ValueError("Exceed capacity")
@@ -471,7 +491,7 @@ class GameStore:
 		self.__staff_logs_list.append(new_log)
 		return new_log
 
-	def create_reservation(self, customer_id: str, room_id: str, start_time: datetime, end_time: datetime) -> str:
+	def create_reservation(self, customer_id: str, room_id: str, start_time: datetime, end_time: datetime) -> Reservation:
 		customer = self.get_customer_by_id(customer_id)
 		if customer is None:
 			raise ValueError("Invalid User")
@@ -488,7 +508,7 @@ class GameStore:
 			raise ValueError("Invalid Time Frame")
 		customer.add_reservation(reservation)
 		self.create_customer_logs(customer, CustomerAction.CREATE_RESERVATION)
-		return reservation.id
+		return reservation
 
 	def get_payment_gateway_by_name(self, payment_gateway_name: str) -> PaymentGateway | None:
 		for payment_gateway in self.__payment_gateway_list:
