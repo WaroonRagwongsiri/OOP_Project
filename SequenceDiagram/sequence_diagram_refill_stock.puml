@@ -28,7 +28,7 @@ alt Did find manager instance
 
     alt Did find StockProduct
         loop Create new product instances and add to StockProduct's ProductItem list
-            GameStore -> ProductItem : Create instance
+            GameStore -> ProductItem : create_product_item(Product)
             activate ProductItem
             ProductItem -> GameStore : Return instance
             deactivate ProductItem
@@ -43,9 +43,9 @@ alt Did find manager instance
             deactivate StockProduct
         end
 
-        GameStore -> Log : Create log
+        GameStore -> Log : create_log(manager_instance, staff_action)
         activate Log
-        Log -> GameStore : Store log
+        Log -> GameStore : Return instance for storing
         deactivate Log
 
         GameStore -> ManagerA : Success

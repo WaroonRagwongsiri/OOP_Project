@@ -14,6 +14,7 @@ def connection():
 def customer_list():
     return store.customers
 
+
 @app.post("/create_customer")
 def create_customer(name : str):
     return store.create_customer(name)
@@ -25,6 +26,8 @@ def add_product_to_cart(customer_id : str, product_id : str):
 @app.post("/select_product")
 def select_product(customer_id : str, product_id : str):
     return store.search_customer(customer_id).select_product(product_id)
+
+
 
 @app.post("/create_customer")
 def create_customer(id : str):
