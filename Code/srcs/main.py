@@ -1,19 +1,23 @@
 from datetime import datetime
-from fastapi import FastAPI, HTTPException
+
+from mcp.server.fastmcp import FastMCP
+
 from AllClass import *
-import uvicorn
 
-app = FastAPI()
-
+mcp = FastMCP("OOP Project")
 store = GameStore("GameStore Demo")
 
+def main():
+	mcp.run(transport="stdio")
 
-@app.get("/")
+if __name__ == "__main__":
+	main()
+
+@mcp.tool()
 def test_connection():
-	return {"message": "Hello World"}
+	return {"service": "GameStore API"}
 
-
-@app.post("/customers")
+@mcp.tool()
 def create_customer(name: str, age: int):
 	try:
 		customer = store.create_customer(name, age)
@@ -23,10 +27,10 @@ def create_customer(name: str, age: int):
 			"age": customer.age
 		}
 	except Exception as e:
-		raise HTTPException(status_code=400, detail=str(e))
+		return f"Error: {e.__str__()}"
 
 
-@app.get("/customers")
+@mcp.tool()
 def get_all_customers():
 	customers = store.get_all_customer()
 	return [
@@ -39,7 +43,7 @@ def get_all_customers():
 	]
 
 
-@app.post("/rooms")
+@mcp.tool()
 def create_room(max_customer: int, rate_price: float):
 	try:
 		room = store.create_room(max_customer, rate_price)
@@ -48,10 +52,10 @@ def create_room(max_customer: int, rate_price: float):
 			"status": room.status.value
 		}
 	except Exception as e:
-		raise HTTPException(status_code=400, detail=str(e))
+		return f"Error: {e.__str__()}"
 
 
-@app.get("/rooms/available")
+@mcp.tool()
 def get_available_rooms():
 	rooms = store.get_available_room()
 	return [
@@ -63,7 +67,7 @@ def get_available_rooms():
 	]
 
 
-@app.post("/reservations")
+@mcp.tool()
 def create_reservation(
 	customer_id: str,
 	room_id: str,
@@ -79,12 +83,12 @@ def create_reservation(
 			"end_time": reservation.end_time
 		}
 	except ValueError as e:
-		raise HTTPException(status_code=400, detail=str(e))
+		return f"Error: {e.__str__()}"
 	except Exception as e:
-		raise HTTPException(status_code=500, detail=str(e))
+		return f"Error: {e.__str__()}"
 
 
-@app.patch("/reservations/cancel")
+@mcp.tool()
 def cancel_reservation(customer_id: str, reservation_id: str):
 	try:
 		reservation = store.cancel_reservation(customer_id, reservation_id)
@@ -94,12 +98,12 @@ def cancel_reservation(customer_id: str, reservation_id: str):
 			"status": reservation.status.value
 		}
 	except ValueError as e:
-		raise HTTPException(status_code=400, detail=str(e))
+		return f"Error: {e.__str__()}"
 	except Exception as e:
-		raise HTTPException(status_code=500, detail=str(e))
+		return f"Error: {e.__str__()}"
 
 
-@app.post("/subscribe")
+@mcp.tool()
 def subscribe(
 	customer_id: str,
 	payment_gateway_name: str,
@@ -113,12 +117,12 @@ def subscribe(
 			"status": member.status.value
 		}
 	except ValueError as e:
-		raise HTTPException(status_code=400, detail=str(e))
+		return f"Error: {e.__str__()}"
 	except Exception as e:
-		raise HTTPException(status_code=500, detail=str(e))
+		return f"Error: {e.__str__()}"
 
 
-@app.patch("/members/unsubscribe")
+@mcp.tool()
 def unsubscribe(member_id: str):
 	try:
 		result = store.unsubscribe(member_id)
@@ -126,12 +130,12 @@ def unsubscribe(member_id: str):
 			"message": result
 		}
 	except ValueError as e:
-		raise HTTPException(status_code=400, detail=str(e))
+		return f"Error: {e.__str__()}"
 	except Exception as e:
-		raise HTTPException(status_code=500, detail=str(e))
+		return f"Error: {e.__str__()}"
 
 
-@app.post("/managers")
+@mcp.tool()
 def create_manager(name: str, age: int):
 	try:
 		manager = store.create_manager(name, age)
@@ -141,10 +145,10 @@ def create_manager(name: str, age: int):
 			"age": manager.age
 		}
 	except Exception as e:
-		raise HTTPException(status_code=400, detail=str(e))
+		return f"Error: {e.__str__()}"
 
 
-@app.post("/games")
+@mcp.tool()
 def create_game(
 	manager_id: str,
 	name: str,
@@ -159,12 +163,12 @@ def create_game(
 			"name": game.name
 		}
 	except ValueError as e:
-		raise HTTPException(status_code=400, detail=str(e))
+		return f"Error: {e.__str__()}"
 	except Exception as e:
-		raise HTTPException(status_code=500, detail=str(e))
+		return f"Error: {e.__str__()}"
 
 
-@app.post("/machines")
+@mcp.tool()
 def create_machine(
 	manager_id: str,
 	name: str,
@@ -177,12 +181,12 @@ def create_machine(
 			"name": machine.name
 		}
 	except ValueError as e:
-		raise HTTPException(status_code=400, detail=str(e))
+		return f"Error: {e.__str__()}"
 	except Exception as e:
-		raise HTTPException(status_code=500, detail=str(e))
+		return f"Error: {e.__str__()}"
 
 
-@app.get("/stocks")
+@mcp.tool()
 def get_all_stocks():
 	try:
 		stocks = store.get_all_stock()
@@ -195,10 +199,10 @@ def get_all_stocks():
 			for stock in stocks
 		]
 	except Exception as e:
-		raise HTTPException(status_code=500, detail=str(e))
+		return f"Error: {e.__str__()}"
 
 
-@app.patch("/stocks/refill")
+@mcp.tool()
 def refill_stock(
 	manager_id: str,
 	stock_id: str,
@@ -214,12 +218,12 @@ def refill_stock(
 			"product_name": stock.product.name
 		}
 	except ValueError as e:
-		raise HTTPException(status_code=400, detail=str(e))
+		return f"Error: {e.__str__()}"
 	except Exception as e:
-		raise HTTPException(status_code=500, detail=str(e))
+		return f"Error: {e.__str__()}"
 
 
-@app.post("/shelves")
+@mcp.tool()
 def create_shelf(max_capacity: int):
 	try:
 		shelf = store.create_shelf(max_capacity)
@@ -227,12 +231,12 @@ def create_shelf(max_capacity: int):
 			"id": shelf.id
 		}
 	except ValueError as e:
-		raise HTTPException(status_code=400, detail=str(e))
+		return f"Error: {e.__str__()}"
 	except Exception as e:
-		raise HTTPException(status_code=500, detail=str(e))
+		return f"Error: {e.__str__()}"
 
 
-@app.get("/shelves")
+@mcp.tool()
 def get_all_shelves():
 	try:
 		shelves = store.get_all_shelf()
@@ -243,10 +247,10 @@ def get_all_shelves():
 			for shelf in shelves
 		]
 	except Exception as e:
-		raise HTTPException(status_code=500, detail=str(e))
+		return f"Error: {e.__str__()}"
 
 
-@app.patch("/shelves/refill")
+@mcp.tool()
 def refill_shelf(
 	staff_id: str,
 	shelf_id: str,
@@ -260,10 +264,6 @@ def refill_shelf(
 			"shelf_id": shelf.id
 		}
 	except ValueError as e:
-		raise HTTPException(status_code=400, detail=str(e))
+		return f"Error: {e.__str__()}"
 	except Exception as e:
-		raise HTTPException(status_code=500, detail=str(e))
-
-
-if __name__ == "__main__":
-	uvicorn.run("main:app", host="127.0.0.1", port=8000, reload=True)
+		return f"Error: {e.__str__()}"
