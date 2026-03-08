@@ -22,7 +22,6 @@ rectangle "Store" {
 	usecase "ViewProductDetail" as UC_ViewProductDetail
 	usecase "Purchase" as UC_Purchase
 	usecase "UseCoupon" as UC_UseCoupon
-	usecase "ConfirmOrder" as UC_ConfirmOrder
 	usecase "Subscribe" as UC_Subscribe
 
 	'Payment'
@@ -31,25 +30,13 @@ rectangle "Store" {
 	usecase "PayViaQR" as UC_PayViaQR
 
 	'Member'
-	usecase "ApplyMemberBenefit" as UC_ApplyMemberBenefit
-	usecase "VerifyMember" as UC_VerifyMember
+	usecase "ApplyDiscountBenefit" as UC_ApplyDiscountBenefit
 	usecase "Unsubscribe" as UC_Unsubscribe
-
-	'Manufacturer'
-	usecase "PublishProduct" as UC_PublishProduct
-	usecase "ViewProductStock" as UC_ViewProductStock
-	usecase "ViewProductDetail" as UC_ViewProductDetail
-	usecase "RemoveProduct" as UC_RemoveProduct
-	usecase "FileAppeal" as UC_FileAppeal
-	usecase "ViewOrder" as UC_ViewOrder
-	usecase "ApproveOrder" as UC_ApproveOrder
-	usecase "RejectOrder" as UC_RejectOrder
-	usecase "CreateProduct" as UC_CreateProduct
-	usecase "RefillStock" as UC_RefillStock
 
 	'Staff'
 	usecase "Checkout" as UC_Checkout
 	usecase "ApplyDiscount" as UC_ApplyDiscount
+	usecase "CreateCustomer" as UC_CreateCustomer
 	usecase "CreateMember" as UC_CreateMember
 
 	'Manager'
@@ -58,27 +45,28 @@ rectangle "Store" {
 	usecase "ViewProductStock" as UC_ViewProductStock
 	usecase "RefillShelf" as UC_RefillShelf
 	usecase "CreateCoupon" as UC_CreateCoupon
-	usecase "OrderProduct" as UC_OrderProduct
+	usecase "RefillStock" as UC_RefillStock
 	usecase "ViewStock" as UC_ViewStock
 
-	'Room Booking'
+	'Room Reservation'
 	usecase "SearchAvailableRoom" as UC_SearchAvailableRoom
-	usecase "CreateBooking" as UC_CreateBooking
-	usecase "ViewBooking" as UC_ViewBooking
-	usecase "CancelBooking" as UC_CancelBooking
+	usecase "CreateReservation" as UC_CreateReservation
+	usecase "ViewReservation" as UC_ViewReservation
+	usecase "CancelReservation" as UC_CancelReservation
 	usecase "CheckIn" as UC_CheckIn
 	usecase "ExtendTime" as UC_ExtendTime
 	usecase "UpgradeRoom" as UC_UpgradeRoom
 	usecase "CheckoutRoom" as UC_CheckoutRoom
 	usecase "Refund" as UC_Refund
+	usecase "RequestGameForRoom" as UC_RequestGameForRoom
 }
 
 'Customer'
 A_Customer --> UC_ViewCart
 A_Customer --> UC_ViewStore
 A_Customer --> UC_Purchase
-A_Customer --> UC_ConfirmOrder
 A_Customer --> UC_Subscribe
+A_Customer --> UC_RequestGameForRoom
 
 UC_ViewStore <.. UC_AddProductToCart : <<extend>>
 UC_ViewStore <.. UC_ViewProductDetail : <<extend>>
@@ -95,25 +83,17 @@ UC_StartPayment <|-- UC_PayViaCard
 UC_StartPayment <|-- UC_PayViaQR
 
 'Member'
-A_Member --> UC_ApplyMemberBenefit
+A_Member --> UC_ApplyDiscountBenefit
 A_Member --> UC_Unsubscribe
-
-UC_ApplyMemberBenefit ..> UC_VerifyMember : <<include>>
-
-UC_ViewOrder <.. UC_ApproveOrder : <<extend>>
-UC_ViewOrder <.. UC_RejectOrder : <<extend>>
-
-UC_ViewProductStock <.. UC_RemoveProduct : <<extend>>
-UC_ViewProductStock <.. UC_ViewProductDetail : <<extend>>
-UC_ViewProductStock <.. UC_FileAppeal : <<extend>>
-UC_ViewProductStock <.. UC_RefillStock : <<extend>>
 
 'Staff'
 A_Staff --> UC_Checkout
 A_Staff --> UC_ViewProductStock
+A_Staff --> UC_CreateCustomer
 A_Staff --> UC_CreateMember
 A_Staff --> UC_CheckIn
 A_Staff --> UC_CheckoutRoom
+A_Staff --> UC_ViewStock
 
 UC_CheckoutRoom <.. UC_Refund : <<extend>>
 UC_CheckoutRoom <.. UC_ExtendTime : <<extend>>
@@ -127,16 +107,15 @@ A_Manager --> UC_CreateCoupon
 A_Manager --> UC_ViewProductStock
 A_Manager --> UC_CreateGame
 A_Manager --> UC_CreateMachine
-A_Manager --> UC_OrderProduct
+A_Manager --> UC_RefillStock
 
-'Customer / Member booking
+'Customer / Member Reservation
 A_Customer --> UC_SearchAvailableRoom
-A_Customer --> UC_CreateBooking
-A_Customer --> UC_ViewBooking
-A_Customer --> UC_CancelBooking
+A_Customer --> UC_CreateReservation
+A_Customer --> UC_ViewReservation
+A_Customer --> UC_CancelReservation
 
-UC_CreateBooking ..> UC_VerifyMember : <<include>>
-UC_CreateBooking ..> UC_StartPayment : <<include>>
-UC_CreateBooking <.. UC_UseCoupon : <<exclude>>
+UC_CreateReservation ..> UC_StartPayment : <<include>>
+UC_CreateReservation <.. UC_UseCoupon : <<exclude>>
 
 @enduml

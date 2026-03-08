@@ -16,19 +16,23 @@ class GameStore
 	- staff_list: List<Staff>
 
 	- payment_gateway_list: List<PaymentGateway>
-	- product_list: List<Product>
 
-	- room_Logs_list: List<RoomLogs>
-	- product_Logs_list: List<ProductLogs>
+	- staff_logs_list: List<StaffLogs>
+	- manager_logs_list: List<ManagerLogs>
+	- customer_logs_list: List<CustomerLogs>
+	- staff_logs_list: List<StaffLogs>
+	- manager_logs_list: List<ManagerLogs>
+	- customer_logs_list: List<CustomerLogs>
 
-	- bill: Bill
+	- bill: List<Bill>
+	- bill: List<Bill>
 
 	+ make_reservation(customer: Customer, room: Room)
 	+ create_customer(name: str)
-	+ create_member_plus(customer: Customer)
+	+ subscribe(customer: Customer)
+	+ subscribe(customer: Customer)
 	+ create_Logs()
 	+ start_payment()
-	+ apply_discount()
 }
 
 ' Shelf
@@ -51,9 +55,8 @@ class StockProduct
 
 abstract class Product
 {
-	- name: String
 	- id: String
-	- sell_price: int
+	- name: String
 }
 
 class ProductItem
@@ -62,6 +65,7 @@ class ProductItem
 	- serial_number: String
 	- status: String
 	' Waiting_For_Approval, Selling, For_Rental, Unavailable, Removed
+	- sell_price: int
 	- condition: String
 	' New, Second_Hand, Refurbish
 }
@@ -69,12 +73,11 @@ class ProductItem
 ' Game
 abstract class Game
 {
+	- id: String
 	- name: String
 	- description: String
 	- genre: List<String>
 	- supported_platform: List<String>
-	- status: String
-	' Waiting_For_Approval, Selling, For_Rental, Unavailable, Under_Maintainace, Removed
 
 	+ play()
 }
@@ -101,6 +104,7 @@ class Room
 	- max_customer: int
 	- serivce_price: int
 	- room_type: RoomTypeEnum
+	- customer_list: list[Customer]
 
 	- status: String
 	' Available, Reserved, Being-Use, Under-Maintainace
@@ -144,8 +148,8 @@ class Reservation
 ' Machine
 abstract class Machine
 {
-	- status: String
-	' Waiting_For_Approval, Selling, For_Rental, Unavailable, Under_Maintainace, Removed
+	- id: String
+	- name: String
 
 	+ run_game()
 }
@@ -169,7 +173,7 @@ class Switch
 	+ run_game()
 }
 
-class GameBoi
+class GameBoy
 {
 	+ run_game()
 }
@@ -181,14 +185,14 @@ class Customer
 	- id: String
 
 	- coupon_list: List<Coupon>
-	- payment_method_list: List<PaymentMethod>
+	- payment_gateway_list: List<PaymentGateway>
 
 	- cart: Cart
 	- reservation: Reservation
 	- service_history: List<Logs>
 	- bought_product: List<ProductItem>
 
-	- bill: Bill
+	- bill: List<Bill>
 
 	+ add_to_cart(productId: str)
 	+ remove_from_cart(productId: str)
@@ -199,20 +203,17 @@ class Customer
 	+ reserve_room(roomId: str)
 	+ check_in()
 	+ check_out()
-
-	+ discount()
+	+ apply_discount()
 }
 
 class Member
 {
 	- member_id: Str
 	- member_expire_date: Datetime
-	- member_stamp: MemberStamp
 	- member_discount: float
 	' 5% or something
 
 	+ unsubscribe()
-	+ stamp(staffId: str)
 	+ discount()
 }
 
@@ -229,8 +230,14 @@ class Staff
 
 class Manager
 {
-	+ approve_product_proposal(product : Product)
-	+ order_product(store: GameStore, product: Product, quantity: int)
+	+ create_game_disc()
+	+ create_game_catridge()
+	+ create_game_key_card()
+	+ create_pc()
+	+ create_switch()
+	+ create_playstation()
+	+ refill_stock()
+	+ create_coupon()
 }
 
 ' Cart
@@ -239,6 +246,7 @@ class Cart
 	- owner: Customer
 	- cart_item_list: list<CartItem>
 
+	+ select_buy_item(product: ProductItem)
 	+ add_item(product: ProductItem)
 	+ remove_item(product: ProductItem)
 }
@@ -249,29 +257,14 @@ class CartItem
 	- productItem: ProductItem
 }
 
-' Discount
-abstract class Discount
-{
-	- owner: Customer
-	- discount: int
-	- expire_date: Datetime
-}
-
-class MemberStamp
-{
-	- points: int
-	- max_point: int
-
-	+ add_point(amount: )
-}
-
 class Coupon
 {
 	- minimum_spending: int
+	- expire_date: Datetime
 }
 
 ' Payment Method
-abstract class PaymentMethod
+abstract class PaymentGateway
 {
 	- id: String
 	- status: String
@@ -318,6 +311,10 @@ Enum CustomerLogAction
 	- RESERVE
 	- CANCEL_RESERVE
 	- REFUND
+	- CHECK_IN
+	- CHECK_OUT
+	- SUBSCRIBE
+	- UNSUBSCRIBE
 }
 
 class StaffLog
@@ -328,8 +325,8 @@ class StaffLog
 
 Enum StaffLogAction
 {
-	- CHECK_IN
-	- CHECK_OUT
+	- CHECK_IN_CUSTOMER
+	- CHECK_OUT_CUSTOMER
 	- REFILL_SHELF
 }
 
@@ -341,9 +338,9 @@ class ManagerLog
 
 Enum ManagerLogAction
 {
-	- APPROVE_PRODUCT
-	- DISAPPROVE_PRODUCT
-	- ORDER_PRODUCT
+	- CREATE_GAME
+	- CREATE_MACHINE
+	- REFILL_STOCK
 }
 
 class Bill
@@ -352,6 +349,8 @@ class Bill
 	- timestamp: Datetime
 	- payment_gateway: PaymentGateway
 	- amount: float
+	- coupon: Coupon
+	- is_used_to_create_coupon: bool
 }
 
 class ProductBill
@@ -371,7 +370,7 @@ GameStore "1" o-- "1..*" Room
 GameStore "1" o-- "0..*" Customer
 GameStore "1" *-- "0..*" Member
 GameStore "1" o-- "1..*" Staff
-GameStore "1" o-- "1..*" PaymentMethod
+GameStore "1" o-- "1..*" PaymentGateway
 GameStore "1" o-- "0..*" Log
 GameStore "1" o-- "0..*" Bill
 
@@ -396,7 +395,7 @@ Room o-- ProductItem
 
 Machine <|-- PC
 Machine <|-- Switch
-Machine <|-- GameBoi
+Machine <|-- GameBoy
 Machine <|-- Playstation
 
 Customer "0..*" *-- Coupon
@@ -405,21 +404,14 @@ Customer o-- Reservation
 Customer o-- Bill
 Customer <|-- Member
 
-Member --> "1" MemberStamp
-
 Staff <|-- Manager
 
 Cart o-- CartItem
 
 CartItem --> ProductItem
 
-Discount <|-- MemberStamp
-Discount <|-- Coupon
-Discount --> "1" Customer
-Discount "1" <-- Logs
-
-PaymentMethod <|-- QrCode
-PaymentMethod <|-- Card
+PaymentGateway <|-- QrCode
+PaymentGateway <|-- Card
 
 Log <|-- CustomerLog
 Log <|-- StaffLog
@@ -433,9 +425,11 @@ StaffLogAction <|-- ManagerLogAction
 
 Reservation --> Room
 
-
-Bill o-- PaymentGateway
+Bill --> PaymentGateway
 Bill <|-- ProductBill
 Bill <|-- RoomBill
+
+RoomBill --> Reservation
+ProductBill o-- ProductItem
 
 @enduml

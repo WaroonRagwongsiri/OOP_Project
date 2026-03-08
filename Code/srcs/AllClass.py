@@ -1,0 +1,689 @@
+from __future__ import annotations
+
+from datetime import datetime
+from enum import Enum
+import uuid
+
+from abc import ABC, abstractmethod
+
+
+def make_id(prefix: str) -> str:
+	# Example: C-550e8400-e29b-41d4-a716-446655440000
+	return f"{prefix}-{uuid.uuid4()}"
+
+
+class Customer:
+	def __init__(self, customer_id: str, name: str, age: int):
+		self.__customer_id: str = customer_id
+		self.__name: str = name
+		self.__age: int = age
+		self.__reservation_list: list[Reservation] = []
+		self.__bill_list: list[Bill] = []
+
+	def get_customer_id(self) -> str:
+		return self.__customer_id
+
+	def get_reservation_list(self) -> list[Reservation]:
+		return self.__reservation_list
+
+	def add_reservation(self, reservation: "Reservation"):
+		self.__reservation_list.append(reservation)
+
+	def get_name(self) -> str:
+		return self.__name
+
+	def get_age(self) -> int:
+		return self.__age
+
+	name = property(get_name)
+	age = property(get_age)
+	reservation_list = property(fget=get_reservation_list)
+	id = property(fget=get_customer_id)
+
+	def check_time_availability(self, start_time: datetime, end_time: datetime) -> bool:
+		for reservation in self.__reservation_list:
+			if start_time < reservation.end_time and end_time > reservation.start_time and reservation.status != ReservationStatusEnum.CANCEL:
+				return False
+		return True
+
+	def get_reservation_from_id(self, reservation_id: str) -> Reservation:
+		for reservation in self.__reservation_list:
+			if reservation.id == reservation_id:
+				return reservation
+		return None
+
+	def add_bill(self, bill: Bill):
+		self.__bill_list.append(bill)
+
+	def apply_discount_benefit(self) -> float:
+		return 1
+
+class MemberStatusEnum(Enum):
+	ACTIVE = "Active"
+	INACTIVE = "Inactive"
+
+# Member Always get 15% discount
+class Member(Customer):
+	def __init__(self, member_id: str, customer_id: str, name: str, age: int):
+		super().__init__(customer_id, name, age)
+		self.__member_id: str = member_id
+		self.__expire_date: datetime = datetime.today()
+		self.__status: MemberStatusEnum = MemberStatusEnum.ACTIVE
+
+	def get_member_id(self) -> str:
+		return self.__member_id
+
+	def get_status(self) -> MemberStatusEnum:
+		return self.__status
+
+	def set_status(self, status: MemberStatusEnum):
+		self.__status = status
+
+	member_id = property(get_member_id)
+	status = property(get_status, set_status)
+
+	def apply_discount_benefit(self) -> float:
+		return 0.85
+
+class Staff:
+	def __init__(self, id: str, name: str, age: int):
+		self.__id: str = id
+		self.__name: str = name
+		self.__age: int = age
+
+	def get_id(self) -> str:
+		return self.__id
+
+	id = property(get_id)
+
+class Manager(Staff):
+	def __init__(self, id, name, age):
+		super().__init__(id, name, age)
+
+class Product:
+	def __init__(self, id: str, name: str):
+		self._id = id
+		self._name = name
+
+	def get_id(self) -> str:
+		return self._id
+
+	id = property(get_id)
+
+class Game(Product):
+	def __init__(self, id: str, name: str, description: str, genre: str, support_platform: tuple[Machine]):
+		super().__init__(id, name)
+		self.__description: str = description
+		self.__genre: str = genre
+		self.__support_platform: tuple[Machine] = support_platform
+
+	def play(self):
+		return f"Playing {self._name}"
+
+	def get_support_platform(self) -> tuple[Machine]:
+		return self.__support_platform
+
+	support_platform = property(get_support_platform)
+
+class GameDisc(Game):
+	def __init__(self, id, name, description, genre):
+		super().__init__(id, name, description, genre, (PC, Playstation))
+
+class GameCartridge(Game):
+	def __init__(self, id, name, description, genre):
+		super().__init__(id, name, description, genre, (GameBoy))
+
+class GameKeyCard(Game):
+	def __init__(self, id, name, description, genre):
+		super().__init__(id, name, description, genre, (Switch))
+
+class Machine(Product):
+	def __init__(self, id, name):
+		super().__init__(id, name)
+
+	def run_game(self, game: Game):
+		if not isinstance(self, game.support_platform):
+			raise ValueError("This machine cannot play this game")
+		return "Running Game"
+
+class PC(Machine):
+	def __init__(self, id):
+		super().__init__(id, "PC")
+
+class Playstation(Machine):
+	def __init__(self, id):
+		super().__init__(id, "Playstation")
+
+class Switch(Machine):
+	def __init__(self, id):
+		super().__init__(id, "Switch")
+
+class GameBoy(Machine):
+	def __init__(self, id):
+		super().__init__(id, "GameBoy")
+
+# Stockerd, Selling, Solded, Renting
+class ProductItemStatus(Enum):
+	STOCKED = "Stocked"
+	SELLING = "Selling"
+	SOLDED = "Solded"
+	RENTING = "Renting"
+
+class ProductItem:
+	def __init__(self, product: Product, sell_price: float):
+		self.__serail_number: str = make_id("SE")
+		self.__product: Product = product
+		self.__status: ProductItemStatus = ProductItemStatus.STOCKED
+		self.__sell_price: float = sell_price
+		self.__condition: float = 1
+
+	def calculate_price(self) -> float:
+		return self.__sell_price * self.__condition
+
+class RoomStatusEnum(Enum):
+	AVAILABLE = "Available"
+	BEING_USE = "BeingUse"
+	RESERVED = "Reserved"
+	UNDER_MAINTAINACE = "UnderMaintainace"
+
+class RoomTypeEnum(Enum):
+	NORMAL = "Normal"
+	VIP = "VIP"
+
+class Room:
+	def __init__(self, room_id: str, max_customer: int, rate_price: float):
+		self.__room_id: str = room_id
+		self.__max_customer: int = max_customer
+		self.__rate_price: float = rate_price
+		self.__room_type: RoomTypeEnum = RoomTypeEnum.NORMAL
+		self.__status: RoomStatusEnum = RoomStatusEnum.AVAILABLE
+		self.__customer_list: list[Customer] = []
+		self.__reservation_list: list[Reservation] = []
+
+	def get_room_id(self) -> str:
+		return self.__room_id
+
+	id = property(fget=get_room_id)
+
+	def get_status(self) -> RoomStatusEnum:
+		return self.__status
+
+	status = property(fget=get_status)
+
+	def get_rate_price(self) -> float:
+		return self.__rate_price
+
+	rate_price = property(get_rate_price)
+
+	def create_reservation(self, reservation_id: str, customer: Customer, start_time: datetime, end_time: datetime) -> "Reservation":
+		if self.check_time_availability(start_time, end_time) == False:
+			return None
+		new_reservation = Reservation(reservation_id, customer, self, start_time, end_time)
+		self.__reservation_list.append(new_reservation)
+		return new_reservation
+
+	def check_time_availability(self, start_time: datetime, end_time: datetime) -> bool:
+		for reservation in self.__reservation_list:
+			if start_time < reservation.end_time and end_time > reservation.start_time and reservation.status != ReservationStatusEnum.CANCEL:
+				return False
+		return True
+
+
+class ReservationStatusEnum(Enum):
+	PENDING = "Pending"
+	SUCCESS = "Success"
+	CANCEL = "Cancel"
+	CHECK_IN = "CheckIn"
+	CHECK_OUT = "CheckOut"
+
+
+class Reservation:
+	def __init__(self, reservation_id: str, customer: Customer, room: Room, start_time: datetime, end_time: datetime):
+		self.__id: str = reservation_id
+		self.__customer: Customer = customer
+		self.__room: Room = room
+		self.__status: ReservationStatusEnum = ReservationStatusEnum.PENDING
+		self.__start_time: datetime = start_time
+		self.__end_time: datetime = end_time
+
+	def get_status(self) -> ReservationStatusEnum:
+		return self.__status
+
+	def set_status(self, status: ReservationStatusEnum):
+		self.__status = status
+
+	status = property(fget=get_status, fset=set_status)
+
+	def get_id(self) -> str:
+		return self.__id
+
+	id = property(fget=get_id)
+
+	def get_start_time(self) -> datetime:
+		return self.__start_time
+
+	def get_end_time(self) -> datetime:
+		return self.__end_time
+	
+	start_time = property(get_start_time)
+	end_time = property(get_end_time)
+
+	def calculate_price(self) -> float:
+		duration = self.__end_time - self.__start_time
+		hours = duration.total_seconds() / 3600
+		return hours * self.__room.rate_price
+
+class StockProduct:
+	def __init__(self, product: Product, product_item_list: list[ProductItem] = []):
+		self.__id: str = make_id('ST')
+		self.__product: Product = product
+		self.__product_item_list: list[ProductItem] = product_item_list
+
+	def get_product(self) -> Product:
+		return self.__product
+
+	product = property(get_product)
+
+	def get_id(self) -> str:
+		return self.__id
+
+	id = property(get_id)
+
+	def refill_stock(self, quantity: int, sell_price: float):
+		for i in range(quantity):
+			new_product_item = ProductItem(self.__product, sell_price)
+			self.__product_item_list.append(new_product_item)
+
+	def take_product_items(self, quantity: int) -> list[ProductItem]:
+		if quantity > len(self.__product_item_list):
+			raise ValueError("Not enough product in stock")
+
+		transfer = self.__product_item_list[:quantity]
+		for item in transfer:
+			self.__product_item_list.remove(transfer)
+
+		return transfer
+
+class Shelf:
+	def __init__(self, max_capacity: int):
+		self.__id: str = make_id('SH')
+		self.__max_capacity: int = max_capacity
+		self.__product_on_shelf: list[ProductItem] = []
+
+	def refill_shelf(self, product_item_list: list[ProductItem]):
+		if len(self.__product_on_shelf) + len(product_item_list) > self.__max_capacity:
+			raise ValueError("Exceed capacity")
+		self.__product_on_shelf.extend(product_item_list)
+
+class Logs:
+	def __init__(self, log_id: str):
+		self.__log_id: str = log_id
+
+class CustomerAction(Enum):
+	CREATE_RESERVATION = "Create Reservation"
+	SUBSCRIBE = "Subscribe"
+	UNSUBSCRIBE = "Unsubscribe"
+	CANCEL_RESERVATION = "Cancel Reservation"
+
+class CustomerLogs(Logs):
+	def __init__(self, log_id: str, customer: Customer, action: CustomerAction):
+		super().__init__(log_id)
+		self.__customer: Customer = customer
+		self.__action: CustomerAction = action
+
+class StaffAction(Enum):
+	REFILL_SHELF = "RefillShelf"
+
+class StaffLogs(Logs):
+	def __init__(self, log_id: str, staff: Staff, action: StaffAction):
+		super().__init__(log_id)
+		self.__staff: Staff = staff
+		self.__action: StaffAction = action
+
+class ManagerAction(Enum):
+	CREATE_GAME = "Create Game"
+	CREATE_MACHINE = "Create Machine"
+	REFILL_STOCK = "Refill Stock"
+
+class ManagerLogs(StaffLogs):
+	def __init__(self, log_id: str, manager: str, action: ManagerAction, target = None):
+		super().__init__(log_id, manager, action)
+		self.__target = target
+
+class GameStore:
+	def __init__(self, store_name: str):
+		self.__store_id: str = make_id("S")
+		self.__store_name: str = store_name
+
+		self.__customer_list: list[Customer] = []
+		self.__member_list: list[Member] = []
+		self.__room_list: list[Room] = []
+		self.__staff_list: list[Staff] = []
+		self.__stock_product_list: list[StockProduct] = []
+		self.__shelf_list: list[Shelf] = []
+
+		self.__customer_logs_list: list[CustomerLogs] = []
+		self.__staff_logs_list: list[StaffLogs] = []
+		self.__bill_list: list[Bill] = []
+
+		self.__payment_gateway_list: list[PaymentGateway] = [QRCode()]
+
+	def create_customer(self, name: str, age: int) -> Customer:
+		new_customer = Customer(make_id("C"), name, age)
+		self.__customer_list.append(new_customer)
+		return new_customer
+
+	def create_member(self, customer: Customer) -> Member:
+		new_member = Member(make_id('ME'), customer.id, customer.name, customer.age)
+		self.__member_list.append(new_member)
+		return new_member
+	
+	def create_manager(self, name: str, age: int) -> Manager:
+		new_manager = Manager(make_id('MA'), name, age)
+		self.__staff_list.append(new_manager)
+		return new_manager
+
+	def create_room(self, max_customer: int, rate_price: float) -> Room:
+		new_room = Room(make_id("RO"), max_customer, rate_price)
+		self.__room_list.append(new_room)
+		return new_room
+
+	def get_available_room(self) -> list[Room]:
+		return [room for room in self.__room_list if room.status == RoomStatusEnum.AVAILABLE]
+
+	def get_all_customer(self) -> list[Customer]:
+		return self.__customer_list
+
+	def get_customer_by_id(self, customer_id: str) -> Customer | None:
+		for customer in self.__customer_list:
+			if customer.id == customer_id:
+				return customer
+		return None
+
+	def get_room_by_id(self, room_id: str) -> Room | None:
+		for room in self.__room_list:
+			if room.id == room_id:
+				return room
+		return None
+
+	def create_customer_logs(self, customer: Customer, action: CustomerAction, target=None) -> CustomerLogs:
+		new_log = CustomerLogs(make_id(f"LC-{action}"), customer, action)
+		self.__customer_list.append(new_log)
+		return new_log
+
+	def create_staff_logs(self, staff: Staff, action: StaffAction, target=None) -> StaffAction:
+		new_log = StaffLogs(make_id('LS')-{action}, staff, action)
+		self.__staff_logs_list.append(new_log)
+		return new_log
+
+	def create_manager_logs(self, manager: Manager, action: ManagerAction, target=None) -> ManagerLogs:
+		new_log = ManagerLogs(make_id(f'LM-{action}'), manager, action, target)
+		self.__staff_logs_list.append(new_log)
+		return new_log
+
+	def create_reservation(self, customer_id: str, room_id: str, start_time: datetime, end_time: datetime) -> str:
+		customer = self.get_customer_by_id(customer_id)
+		if customer is None:
+			raise ValueError("Invalid User")
+		
+		if customer.check_time_availability(start_time, end_time) == False:
+			raise ValueError("Invalid Time Frame")
+
+		room = self.get_room_by_id(room_id)
+		if room is None:
+			raise ValueError("No Room this ID")
+
+		reservation = room.create_reservation(make_id("RE"), customer, start_time, end_time)
+		if reservation is None:
+			raise ValueError("Invalid Time Frame")
+		customer.add_reservation(reservation)
+		self.create_customer_logs(customer, CustomerAction.CREATE_RESERVATION)
+		return reservation.id
+
+	def get_payment_gateway_by_name(self, payment_gateway_name: str) -> PaymentGateway | None:
+		for payment_gateway in self.__payment_gateway_list:
+			if payment_gateway.name == payment_gateway_name:
+				return payment_gateway
+		return None
+
+	def create_bill(self, payment_gateway: PaymentGateway, amount: float) -> Bill:
+		new_bill = Bill(payment_gateway, amount)
+		self.__bill_list.append(new_bill)
+		return new_bill
+
+	def subscribe(self, customer_id: str, payment_gateway_name: str, payment_information: str) -> Member:
+		SUBSCRIBE_PRICE = 500
+
+		customer = self.get_customer_by_id(customer_id)
+		if customer is None:
+			raise ValueError("Customer not found")
+
+		member = self.get_member_by_customer_id(customer_id)
+		if member and member.status == MemberStatusEnum.ACTIVE:
+			raise ValueError("Fail already be a member")
+
+		payment_gateway = self.get_payment_gateway_by_name(payment_gateway_name)
+		if payment_gateway is None:
+			raise ValueError("Payment gateway not found")
+
+		if not payment_gateway.start_payment(payment_information, SUBSCRIBE_PRICE):
+			raise ValueError("Fail to payment")
+
+		new_bill = self.create_bill(payment_gateway, SUBSCRIBE_PRICE)
+		customer.add_bill(new_bill)
+
+		if member:
+			member.status = MemberStatusEnum.ACTIVE
+			self.create_customer_logs(customer, CustomerAction.SUBSCRIBE)
+			return member
+
+		new_member = self.create_member(customer)
+		self.create_customer_logs(customer, CustomerAction.SUBSCRIBE)
+		return new_member
+
+	def get_member_by_member_id(self, member_id: str) -> Member | None:
+		for member in self.__member_list:
+			if member.member_id == member_id:
+				return member
+		return None
+
+	def get_member_by_customer_id(self, custoemr_id: str) -> Member | None:
+		for member in self.__member_list:
+			if member.id == custoemr_id:
+				return member
+		return None
+
+	def get_manager_by_id(self, manager_id: str) -> Manager | None:
+		for staff in self.__staff_list:
+			if isinstance(staff, Manager):
+				if staff.id == manager_id:
+					return staff
+		return None
+
+	def get_staff_by_id(self, staff_id: str) -> Staff | None:
+		for staff in self.__staff_list:
+			if staff.id == staff_id:
+				return staff
+		return None
+
+	def create_stock_product(self, product: Product, product_item_list: list[ProductItem] = []) -> StockProduct:
+		new_stock_product = StockProduct(product, product_item_list)
+		self.__stock_product_list.append(new_stock_product)
+		return new_stock_product
+
+	def create_game(self, manager_id: str, name: str, description: str, genre: str, game_type: str) -> Game:
+		manager = self.get_manager_by_id(manager_id)
+		if manager is None:
+			raise ValueError("Not found manager")
+
+		if game_type.upper() == "DISC":
+			new_game = GameDisc(make_id('G'), name, description, genre)
+		elif game_type.upper() == "KEYCARD":
+			new_game = GameKeyCard(make_id('G'), name, description, genre)
+		elif game_type.upper() == "CARTRIDGE":
+			new_game = GameCartridge(make_id('G'), name, description, genre)
+		else:
+			raise ValueError("No this type of game available (Available type: DISC, KEYCARD, CARTRIDGE)")
+
+		self.create_stock_product(new_game, [])
+		self.create_manager_logs(manager, ManagerAction.CREATE_GAME)
+		return new_game
+
+	def create_machine(self, manager_id: str, name: str, machine_type: str) -> Machine:
+		manager = self.get_manager_by_id(manager_id)
+		if manager is None:
+			raise ValueError("Not found manager")
+
+		if machine_type.upper() == "PC":
+			new_machine = PC(make_id('M'))
+		elif machine_type.upper() == "PLAYSTATION":
+			new_machine = Playstation(make_id('M'))
+		elif machine_type.upper() == "GAMEBOY":
+			new_machine = GameBoy(make_id('M'))
+		elif machine_type.upper() == "SWITCH":
+			new_machine = Switch(make_id('M'))
+		else:
+			raise ValueError("No this type of machine available (Available type: PC, PLAYSTATION, GAMEBOY, SWITCH)")
+
+		self.create_stock_product(new_machine, [])
+		self.create_manager_logs(manager, ManagerAction.CREATE_MACHINE)
+		return new_machine
+
+	def get_product_by_id(self, product_id: str) -> Product:
+		for stock in self.__stock_product_list:
+			if stock.product.id == product_id:
+				return stock.product
+		return None
+
+	def cancel_reservation(self, customer_id: str, reservation_id: str) -> Reservation:
+		customer = self.get_customer_by_id(customer_id)
+		if customer is None:
+			raise ValueError("Customer Not Found")
+
+		reservation = customer.get_reservation_from_id(reservation_id)
+		if reservation is None:
+			raise ValueError("Reservaton Not Found")
+
+		reservation.status = ReservationStatusEnum.CANCEL
+
+		new_log = self.create_customer_logs(customer, CustomerAction.CANCEL_RESERVATION)
+		return reservation
+
+	def unsubscribe(self, member_id: str):
+		member = self.get_member_by_member_id(member_id)
+		if member is None:
+			raise ValueError("Member not found")
+
+		if member.status == MemberStatusEnum.INACTIVE:
+			raise ValueError("Member already inactive")
+
+		member.status = MemberStatusEnum.INACTIVE
+		self.create_customer_logs(member, CustomerAction.UNSUBSCRIBE)
+		return "Success"
+
+	def get_all_stock(self) -> list[StockProduct]:
+		return self.__stock_product_list
+
+	def get_stock_by_id(self, stock_id: str) -> StockProduct | None:
+		for stock in self.__stock_product_list:
+			if stock.id == stock_id:
+				return stock
+		return None
+
+	def create_shelf(self, max_capacity: int) -> Shelf:
+		new_shelf = Shelf(max_capacity)
+
+		self.__shelf_list.append(new_shelf)
+		return new_shelf
+
+	def get_all_shelf(self) -> list[Shelf]:
+		return self.__shelf_list
+
+	def get_shelf_by_id(self, shelf_id: str) -> Shelf | None:
+		for shelf in self.__shelf_list:
+			if shelf.id == shelf_id:
+				return shelf
+		return None
+
+	def refill_shelf(self, staff_id: str, shelf_id: str, stock_id: str, quantity: int) -> Shelf:
+		staff = self.get_staff_by_id(staff_id)
+		if not staff:
+			raise ValueError("No staff found")
+
+		shelf = self.get_shelf_by_id(shelf_id)
+		if not shelf:
+			raise ValueError("No shelf found")
+
+		stock = self.get_stock_by_id(stock_id)
+		if not stock:
+			raise ValueError("No stock found")
+
+		transfer = stock.take_product_items(quantity)
+		shelf.refill_shelf(transfer)
+
+		new_log = self.create_staff_logs(staff, StaffAction.REFILL_SHELF)
+		return shelf
+
+	def refill_stock(self, manager_id : str, stock_id : str, quantity : int, sell_price: float) -> StockProduct:
+		manager = self.get_manager_by_id(manager_id)
+		if not manager:
+			raise ValueError("Manager Not found")
+
+		stock = self.get_stock_by_id(stock_id)
+		if not stock:
+			raise ValueError("Stock Not found")
+
+		stock.refill_stock(quantity, sell_price)
+
+		new_log = self.create_manager_logs(manager, ManagerAction.REFILL_STOCK, stock)
+		return stock
+
+class Bill:
+	def __init__(self, payment_gateway: PaymentGateway, amount: float):
+		super().__init__()
+		self.__id: str = make_id('B')
+		self.__timestamp: datetime = datetime.now()
+		self.__payment_gateway: PaymentGateway = payment_gateway
+		self.__amount: float = amount
+
+class PaymentGateway(ABC):
+	def __init__(self, name: str):
+		super().__init__()
+		self.__id: str = make_id('P')
+		self.__name: str = name
+		self.__status: str = "Active"
+	
+	@abstractmethod
+	def authenticate():
+		pass
+
+	@abstractmethod
+	def pay():
+		pass
+
+	@abstractmethod
+	def start_payment():
+		pass
+
+	def get_name(self) -> str:
+		return self.__name
+
+	name = property(get_name)
+
+# QRCode
+class QRCode(PaymentGateway):
+	def __init__(self):
+		super().__init__("QRCode")
+
+	def authenticate(self, payment_information) -> bool:
+		return True
+
+	def pay(self, amount) -> bool:
+		return True
+
+	def start_payment(self, payment_information, amount) -> bool:
+		if not self.authenticate(payment_information):
+			return False
+		if not self.pay(amount):
+			return False
+		return True

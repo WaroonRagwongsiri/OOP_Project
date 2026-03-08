@@ -2,7 +2,7 @@
 
 actor Manager as ManagerA
 
-ManagerA -> GameStore : Order product (managerID, productID, quantity)
+ManagerA -> GameStore : refill_stock(managerID, productID, quantity)
 activate ManagerA
 activate GameStore
 
