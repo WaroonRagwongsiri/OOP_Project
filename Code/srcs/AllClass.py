@@ -125,7 +125,6 @@ class Staff:
 		self.__id: str = id
 		self.__name: str = name
 		self.__age: int = age
-		self.__busy: bool = False
 
 	def get_id(self) -> str:
 		return self.__id
