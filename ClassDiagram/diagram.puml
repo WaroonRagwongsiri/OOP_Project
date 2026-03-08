@@ -104,6 +104,7 @@ class Room
 	- max_customer: int
 	- serivce_price: int
 	- room_type: RoomTypeEnum
+	- customer_list: list[Customer]
 
 	- status: String
 	' Available, Reserved, Being-Use, Under-Maintainace
