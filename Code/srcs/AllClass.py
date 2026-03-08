@@ -219,9 +219,6 @@ class ProductItem:
 	def status(self) -> ProductItemStatus:
 		return self.__status
 	@property
-	def sell_price(self) -> float:
-		return self.__sell_price
-	@property
 	def condition(self) -> float:
 		return self.__condition
 
