@@ -1,7 +1,5 @@
 from datetime import datetime
 from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel
-
 from AllClass import *
 import uvicorn
 
@@ -16,10 +14,7 @@ def test_connection():
 
 
 @app.post("/customers")
-def create_customer(
-	name: str,
-	age: int
-):
+def create_customer(name: str, age: int):
 	try:
 		customer = store.create_customer(name, age)
 		return {
@@ -45,10 +40,7 @@ def get_all_customers():
 
 
 @app.post("/rooms")
-def create_room(
-	max_customer: int,
-	rate_price: float
-):
+def create_room(max_customer: int, rate_price: float):
 	try:
 		room = store.create_room(max_customer, rate_price)
 		return {
@@ -71,17 +63,35 @@ def get_available_rooms():
 	]
 
 
-@app.post("/bookings")
-def create_booking(
+@app.post("/reservations")
+def create_reservation(
 	customer_id: str,
 	room_id: str,
 	start_time: datetime,
 	end_time: datetime
 ):
 	try:
-		reservation_id = store.create_booking(customer_id, room_id, start_time, end_time)
+		reservation = store.create_reservation(customer_id, room_id, start_time, end_time)
 		return {
-			"reservation_id": reservation_id
+			"id": reservation.id,
+			"status": reservation.status.value,
+			"start_time": reservation.start_time,
+			"end_time": reservation.end_time
+		}
+	except ValueError as e:
+		raise HTTPException(status_code=400, detail=str(e))
+	except Exception as e:
+		raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.patch("/reservations/cancel")
+def cancel_reservation(customer_id: str, reservation_id: str):
+	try:
+		reservation = store.cancel_reservation(customer_id, reservation_id)
+		return {
+			"message": "Reservation cancelled",
+			"id": reservation.id,
+			"status": reservation.status.value
 		}
 	except ValueError as e:
 		raise HTTPException(status_code=400, detail=str(e))
@@ -96,9 +106,24 @@ def subscribe(
 	payment_information: str
 ):
 	try:
-		member_id = store.subscribe(customer_id, payment_gateway_name, payment_information)
+		member = store.subscribe(customer_id, payment_gateway_name, payment_information)
 		return {
-			"member_id": member_id
+			"member_id": member.member_id,
+			"customer_id": member.id,
+			"status": member.status.value
+		}
+	except ValueError as e:
+		raise HTTPException(status_code=400, detail=str(e))
+	except Exception as e:
+		raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.patch("/members/unsubscribe")
+def unsubscribe(member_id: str):
+	try:
+		result = store.unsubscribe(member_id)
+		return {
+			"message": result
 		}
 	except ValueError as e:
 		raise HTTPException(status_code=400, detail=str(e))
@@ -107,14 +132,13 @@ def subscribe(
 
 
 @app.post("/managers")
-def create_manager(
-	name: str,
-	age: int
-):
+def create_manager(name: str, age: int):
 	try:
 		manager = store.create_manager(name, age)
 		return {
-			"id": manager.id
+			"id": manager.id,
+			"name": manager.name,
+			"age": manager.age
 		}
 	except Exception as e:
 		raise HTTPException(status_code=400, detail=str(e))
@@ -129,16 +153,13 @@ def create_game(
 	game_type: str
 ):
 	try:
-		result = store.create_game(manager_id, name, description, genre, game_type)
-
-		if isinstance(result, str) and result.startswith("Error:"):
-			raise HTTPException(status_code=400, detail=result)
-
+		game = store.create_game(manager_id, name, description, genre, game_type)
 		return {
-			"id": result.id
+			"id": game.id,
+			"name": game.name
 		}
-	except HTTPException:
-		raise
+	except ValueError as e:
+		raise HTTPException(status_code=400, detail=str(e))
 	except Exception as e:
 		raise HTTPException(status_code=500, detail=str(e))
 
@@ -150,54 +171,99 @@ def create_machine(
 	machine_type: str
 ):
 	try:
-		result = store.create_machine(manager_id, name, machine_type)
-
-		if isinstance(result, str) and result.startswith("Error:"):
-			raise HTTPException(status_code=400, detail=result)
-
+		machine = store.create_machine(manager_id, name, machine_type)
 		return {
-			"id": result.id
+			"id": machine.id,
+			"name": machine.name
 		}
-	except HTTPException:
-		raise
+	except ValueError as e:
+		raise HTTPException(status_code=400, detail=str(e))
 	except Exception as e:
 		raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.patch("/bookings/cancel")
-def cancel_booking(
-	customer_id: str,
-	reservation_id: str
+@app.get("/stocks")
+def get_all_stocks():
+	try:
+		stocks = store.get_all_stock()
+		return [
+			{
+				"id": stock.id,
+				"product_id": stock.product.id,
+				"product_name": stock.product.name
+			}
+			for stock in stocks
+		]
+	except Exception as e:
+		raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.patch("/stocks/refill")
+def refill_stock(
+	manager_id: str,
+	stock_id: str,
+	quantity: int,
+	sell_price: float
 ):
 	try:
-		result = store.cancel_booking(customer_id, reservation_id)
-
-		if isinstance(result, str) and result.startswith("Error:"):
-			raise HTTPException(status_code=400, detail=result)
-
+		stock = store.refill_stock(manager_id, stock_id, quantity, sell_price)
 		return {
-			"message": "Reservation cancelled"
+			"message": "Stock refilled",
+			"stock_id": stock.id,
+			"product_id": stock.product.id,
+			"product_name": stock.product.name
 		}
-	except HTTPException:
-		raise
+	except ValueError as e:
+		raise HTTPException(status_code=400, detail=str(e))
 	except Exception as e:
 		raise HTTPException(status_code=500, detail=str(e))
 
-@app.patch("/members/unsubscribe")
-def unsubscribe(member_id: str):
+
+@app.post("/shelves")
+def create_shelf(max_capacity: int):
 	try:
-		result = store.unsubscribe(member_id)
-
-		if isinstance(result, str) and result.startswith("Error:"):
-			raise HTTPException(status_code=400, detail=result)
-
+		shelf = store.create_shelf(max_capacity)
 		return {
-			"message": "Member unsubscribed"
+			"id": shelf.id
 		}
-	except HTTPException:
-		raise
+	except ValueError as e:
+		raise HTTPException(status_code=400, detail=str(e))
 	except Exception as e:
 		raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/shelves")
+def get_all_shelves():
+	try:
+		shelves = store.get_all_shelf()
+		return [
+			{
+				"id": shelf.id
+			}
+			for shelf in shelves
+		]
+	except Exception as e:
+		raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.patch("/shelves/refill")
+def refill_shelf(
+	staff_id: str,
+	shelf_id: str,
+	stock_id: str,
+	quantity: int
+):
+	try:
+		shelf = store.refill_shelf(staff_id, shelf_id, stock_id, quantity)
+		return {
+			"message": "Shelf refilled",
+			"shelf_id": shelf.id
+		}
+	except ValueError as e:
+		raise HTTPException(status_code=400, detail=str(e))
+	except Exception as e:
+		raise HTTPException(status_code=500, detail=str(e))
+
 
 if __name__ == "__main__":
-	uvicorn.run("main:app",host="127.0.0.1",port=8000,reload=True)
+	uvicorn.run("main:app", host="127.0.0.1", port=8000, reload=True)

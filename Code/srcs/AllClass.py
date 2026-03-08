@@ -100,18 +100,6 @@ class Manager(Staff):
 	def __init__(self, id, name, age):
 		super().__init__(id, name, age)
 
-class RoomStatusEnum(Enum):
-	AVAILABLE = "Available"
-	BEING_USE = "BeingUse"
-	RESERVED = "Reserved"
-	UNDER_MAINTAINACE = "UnderMaintainace"
-
-
-class RoomTypeEnum(Enum):
-	NORMAL = "Normal"
-	VIP = "VIP"
-
-
 class Product:
 	def __init__(self, id: str, name: str):
 		self._id = id
@@ -174,8 +162,33 @@ class GameBoy(Machine):
 	def __init__(self, id):
 		super().__init__(id, "GameBoy")
 
+# Stockerd, Selling, Solded, Renting
+class ProductItemStatus(Enum):
+	STOCKED = "Stocked"
+	SELLING = "Selling"
+	SOLDED = "Solded"
+	RENTING = "Renting"
+
 class ProductItem:
-	pass
+	def __init__(self, product: Product, sell_price: float):
+		self.__serail_number: str = make_id("SE")
+		self.__product: Product = product
+		self.__status: ProductItemStatus = ProductItemStatus.STOCKED
+		self.__sell_price: float = sell_price
+		self.__condition: float = 1
+
+	def calculate_price(self) -> float:
+		return self.__sell_price * self.__condition
+
+class RoomStatusEnum(Enum):
+	AVAILABLE = "Available"
+	BEING_USE = "BeingUse"
+	RESERVED = "Reserved"
+	UNDER_MAINTAINACE = "UnderMaintainace"
+
+class RoomTypeEnum(Enum):
+	NORMAL = "Normal"
+	VIP = "VIP"
 
 class Room:
 	def __init__(self, room_id: str, max_customer: int, rate_price: float):
@@ -184,6 +197,7 @@ class Room:
 		self.__rate_price: float = rate_price
 		self.__room_type: RoomTypeEnum = RoomTypeEnum.NORMAL
 		self.__status: RoomStatusEnum = RoomStatusEnum.AVAILABLE
+		self.__customer_list: list[Customer] = []
 		self.__reservation_list: list[Reservation] = []
 
 	def get_room_id(self) -> str:
@@ -275,6 +289,21 @@ class StockProduct:
 
 	id = property(get_id)
 
+	def refill_stock(self, quantity: int, sell_price: float):
+		for i in range(quantity):
+			new_product_item = ProductItem(self.__product, sell_price)
+			self.__product_item_list.append(new_product_item)
+
+	def take_product_items(self, quantity: int) -> list[ProductItem]:
+		if quantity > len(self.__product_item_list):
+			raise ValueError("Not enough product in stock")
+
+		transfer = self.__product_item_list[:quantity]
+		for item in transfer:
+			self.__product_item_list.remove(transfer)
+
+		return transfer
+
 class Shelf:
 	def __init__(self, max_capacity: int):
 		self.__id: str = make_id('SH')
@@ -294,6 +323,7 @@ class CustomerAction(Enum):
 	CREATE_RESERVATION = "Create Reservation"
 	SUBSCRIBE = "Subscribe"
 	UNSUBSCRIBE = "Unsubscribe"
+	CANCEL_RESERVATION = "Cancel Reservation"
 
 class CustomerLogs(Logs):
 	def __init__(self, log_id: str, customer: Customer, action: CustomerAction):
@@ -301,21 +331,22 @@ class CustomerLogs(Logs):
 		self.__customer: Customer = customer
 		self.__action: CustomerAction = action
 
-class StaffActionLogs(Enum):
-	pass
+class StaffAction(Enum):
+	REFILL_SHELF = "RefillShelf"
 
 class StaffLogs(Logs):
-	def __init__(self, log_id: str, staff: Staff, action: StaffActionLogs):
+	def __init__(self, log_id: str, staff: Staff, action: StaffAction):
 		super().__init__(log_id)
 		self.__staff: Staff = staff
-		self.__action: StaffActionLogs = action
+		self.__action: StaffAction = action
 
-class ManagerActionLogs(Enum):
-	CREATE_GAME = "CreateGame"
-	CREATE_MACHINE = "CreateMachine"
+class ManagerAction(Enum):
+	CREATE_GAME = "Create Game"
+	CREATE_MACHINE = "Create Machine"
+	REFILL_STOCK = "Refill Stock"
 
 class ManagerLogs(StaffLogs):
-	def __init__(self, log_id: str, manager: str, action: ManagerActionLogs, target = None):
+	def __init__(self, log_id: str, manager: str, action: ManagerAction, target = None):
 		super().__init__(log_id, manager, action)
 		self.__target = target
 
@@ -375,12 +406,17 @@ class GameStore:
 				return room
 		return None
 
-	def create_customer_logs(self, customer: Customer, action: CustomerAction) -> CustomerLogs:
+	def create_customer_logs(self, customer: Customer, action: CustomerAction, target=None) -> CustomerLogs:
 		new_log = CustomerLogs(make_id(f"LC-{action}"), customer, action)
 		self.__customer_list.append(new_log)
 		return new_log
 
-	def create_manager_logs(self, manager: Manager, action: ManagerActionLogs, target=None) -> ManagerLogs:
+	def create_staff_logs(self, staff: Staff, action: StaffAction, target=None) -> StaffAction:
+		new_log = StaffLogs(make_id('LS')-{action}, staff, action)
+		self.__staff_logs_list.append(new_log)
+		return new_log
+
+	def create_manager_logs(self, manager: Manager, action: ManagerAction, target=None) -> ManagerLogs:
 		new_log = ManagerLogs(make_id(f'LM-{action}'), manager, action, target)
 		self.__staff_logs_list.append(new_log)
 		return new_log
@@ -464,6 +500,12 @@ class GameStore:
 					return staff
 		return None
 
+	def get_staff_by_id(self, staff_id: str) -> Staff | None:
+		for staff in self.__staff_list:
+			if staff.id == staff_id:
+				return staff
+		return None
+
 	def create_stock_product(self, product: Product, product_item_list: list[ProductItem] = []) -> StockProduct:
 		new_stock_product = StockProduct(product, product_item_list)
 		self.__stock_product_list.append(new_stock_product)
@@ -484,7 +526,7 @@ class GameStore:
 			raise ValueError("No this type of game available (Available type: DISC, KEYCARD, CARTRIDGE)")
 
 		self.create_stock_product(new_game, [])
-		self.create_manager_logs(manager, ManagerActionLogs.CREATE_GAME)
+		self.create_manager_logs(manager, ManagerAction.CREATE_GAME)
 		return new_game
 
 	def create_machine(self, manager_id: str, name: str, machine_type: str) -> Machine:
@@ -504,7 +546,7 @@ class GameStore:
 			raise ValueError("No this type of machine available (Available type: PC, PLAYSTATION, GAMEBOY, SWITCH)")
 
 		self.create_stock_product(new_machine, [])
-		self.create_manager_logs(manager, ManagerActionLogs.CREATE_MACHINE)
+		self.create_manager_logs(manager, ManagerAction.CREATE_MACHINE)
 		return new_machine
 
 	def get_product_by_id(self, product_id: str) -> Product:
@@ -513,7 +555,7 @@ class GameStore:
 				return stock.product
 		return None
 
-	def cancel_reservation(self, customer_id: str, reservation_id: str):
+	def cancel_reservation(self, customer_id: str, reservation_id: str) -> Reservation:
 		customer = self.get_customer_by_id(customer_id)
 		if customer is None:
 			raise ValueError("Customer Not Found")
@@ -523,7 +565,9 @@ class GameStore:
 			raise ValueError("Reservaton Not Found")
 
 		reservation.status = ReservationStatusEnum.CANCEL
-		return "Success"
+
+		new_log = self.create_customer_logs(customer, CustomerAction.CANCEL_RESERVATION)
+		return reservation
 
 	def unsubscribe(self, member_id: str):
 		member = self.get_member_by_member_id(member_id)
@@ -561,12 +605,38 @@ class GameStore:
 				return shelf
 		return None
 
-	def refill_shelf(self, shelf_id: str, product_item_list: list[ProductItem]):
+	def refill_shelf(self, staff_id: str, shelf_id: str, stock_id: str, quantity: int) -> Shelf:
+		staff = self.get_staff_by_id(staff_id)
+		if not staff:
+			raise ValueError("No staff found")
+
 		shelf = self.get_shelf_by_id(shelf_id)
 		if not shelf:
 			raise ValueError("No shelf found")
 
-		shelf.refill_shelf(product_item_list)
+		stock = self.get_stock_by_id(stock_id)
+		if not stock:
+			raise ValueError("No stock found")
+
+		transfer = stock.take_product_items(quantity)
+		shelf.refill_shelf(transfer)
+
+		new_log = self.create_staff_logs(staff, StaffAction.REFILL_SHELF)
+		return shelf
+
+	def refill_stock(self, manager_id : str, stock_id : str, quantity : int, sell_price: float) -> StockProduct:
+		manager = self.get_manager_by_id(manager_id)
+		if not manager:
+			raise ValueError("Manager Not found")
+
+		stock = self.get_stock_by_id(stock_id)
+		if not stock:
+			raise ValueError("Stock Not found")
+
+		stock.refill_stock(quantity, sell_price)
+
+		new_log = self.create_manager_logs(manager, ManagerAction.REFILL_STOCK, stock)
+		return stock
 
 class Bill:
 	def __init__(self, payment_gateway: PaymentGateway, amount: float):
