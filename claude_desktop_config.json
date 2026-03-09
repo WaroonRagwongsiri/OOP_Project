@@ -1,0 +1,30 @@
+{
+	"mcpServers": {
+		"oop-project": {
+			"command": "wsl",
+			"args": [
+				"cd",
+				"/mnt/d/First Year/Semister2/OOP_Project/",
+				"&&",
+				"docker",
+				"build",
+				"-t",
+				"oop-mcp",
+				".",
+				"&&",
+				"docker",
+				"run",
+				"--rm",
+				"-i",
+				"oop-mcp"
+			]
+		}
+	},
+	"preferences": {
+		"menuBarEnabled": false,
+		"coworkScheduledTasksEnabled": false,
+		"ccdScheduledTasksEnabled": false,
+		"coworkWebSearchEnabled": true,
+		"sidebarMode": "chat"
+	}
+}

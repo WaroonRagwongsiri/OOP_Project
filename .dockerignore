@@ -1,0 +1,10 @@
+ClassDiagram
+SequenceDiagram
+UseCaseDiagram
+note.txt
+README.md
+*.pyc
+*test*
+.venv
+__pycache__
+prompt.md
