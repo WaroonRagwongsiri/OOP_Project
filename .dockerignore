@@ -8,3 +8,6 @@ README.md
 .venv
 __pycache__
 prompt.md
+prompt_create_reservation.md
+prompt_subscribe.md
+sequence_diagram.puml
