@@ -1,145 +1,79 @@
-GameStore MCP — Test Case Prompts
-TC-01 · Connection Check
+🔌 Phase 0 – Connection
 
-```
-Use the test_connection tool and confirm the service is reachable.
-```
+Call test_connection → expect {"message": "Hello World"}
 
-TC-02 · Create Manager
 
-```
-Create a manager named "Alice" who is 35 years old. Save the returned manager ID for later use.
-```
+👥 Phase 1 – People Setup
 
-TC-03 · Create Customers
+Call create_customer with name="Alice", age=25 → save customer_id
+Call create_customer with name="Bob", age=17 → save customer_id_2
+Call get_all_customers → expect both Alice and Bob appear
+Call create_staff with name="StaffJohn", age=30 → save staff_id
+Call create_manager with name="ManagerMike", age=40 → save manager_id
 
-```
-Create two customers:
-1. Name: "Bob", Age: 22
-2. Name: "Carol", Age: 17
 
-Save both customer IDs for later steps.
-```
+🏠 Phase 2 – Room Setup
 
-TC-04 · List All Customers
+Call create_room with max_customer=4, rate_price=100.0 → save room_id
+Call get_available_rooms → expect the room created above appears
 
-```
-Retrieve all customers and display their id, name, and age.
-```
 
-TC-05 · Create Game Products
+🎮 Phase 3 – Product & Inventory Setup
 
-```
-Using the manager ID from TC-02, create the following games:
-1. Name: "Elden Ring", Description: "Open world RPG", Genre: "RPG", Type: "DISC"
-2. Name: "Minecraft", Description: "Sandbox survival game", Genre: "Sandbox", Type: "KEYCARD"
-3. Name: "Mario Kart", Description: "Racing game", Genre: "Racing", Type: "CARTRIDGE"
+Call create_game with manager_id={manager_id}, name="Chess", description="Classic strategy game", genre="Strategy", game_type="DISC" → save game_id
+Call create_machine with manager_id={manager_id}, name="Arcade1", machine_type="Arcade" → save machine_id
+Call get_all_stocks → save a stock_id from the list
+Call refill_stock with manager_id={manager_id}, stock_id={stock_id}, quantity=10, sell_price=29.99 → expect success message
+Call create_shelf with max_capacity=5 → save shelf_id
+Call get_all_shelves → expect the shelf above appears
+Call refill_shelf with staff_id={staff_id}, shelf_id={shelf_id}, stock_id={stock_id}, quantity=3 → expect current_amount=3
 
-Save all returned game IDs.
-```
 
-TC-06 · Create Gaming Machine
+🎟️ Phase 4 – Membership
 
-```
-Using the manager ID from TC-02, create a gaming machine named "PlayStation 5" with machine_type "PLAYSTATION".
-Save the returned machine ID.
-```
+Call subscribe with customer_id={customer_id}, payment_gateway_name="QRCode", payment_information="0812345678" → save member_id
+Call unsubscribe with member_id={member_id} → expect success message
 
-TC-07 · Create Rooms
 
-```
-Create two game rooms:
-1. max_customer: 4, rate_price: 150.0
-2. max_customer: 2, rate_price: 80.0
+📅 Phase 5 – Reservation Lifecycle
 
-Save both room IDs.
-```
+Call create_reservation with customer_id={customer_id}, room_id={room_id}, start_time="2026-03-10T10:00:00", end_time="2026-03-10T12:00:00" → save reservation_id
+Call extend_time with customer_id={customer_id}, reservation_id={reservation_id}, additional_hours=1.0 → expect end_time extended by 1 hour
+Call check_in with customer_id={customer_id}, reservation_id={reservation_id} → expect status change
+Call request_item_for_room with customer_id={customer_id}, reservation_id={reservation_id}, product_id={game_id}, quantity=1 → expect total_items_in_room >= 1
+Call check_out with customer_id={customer_id}, reservation_id={reservation_id} → expect status change
 
-TC-08 · List Available Rooms
+📅 Phase 5b – Reservation Cancellation
 
-```
-Retrieve all available rooms and show their id and status.
-```
+Call create_reservation (new one) → save reservation_id_2
+Call cancel_reservation with customer_id={customer_id}, reservation_id={reservation_id_2} → expect status=cancelled
 
-TC-09 · Create Reservation & Cancel It
 
-```
-Step 1: Using the customer ID from TC-03 (Bob) and the first room ID from TC-07,
-create a reservation with:
-  - start_time: 2026-03-10T10:00:00
-  - end_time:   2026-03-10T12:00:00
+🛒 Phase 6 – Cart & Purchase
 
-Step 2: After the reservation is created, cancel it using Bob's customer ID and the reservation ID returned in Step 1.
-Confirm the reservation status after cancellation.
-```
+Call view_product_detail with a serial_number from a shelf item (use one from refill_shelf result) → expect status/price/condition fields
+Call add_product_to_cart with customer_id={customer_id}, product_id={game_id} → expect total_items increases
+Call view_cart with customer_id={customer_id} → save serial_number from result
+Call set_cart_item_buy with customer_id={customer_id}, serial_number={serial_number}, is_buy=true → expect is_buy=true
+Call set_cart_item_buy again with is_buy=false → expect is_buy=false, then set back to true
+Call remove_item_from_cart with customer_id={customer_id}, product_id={game_id} → expect total_items decreases
+Re-add product and mark is_buy=true
 
-TC-10 · Subscribe & Unsubscribe
+🎫 Phase 6b – Coupon & Purchase with Coupon
 
-```
-Step 1: Subscribe the customer "Bob" (from TC-03) using:
-  - payment_gateway_name: "QRCode"
-  - payment_information: "tok_visa_test_001"
+Call create_coupon with manager_id={manager_id}, customer_id={customer_id}, minimum_amount=10.0, discount_amount=5.0, expire_date="2027-01-01T00:00:00" → save coupon_id
+Call purchase with customer_id={customer_id}, payment_method_name="QRCode", payment_information=["500"], coupon_id={coupon_id} → save bill_id and product_serials
 
-Step 2: After subscribing, unsubscribe using the member_id returned in Step 1.
-Confirm the result message.
-```
+💸 Phase 6c – Refund
 
-TC-11 · Stock Management
+Call refund with customer_id={customer_id}, bill_id={bill_id}, product_serial_numbers={product_serials} → expect refund coupon returned
 
-```
-Step 1: Get all current stocks using get_all_stocks.
 
-Step 2: Using the manager ID from TC-02, refill the stock for the first stock entry found with:
-  - quantity: 10
-  - sell_price: 1990.0
+❌ Phase 7 – Error / Edge Cases
 
-Show the stock_id and product_name after refilling.
-```
-
-TC-12 · Shelf Management
-
-```
-Step 1: Create a shelf with max_capacity: 20. Save the shelf ID.
-
-Step 2: List all shelves using get_all_shelves.
-
-Step 3: Using the manager ID from TC-02 as staff_id, refill the shelf from TC-12 Step 1
-using the stock_id from TC-11, with quantity: 5.
-Confirm the shelf ID in the response.
-```
-
-TC-13 · Shopping Cart Flow
-
-```
-Step 1: Add the game "Elden Ring" (product_id from TC-05) to Bob's cart (customer_id from TC-03).
-
-Step 2: View Bob's cart and list all items including product_name, serial_number, and is_buy.
-
-Step 3: View the product detail for the first serial_number shown in the cart.
-
-Step 4: Remove "Elden Ring" from Bob's cart.
-
-Step 5: View Bob's cart again to confirm the item was removed and total_items decreased.
-```
-
-TC-14 · Full End-to-End Flow
-
-```
-Run a complete GameStore scenario in sequence:
-1. test_connection — confirm service is up
-2. create_manager — "Manager Dan", age 40
-3. create_customer — "Eve", age 25
-4. create_game — using Dan's manager ID: "God of War", "Action RPG", "RPG", "DISC"
-5. get_all_stocks — find the stock ID for "God of War"
-6. refill_stock — 5 units at price 2500.0 using Dan's manager ID
-7. create_shelf — max_capacity 10
-8. refill_shelf — move 3 units from stock to shelf using Dan as staff
-9. add_product_to_customer — add "God of War" to Eve's cart
-10. view_cart — show Eve's cart
-11. view_product_detail — for the first serial_number in the cart
-12. remove_item_from_cart — remove "God of War" from Eve's cart
-13. subscribe — Eve subscribes via "PayPalGateway", info: "paypal_ref_abc"
-14. unsubscribe — using the member_id from step 13
-
-Report the result of every step clearly.
-```
+Call create_reservation with an invalid customer_id → expect "Error: ..." string
+Call cancel_reservation on an already-cancelled reservation → expect "Error: ..."
+Call check_in on a non-existent reservation → expect "Error: ..."
+Call refill_shelf with quantity exceeding shelf capacity → expect "Error: ..."
+Call set_cart_item_buy with a serial number not in cart → expect "Error: Item not found in cart"
+Call unsubscribe with an invalid member_id → expect "Error: ..."

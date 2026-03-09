@@ -715,6 +715,114 @@ def request_item_for_room(
 	except Exception as e:
 		return f"Error: {e.__str__()}"
 
+# -------------------------
+# Cart Purchase Controls
+# -------------------------
+@mcp.tool()
+def set_cart_item_buy(customer_id: str, serial_number: str, is_buy: bool):
+	"""
+	Mark a cart item as selected for purchase.
+
+	Args:
+		customer_id (str): Customer id.
+		serial_number (str): Product serial number.
+		is_buy (bool): True if customer wants to buy.
+
+	Returns:
+		dict: Updated cart item.
+	"""
+	try:
+		customer = store.get_customer_by_id(customer_id)
+		if not customer:
+			raise Exception("Customer not found")
+
+		for item in customer.cart.products:
+			if item.product_item.serial_number == serial_number:
+				item.is_buy = is_buy
+				return {
+					"serial_number": serial_number,
+					"is_buy": item.is_buy
+				}
+
+		raise Exception("Item not found in cart")
+
+	except Exception as e:
+		return f"Error: {e.__str__()}"
+
+
+# -------------------------
+# Purchase
+# -------------------------
+@mcp.tool()
+def purchase(
+	customer_id: str,
+	payment_method_name: str,
+	payment_information: list,
+	coupon_id: str = None
+):
+	"""
+	Purchase selected items in cart.
+
+	Args:
+		customer_id (str): Customer id.
+		payment_method_name (str): Payment method.
+		payment_information (list): Payment information.
+		coupon_id (str | None): Coupon id.
+
+	Returns:
+		dict: Purchase result.
+	"""
+	try:
+		bill, product_serials = store.purchase(
+			customer_id,
+			payment_method_name,
+			payment_information,
+			coupon_id
+		)
+
+		return {
+			"bill_id": bill.id,
+			"amount": bill.amount,
+			"products": product_serials
+		}
+
+	except Exception as e:
+		return f"Error: {e.__str__()}"
+
+
+# -------------------------
+# Refund
+# -------------------------
+@mcp.tool()
+def refund(
+	customer_id: str,
+	bill_id: str,
+	product_serial_numbers: list[str]
+):
+	"""
+	Refund purchased items.
+
+	Args:
+		customer_id (str): Customer id.
+		bill_id (str): Bill id.
+		product_serial_numbers (list[str]): Product serial numbers.
+
+	Returns:
+		dict: Refund result.
+	"""
+	try:
+		coupon = store.refund(customer_id, bill_id, product_serial_numbers)
+
+		return {
+			"message": "Refund successful",
+			"coupon_id": coupon.id,
+			"discount_amount": coupon.discount_amount,
+			"expire_date": coupon.expire_date
+		}
+
+	except Exception as e:
+		return f"Error: {e.__str__()}"
+
 
 def main():
 	mcp.run(transport="stdio")
