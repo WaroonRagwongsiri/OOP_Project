@@ -16,11 +16,6 @@ activate Customer
 Customer -> GameStore: Customer
 deactivate Customer
 
-GameStore -> Coupon: Coupon(make_id("CO"), "Discount", customer, minimum_amount, discount_amount, expire_date)
-activate Coupon
-Coupon -> GameStore: Coupon
-deactivate Coupon
-
 GameStore -> Customer: add_coupon(coupon)
 activate Customer
 Customer -> GameStore: (set)
@@ -30,6 +25,11 @@ GameStore -> ManagerLogs: create_manager_logs(manager, ManagerAction.CREATE_COUP
 activate ManagerLogs
 ManagerLogs -> GameStore: ManagerLogs
 deactivate ManagerLogs
+
+GameStore -> Coupon: Coupon(make_id("CO"), "Discount", customer, minimum_amount, discount_amount, expire_date)
+activate Coupon
+Coupon -> GameStore: Coupon
+deactivate Coupon
 
 GameStore -> GameStore: __staff_logs_list.append(log)
 
