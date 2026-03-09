@@ -2,7 +2,7 @@
 
 actor Customer as CustomerA
 
-CustomerA -> GameStore : Purchase (Customer id, Preferred payment method, Payment info)
+CustomerA -> GameStore : purchase(customer_id, payment_method_name,\n payment_info, coupon_info)
 activate CustomerA
 activate GameStore
 
@@ -13,77 +13,99 @@ loop Get customer instance by id
     deactivate Customer
 end
 
-alt Store did have that customer instance
-    loop Get payment method by name
-        GameStore -> PaymentMethod : Get payment method
-        activate PaymentMethod
-        PaymentMethod -> GameStore : Payment method
-        deactivate PaymentMethod
+loop Get payment method by nam
+    GameStore -> PaymentMethod : Get payment method
+    activate PaymentMethod
+    PaymentMethod -> GameStore : Payment method
+    deactivate PaymentMethod
+end
+
+GameStore -> Customer : Get CartItem list
+activate Customer
+Customer -> Cart : Get CartItem list
+activate Cart
+Cart -> CartItem : Get CartItem list
+activate CartItem
+CartItem -> Cart : Return CartItem list
+deactivate CartItem
+Cart -> Customer : Return CartItem list
+deactivate Cart
+Customer -> GameStore : Return CartItem list
+deactivate Customer
+
+GameStore -> CartItem : Get all the product items that the customer choose to buy, sum the price and check if is selling
+activate CartItem
+CartItem -> GameStore
+deactivate CartItem
+
+alt All the product item have a selling status
+    GameStore -> Customer : Get customer discount benefit
+    activate Customer
+    Customer -> GameStore : Return the discount benefit
+    deactivate Customer
+    GameStore -> GameStore : Apply the discount benefit to the sum of the product pricing
+    activate GameStore
+    deactivate GameStore
+
+    alt Coupon ID is specified
+        GameStore -> Customer : Get coupon from ID
+        activate Customer
+        loop Get coupon
+            Customer -> Coupon
+            activate Coupon
+            Coupon -> Customer
+            deactivate Coupon
+        end
+        Customer -> GameStore : Return Coupon
+        deactivate Customer
+
+        GameStore -> Coupon : Check if the purchasing is valid for coupon application
+        activate Coupon
+        Coupon -> GameStore
+        deactivate Coupon
+
+        alt Coupon is invalid
+            GameStore -> CustomerA : Failed (Unable to apply coupon)
+        end
+
+        GameStore -> GameStore : Apply coupon
+        activate GameStore
+        deactivate GameStore
     end
 
-    alt Payment method with same name exist
-        GameStore -> Cart : Get product item instances in customer cart
-        activate Cart
-        loop get product item instances in cart
-            Cart -> ProductItem
+    GameStore -> PaymentMethod : start_payment(total_pricing, payment_info)
+    activate PaymentMethod
+    PaymentMethod -> GameStore : Return Status
+    deactivate PaymentMethod
+
+    alt Payment successful
+        loop Set the product item status to be sold
+            GameStore -> CartItem : Access the product item
+            activate CartItem
+            CartItem -> ProductItem : Set the status to being sold
             activate ProductItem
-            ProductItem -> Cart
+            ProductItem -> CartItem
             deactivate ProductItem
-        end
-        Cart -> GameStore : Return product item instances in customer cart list
-        deactivate Cart
-
-        loop Check if store still have that product instance
-            GameStore -> GameStore
-            activate GameStore
-            deactivate GameStore
+            CartItem -> GameStore
+            deactivate CartItem
         end
 
-        alt Products are available
-            loop Calculate total value of purchasing products
-                GameStore -> ProductItem : Get value
-                activate ProductItem
-                ProductItem -> GameStore : Value
-                deactivate ProductItem
-            end
+        GameStore -> Bill : create_bill(payment_method, total_pricing) and add the puchasing products
+        activate Bill
+        Bill -> GameStore : Return Bill
+        deactivate Bill
 
-            GameStore -> PaymentMethod : Create transaction (Payment info)
-            activate PaymentMethod 
-            PaymentMethod -> GameStore : Status
-            deactivate PaymentMethod
-            
-            alt Payment Successful
-                loop Remove products from stock and customer's cart
-                    GameStore -> GameStore
-                    activate GameStore
-                    deactivate GameStore
-                    GameStore -> Cart : Remove product
-                    activate Cart
-                    deactivate Cart
-                end
+        GameStore -> Log : create_customer_logs(customer_instance, CustomerAction.Purchase)
+        activate Log
+        Log -> GameStore : Store log
+        deactivate Log
 
-                GameStore -> Log : Create purchase record
-                activate Log
-                Log -> GameStore : Purchasing log
-                deactivate Log
-
-                GameStore -> Bill : Create bill
-                activate Bill
-                Bill -> GameStore : Purchasing Bill
-                deactivate Bill
-
-                GameStore -> CustomerA : Purchase bill + Products serial number
-            else
-                GameStore -> CustomerA : Failed (Payment)
-            end
-        else
-            GameStore -> CustomerA : Failed (Product availability)
-        end
+        GameStore -> CustomerA : Success, return bill and product item\n serial number
     else
-        GameStore -> CustomerA : Failed (Payment method doesn't exist)
+        GameStore -> CustomerA : Failed (Payment failed)
     end
 else
-    GameStore -> CustomerA : Failed (You don't exist)
+    GameStore -> CustomerA : Failed (Product is unavailable)
 end
 
 
