@@ -433,7 +433,7 @@ class StockProduct:
 
 	def add_to_stock(self, transfer: list[ProductItem]):
 		self.__product_item_list.extend(transfer)
-		for product_item in self.__product_item_list:
+		for product_item in transfer:
 			product_item.status = ProductItemStatus.STOCKED
 
 class Shelf:
@@ -922,10 +922,10 @@ class GameStore:
 		if not customer:
 			raise ValueError("Customer not found")
 
-		if minimum_amount <= 0:
+		if minimum_amount < 0:
 			raise ValueError("Invalid minimum amount")
 		
-		if discount_amount <= 0:
+		if discount_amount < 0:
 			raise ValueError("Invalid discount amount")
 		
 		if expire_date <= datetime.now():
@@ -1074,7 +1074,7 @@ class GameStore:
 
 		product_sn_list = [item.serial_number for item in bought_items]
 		return [bill, product_sn_list]
-	
+
 	def get_product_item_by_serial_number(self, serial_number: str) -> ProductItem:
 		for stock in self.__stock_product_list:
 			for product_item in stock.product_item_list:
@@ -1084,6 +1084,9 @@ class GameStore:
 			for product_item in shelf.product_on_shelf:
 				if product_item.serial_number == serial_number:
 					return product_item
+		for item in self.__bought_list:
+			if item.serial_number == serial_number:
+				return item
 		return None
 
 	def get_bill_by_id(self, bill_id : str) -> Bill:
@@ -1105,6 +1108,9 @@ class GameStore:
 			raise Exception(f"Serial numbers not found in this bill: {invalid}")
 
 		product_items: list[ProductItem] = [self.get_product_item_by_serial_number(sn) for sn in product_sn_list]
+		if any(item is None for item in product_items):
+			raise Exception("One or more serial numbers could not be found")
+
 		total_price = 0
 		for product_item in product_items:
 			total_price += product_item.calculate_price()
@@ -1126,6 +1132,13 @@ class GameStore:
 			if isinstance(staff, Manager):
 				manager_id = staff.id
 				break
+		if manager_id is None:
+			raise Exception("No manager found in the system to issue refund coupon")
+
+		for item in product_items:
+			stock = self.get_stock_by_product_id(item.product.id)
+			stock.add_to_stock([item])
+
 		coupon = self.create_coupon(manager_id, customer_id, 0, total_price, datetime.today() + timedelta(days=90))
 
 		return coupon
