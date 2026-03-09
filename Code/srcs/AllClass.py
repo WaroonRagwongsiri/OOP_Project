@@ -1023,7 +1023,6 @@ class GameStore:
 		customer_instance.add_bill(bill)
 
 		customer_log = self.create_customer_logs(customer_instance, CustomerAction.PURCHASE)
-		self.__customer_logs_list.append(customer_log)
 
 		product_sn_list = [item.serial_number for item in bought_items]
 		return [bill, product_sn_list]
@@ -1072,7 +1071,6 @@ class GameStore:
 
 		customer_instance = self.get_customer_by_id(customer_id)
 		log = self.create_customer_logs(customer_instance, CustomerAction.REFUND)
-		self.__customer_logs_list.append(log)
 
 		manager_id = None
 		for staff in self.__staff_list:
