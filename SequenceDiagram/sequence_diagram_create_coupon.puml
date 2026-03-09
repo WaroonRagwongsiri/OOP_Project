@@ -1,0 +1,41 @@
+@startuml Create Coupon Sequence Diagram
+
+actor Manager as A_Manager
+
+A_Manager -> GameStore: create_coupon(manager_id, customer_id, minimum_amount, discount_amount, expire_date)
+activate A_Manager
+
+activate GameStore
+GameStore -> Manager: get_manager_by_id(manager_id)
+activate Manager
+Manager -> GameStore: Manager
+deactivate Manager
+
+GameStore -> Customer: get_customer_by_id(customer_id)
+activate Customer
+Customer -> GameStore: Customer
+deactivate Customer
+
+GameStore -> Coupon: Coupon(make_id("CO"), "Discount", customer, minimum_amount, discount_amount, expire_date)
+activate Coupon
+Coupon -> GameStore: Coupon
+deactivate Coupon
+
+GameStore -> Customer: add_coupon(coupon)
+activate Customer
+Customer -> GameStore: (set)
+deactivate Customer
+
+GameStore -> ManagerLogs: create_manager_logs(manager, ManagerAction.CREATE_COUPON, coupon)
+activate ManagerLogs
+ManagerLogs -> GameStore: ManagerLogs
+deactivate ManagerLogs
+
+GameStore -> GameStore: __staff_logs_list.append(log)
+
+GameStore -> A_Manager: Coupon
+deactivate GameStore
+
+deactivate A_Manager
+
+@enduml

@@ -1,0 +1,54 @@
+@startuml Check In Sequence Diagram
+
+actor Customer as A_Customer
+
+A_Customer -> GameStore: check_in(customer_id, reservation_id)
+activate A_Customer
+
+activate GameStore
+GameStore -> Customer: get_customer_by_id(customer_id)
+activate Customer
+Customer -> GameStore: Customer
+deactivate Customer
+
+GameStore -> Customer: get_reservation_from_id(reservation_id)
+activate Customer
+Customer -> Reservation: get_reservation_from_id(reservation_id)
+activate Reservation
+Reservation -> Customer: Reservation
+deactivate Reservation
+Customer -> GameStore: Reservation
+deactivate Customer
+
+GameStore -> Reservation: room
+activate Reservation
+Reservation -> Room: room
+activate Room
+Room -> Reservation: Room
+deactivate Room
+Reservation -> GameStore: Room
+deactivate Reservation
+
+GameStore -> Room: customer = reservation.customer
+activate Room
+Room -> GameStore: (set)
+deactivate Room
+
+GameStore -> Reservation: status = CHECK_IN
+activate Reservation
+Reservation -> GameStore: (set)
+deactivate Reservation
+
+GameStore -> CustomerLogs: CustomerLogs(make_id("LC-CHECK_IN"), customer, CustomerAction.CHECK_IN)
+activate CustomerLogs
+CustomerLogs -> GameStore: CustomerLogs
+deactivate CustomerLogs
+
+GameStore -> GameStore: __customer_logs_list.append(log)
+
+GameStore -> A_Customer: Reservation
+deactivate GameStore
+
+deactivate A_Customer
+
+@enduml
