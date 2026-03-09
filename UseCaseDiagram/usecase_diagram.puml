@@ -64,7 +64,10 @@ A_Customer --> UC_ViewCart
 A_Customer --> UC_ViewShelf
 A_Customer --> UC_Purchase
 A_Customer --> UC_Subscribe
+A_Customer --> UC_Refund
+A_Customer --> UC_ExtendTime
 A_Customer --> UC_RequestItemForRoom
+A_Customer --> UC_CheckoutRoom
 
 UC_ViewShelf <.. UC_AddProductToCart : <<extend>>
 UC_ViewShelf <.. UC_ViewProductDetail : <<extend>>
