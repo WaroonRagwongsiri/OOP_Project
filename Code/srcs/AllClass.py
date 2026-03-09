@@ -881,17 +881,14 @@ class GameStore:
 		return None
 
 	def add_product_to_customer(self, customer_id : str, product_id : str):
-		stock_product = self.get_product_from_shelf(product_id)
-		if stock_product is None:
+		product_item = self.get_product_from_shelf(product_id)
+		if product_item is None:
 			raise Exception("No product with matching ID")
-		
-		if len(stock_product.product_item_list) == 0:
-			raise Exception("No product in stock")
 
 		customer_instance = self.get_customer_by_id(customer_id)
 		cart: Cart = customer_instance.cart
 
-		cart.products.append(CartItem(stock_product.product_item_list[0]))
+		cart.products.append(CartItem(product_item))
 
 		return cart
 	
