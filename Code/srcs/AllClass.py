@@ -588,13 +588,13 @@ class GameStore:
 		customer = self.get_customer_by_id(customer_id)
 		if customer is None:
 			raise ValueError("Invalid User")
-		
-		if customer.check_time_availability(start_time, end_time) == False:
-			raise ValueError("Invalid Time Frame")
 
 		room = self.get_room_by_id(room_id)
 		if room is None:
 			raise ValueError("No Room this ID")
+		
+		if customer.check_time_availability(start_time, end_time) == False:
+			raise ValueError("Invalid Time Frame")
 
 		reservation = room.create_reservation(make_id("RE"), customer, start_time, end_time)
 		if reservation is None:

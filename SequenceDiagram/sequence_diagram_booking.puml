@@ -1,10 +1,33 @@
 @startuml UsecaseSequenceDiagram
 
-Customer -> GameStore : Create booking (Room ID)
-activate Customer
+actor Customer as A_Customer
+participant GameStore
+participant Customer as P_Customer
+participant Room
+participant Reservation
+participant Log
+
+A_Customer -> GameStore : create_reservation(customer_id, room_id, start_time, end_time)
+activate A_Customer
 activate GameStore
 
-alt booking success
+alt create reservation success
+
+	loop get customer by id
+
+		GameStore -> P_Customer : Get customer
+		activate P_Customer
+
+		P_Customer -> GameStore : Customer
+		deactivate P_Customer
+
+	end
+
+	GameStore -> P_Customer : check_time_availability(start_time, end_time)
+	activate P_Customer
+
+	P_Customer -> GameStore : Available
+	deactivate P_Customer
 
 	loop get room by id
 
@@ -16,39 +39,52 @@ alt booking success
 
 	end
 
-	GameStore -> Room : Set booking
+	GameStore -> Room : create_reservation(customer, start_time, end_time)
 	activate Room
 
-	Room -> Reservation : Create Reservation(customer, room, room_type)
+	Room -> Reservation : create_reservation(customer, start_time, end_time)
 	activate Reservation
-	Reservation -> Reservation : status = Pending
-	Reservation -> Room : Created(reservation_id)
+	Reservation -> Room : Reservation
 	deactivate Reservation
 
 	Room -> GameStore : Reservation
 	deactivate Room
 
-	GameStore -> Transaction : Create Transaction(reservation_id)
-	activate Transaction
-	Transaction -> Transaction : status = Pending
-	Transaction -> GameStore : Transaction Instance
-	deactivate Transaction
+	GameStore -> P_Customer : add_reservation(reservation)
+	activate P_Customer
+	P_Customer -> GameStore
+	deactivate P_Customer
 
-	GameStore -> Customer : Success
+	GameStore -> Log : create_customer_logs(customer, CREATE_RESERVATION)
+	activate Log
+	Log -> GameStore : Log
+	deactivate Log
 
-else booking fail (fail to get rooms)
+	GameStore -> A_Customer : reservation.id
 
-	Room -> GameStore : Fail (fail to get rooms)
-	GameStore -> Customer : Fail (fail to get rooms)
+else create reservation fail (invalid user)
 
-else booking fail (fail to create reservation)
+	P_Customer -> GameStore : Fail (invalid user)
+	GameStore -> A_Customer : Invalid User
 
-	Room -> GameStore : Fail (fail to create reservation)
-	GameStore -> Customer : Fail (fail to create reservation)
+else create reservation fail (invalid time frame)
 
-	deactivate GameStore
-	deactivate Customer
+	P_Customer -> GameStore : Fail (invalid time frame)
+	GameStore -> A_Customer : Invalid Time Frame
+
+else create reservation fail (no room this id)
+
+	Room -> GameStore : Fail (no room this id)
+	GameStore -> A_Customer : No Room this ID
+
+else create reservation fail (fail to create reservation)
+
+	Room -> GameStore : Fail (invalid time frame)
+	GameStore -> A_Customer : Invalid Time Frame
 
 end
+
+deactivate GameStore
+deactivate A_Customer
 
 @enduml
