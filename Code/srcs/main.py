@@ -13,6 +13,9 @@ def test_connection():
 	return {"message": "Hello World"}
 
 
+# -------------------------
+# Customer
+# -------------------------
 @app.post("/customers")
 def create_customer(name: str, age: int):
 	try:
@@ -39,6 +42,34 @@ def get_all_customers():
 	]
 
 
+# -------------------------
+# Staff / Manager
+# -------------------------
+@app.post("/staffs")
+def create_staff(name: str, age: int):
+	try:
+		staff = store.create_staff(name, age)
+		return {
+			"id": staff.id
+		}
+	except Exception as e:
+		raise HTTPException(status_code=400, detail=str(e))
+
+
+@app.post("/managers")
+def create_manager(name: str, age: int):
+	try:
+		manager = store.create_manager(name, age)
+		return {
+			"id": manager.id
+		}
+	except Exception as e:
+		raise HTTPException(status_code=400, detail=str(e))
+
+
+# -------------------------
+# Room
+# -------------------------
 @app.post("/rooms")
 def create_room(max_customer: int, rate_price: float):
 	try:
@@ -63,6 +94,9 @@ def get_available_rooms():
 	]
 
 
+# -------------------------
+# Reservation
+# -------------------------
 @app.post("/reservations")
 def create_reservation(
 	customer_id: str,
@@ -71,12 +105,15 @@ def create_reservation(
 	end_time: datetime
 ):
 	try:
-		reservation = store.create_reservation(customer_id, room_id, start_time, end_time)
+		reservation_id = store.create_reservation(customer_id, room_id, start_time, end_time)
+		reservation = store.get_reservation_by_id(reservation_id)
 		return {
 			"id": reservation.id,
 			"status": reservation.status.value,
 			"start_time": reservation.start_time,
-			"end_time": reservation.end_time
+			"end_time": reservation.end_time,
+			"room_id": reservation.room.id,
+			"customer_id": reservation.customer.id
 		}
 	except ValueError as e:
 		raise HTTPException(status_code=400, detail=str(e))
@@ -99,6 +136,43 @@ def cancel_reservation(customer_id: str, reservation_id: str):
 		raise HTTPException(status_code=500, detail=str(e))
 
 
+@app.patch("/reservations/check-in")
+def check_in(customer_id: str, reservation_id: str):
+	try:
+		reservation = store.check_in(customer_id, reservation_id)
+		return {
+			"message": "Check in success",
+			"id": reservation.id,
+			"status": reservation.status.value,
+			"room_id": reservation.room.id,
+			"customer_id": reservation.customer.id
+		}
+	except ValueError as e:
+		raise HTTPException(status_code=400, detail=str(e))
+	except Exception as e:
+		raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.patch("/reservations/check-out")
+def check_out(customer_id: str, reservation_id: str):
+	try:
+		reservation = store.check_out(customer_id, reservation_id)
+		return {
+			"message": "Check out success",
+			"id": reservation.id,
+			"status": reservation.status.value,
+			"room_id": reservation.room.id,
+			"customer_id": reservation.customer.id
+		}
+	except ValueError as e:
+		raise HTTPException(status_code=400, detail=str(e))
+	except Exception as e:
+		raise HTTPException(status_code=500, detail=str(e))
+
+
+# -------------------------
+# Member
+# -------------------------
 @app.post("/subscribe")
 def subscribe(
 	customer_id: str,
@@ -131,19 +205,9 @@ def unsubscribe(member_id: str):
 		raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.post("/managers")
-def create_manager(name: str, age: int):
-	try:
-		manager = store.create_manager(name, age)
-		return {
-			"id": manager.id,
-			"name": manager.name,
-			"age": manager.age
-		}
-	except Exception as e:
-		raise HTTPException(status_code=400, detail=str(e))
-
-
+# -------------------------
+# Product / Game / Machine
+# -------------------------
 @app.post("/games")
 def create_game(
 	manager_id: str,
@@ -155,8 +219,7 @@ def create_game(
 	try:
 		game = store.create_game(manager_id, name, description, genre, game_type)
 		return {
-			"id": game.id,
-			"name": game.name
+			"id": game.id
 		}
 	except ValueError as e:
 		raise HTTPException(status_code=400, detail=str(e))
@@ -173,8 +236,7 @@ def create_machine(
 	try:
 		machine = store.create_machine(manager_id, name, machine_type)
 		return {
-			"id": machine.id,
-			"name": machine.name
+			"id": machine.id
 		}
 	except ValueError as e:
 		raise HTTPException(status_code=400, detail=str(e))
@@ -182,6 +244,9 @@ def create_machine(
 		raise HTTPException(status_code=500, detail=str(e))
 
 
+# -------------------------
+# Stock
+# -------------------------
 @app.get("/stocks")
 def get_all_stocks():
 	try:
@@ -189,8 +254,7 @@ def get_all_stocks():
 		return [
 			{
 				"id": stock.id,
-				"product_id": stock.product.id,
-				"product_name": stock.product.name
+				"product_id": stock.product.id
 			}
 			for stock in stocks
 		]
@@ -210,8 +274,7 @@ def refill_stock(
 		return {
 			"message": "Stock refilled",
 			"stock_id": stock.id,
-			"product_id": stock.product.id,
-			"product_name": stock.product.name
+			"product_id": stock.product.id
 		}
 	except ValueError as e:
 		raise HTTPException(status_code=400, detail=str(e))
@@ -219,12 +282,17 @@ def refill_stock(
 		raise HTTPException(status_code=500, detail=str(e))
 
 
+# -------------------------
+# Shelf
+# -------------------------
 @app.post("/shelves")
 def create_shelf(max_capacity: int):
 	try:
 		shelf = store.create_shelf(max_capacity)
 		return {
-			"id": shelf.id
+			"id": shelf.id,
+			"max_capacity": shelf.max_capacity,
+			"current_amount": len(shelf.product_on__shelf)
 		}
 	except ValueError as e:
 		raise HTTPException(status_code=400, detail=str(e))
@@ -238,7 +306,9 @@ def get_all_shelves():
 		shelves = store.get_all_shelf()
 		return [
 			{
-				"id": shelf.id
+				"id": shelf.id,
+				"max_capacity": shelf.max_capacity,
+				"current_amount": len(shelf.product_on__shelf)
 			}
 			for shelf in shelves
 		]
@@ -257,7 +327,137 @@ def refill_shelf(
 		shelf = store.refill_shelf(staff_id, shelf_id, stock_id, quantity)
 		return {
 			"message": "Shelf refilled",
-			"shelf_id": shelf.id
+			"shelf_id": shelf.id,
+			"current_amount": len(shelf.product_on__shelf),
+			"max_capacity": shelf.max_capacity
+		}
+	except ValueError as e:
+		raise HTTPException(status_code=400, detail=str(e))
+	except Exception as e:
+		raise HTTPException(status_code=500, detail=str(e))
+
+
+# -------------------------
+# Coupon
+# -------------------------
+@app.post("/coupons")
+def create_coupon(
+	manager_id: str,
+	customer_id: str,
+	minimum_amount: float,
+	discount_amount: float,
+	expire_date: datetime
+):
+	try:
+		coupon = store.create_coupon(
+			manager_id,
+			customer_id,
+			minimum_amount,
+			discount_amount,
+			expire_date
+		)
+		return {
+			"id": coupon.id,
+			"type": coupon.type,
+			"minimum_amount": coupon.minimum_amount,
+			"discount_amount": coupon.discount_amount,
+			"expire_date": coupon.expire_date
+		}
+	except ValueError as e:
+		raise HTTPException(status_code=400, detail=str(e))
+	except Exception as e:
+		raise HTTPException(status_code=500, detail=str(e))
+
+
+# -------------------------
+# Cart
+# -------------------------
+@app.post("/cart/items")
+def add_product_to_cart(customer_id: str, product_id: str):
+	try:
+		cart = store.add_product_to_customer(customer_id, product_id)
+		return {
+			"message": "Product added to cart",
+			"total_items": len(cart.products)
+		}
+	except ValueError as e:
+		raise HTTPException(status_code=400, detail=str(e))
+	except Exception as e:
+		raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/cart")
+def view_cart(customer_id: str):
+	try:
+		cart_items = store.view_cart(customer_id)
+		return [
+			{
+				"serial_number": item.product_item.serial_number,
+				"product_id": item.product_item.product.id,
+				"is_buy": item.is_buy
+			}
+			for item in cart_items
+		]
+	except ValueError as e:
+		raise HTTPException(status_code=400, detail=str(e))
+	except Exception as e:
+		raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.delete("/cart/items")
+def remove_item_from_cart(customer_id: str, product_id: str):
+	try:
+		cart = store.remove_item_from_cart(customer_id, product_id)
+		return {
+			"message": "Product removed from cart",
+			"total_items": len(cart.products)
+		}
+	except ValueError as e:
+		raise HTTPException(status_code=400, detail=str(e))
+	except Exception as e:
+		raise HTTPException(status_code=500, detail=str(e))
+
+
+# -------------------------
+# Product Detail
+# -------------------------
+@app.get("/products/detail")
+def view_product_detail(serial_number: str):
+	try:
+		product_detail = store.view_product_detail(serial_number)
+		if product_detail is None:
+			raise HTTPException(status_code=404, detail="Product item not found")
+
+		return {
+			"serial_number": serial_number,
+			"status": product_detail["status"].value,
+			"sell_price": product_detail["sell_price"],
+			"condition": product_detail["condition"]
+		}
+	except HTTPException:
+		raise
+	except ValueError as e:
+		raise HTTPException(status_code=400, detail=str(e))
+	except Exception as e:
+		raise HTTPException(status_code=500, detail=str(e))
+
+
+# -------------------------
+# Room Item Request
+# -------------------------
+@app.post("/rooms/request-item")
+def request_item_for_room(
+	customer_id: str,
+	reservation_id: str,
+	product_id: str,
+	quantity: int
+):
+	try:
+		room = store.request_item_for_room(customer_id, reservation_id, product_id, quantity)
+		return {
+			"message": "Item requested for room",
+			"room_id": room.id,
+			"total_items_in_room": len(room.product_item_list)
 		}
 	except ValueError as e:
 		raise HTTPException(status_code=400, detail=str(e))
