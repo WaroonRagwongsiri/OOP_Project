@@ -1,23 +1,39 @@
 from datetime import datetime
-from fastapi import FastAPI, HTTPException
+
+from mcp.server.fastmcp import FastMCP
+
 from AllClass import *
-import uvicorn
 
-app = FastAPI()
-
+mcp = FastMCP("OOP Project")
 store = GameStore("GameStore Demo")
 
 
-@app.get("/")
+@mcp.tool()
 def test_connection():
+	"""
+	Test the connection to the GameStore MCP service.
+
+	Returns:
+		dict: A dictionary indicating the service is working.
+	"""
 	return {"message": "Hello World"}
 
 
 # -------------------------
 # Customer
 # -------------------------
-@app.post("/customers")
+@mcp.tool()
 def create_customer(name: str, age: int):
+	"""
+	Create a new customer.
+
+	Args:
+		name (str): Customer name.
+		age (int): Customer age.
+
+	Returns:
+		dict: Customer information.
+	"""
 	try:
 		customer = store.create_customer(name, age)
 		return {
@@ -26,189 +42,316 @@ def create_customer(name: str, age: int):
 			"age": customer.age
 		}
 	except Exception as e:
-		raise HTTPException(status_code=400, detail=str(e))
+		return f"Error: {e.__str__()}"
 
 
-@app.get("/customers")
+@mcp.tool()
 def get_all_customers():
-	customers = store.get_all_customer()
-	return [
-		{
-			"id": customer.id,
-			"name": customer.name,
-			"age": customer.age
-		}
-		for customer in customers
-	]
+	"""
+	Get all customers.
+
+	Returns:
+		list[dict]: Customer records.
+	"""
+	try:
+		customers = store.get_all_customer()
+		return [
+			{
+				"id": customer.id,
+				"name": customer.name,
+				"age": customer.age
+			}
+			for customer in customers
+		]
+	except Exception as e:
+		return f"Error: {e.__str__()}"
 
 
 # -------------------------
 # Staff / Manager
 # -------------------------
-@app.post("/staffs")
+@mcp.tool()
 def create_staff(name: str, age: int):
+	"""
+	Create a new staff.
+
+	Args:
+		name (str): Staff name.
+		age (int): Staff age.
+
+	Returns:
+		dict: Staff information.
+	"""
 	try:
 		staff = store.create_staff(name, age)
 		return {
 			"id": staff.id
 		}
 	except Exception as e:
-		raise HTTPException(status_code=400, detail=str(e))
+		return f"Error: {e.__str__()}"
 
 
-@app.post("/managers")
+@mcp.tool()
 def create_manager(name: str, age: int):
+	"""
+	Create a new manager.
+
+	Args:
+		name (str): Manager name.
+		age (int): Manager age.
+
+	Returns:
+		dict: Manager information.
+	"""
 	try:
 		manager = store.create_manager(name, age)
 		return {
 			"id": manager.id
 		}
 	except Exception as e:
-		raise HTTPException(status_code=400, detail=str(e))
+		return f"Error: {e.__str__()}"
 
 
 # -------------------------
 # Room
 # -------------------------
-@app.post("/rooms")
+@mcp.tool()
 def create_room(max_customer: int, rate_price: float):
+	"""
+	Create a new room.
+
+	Args:
+		max_customer (int): Maximum number of customers in room.
+		rate_price (float): Room price.
+
+	Returns:
+		dict: Room information.
+	"""
 	try:
 		room = store.create_room(max_customer, rate_price)
 		return {
 			"id": room.id,
-			"status": room.status.value
+			"status": room.status
 		}
 	except Exception as e:
-		raise HTTPException(status_code=400, detail=str(e))
+		return f"Error: {e.__str__()}"
 
 
-@app.get("/rooms/available")
+@mcp.tool()
 def get_available_rooms():
-	rooms = store.get_available_room()
-	return [
-		{
-			"id": room.id,
-			"status": room.status.value
-		}
-		for room in rooms
-	]
+	"""
+	Get all available rooms.
+
+	Returns:
+		list[dict]: Available room records.
+	"""
+	try:
+		rooms = store.get_available_room()
+		return [
+			{
+				"id": room.id,
+				"status": room.status
+			}
+			for room in rooms
+		]
+	except Exception as e:
+		return f"Error: {e.__str__()}"
 
 
 # -------------------------
 # Reservation
 # -------------------------
-@app.post("/reservations")
+@mcp.tool()
 def create_reservation(
 	customer_id: str,
 	room_id: str,
 	start_time: datetime,
 	end_time: datetime
 ):
+	"""
+	Create a reservation.
+
+	Args:
+		customer_id (str): Customer id.
+		room_id (str): Room id.
+		start_time (datetime): Reservation start time.
+		end_time (datetime): Reservation end time.
+
+	Returns:
+		dict: Reservation information.
+	"""
 	try:
 		reservation_id = store.create_reservation(customer_id, room_id, start_time, end_time)
 		reservation = store.get_reservation_by_id(reservation_id)
 		return {
 			"id": reservation.id,
-			"status": reservation.status.value,
+			"status": reservation.status,
 			"start_time": reservation.start_time,
 			"end_time": reservation.end_time,
 			"room_id": reservation.room.id,
 			"customer_id": reservation.customer.id
 		}
-	except ValueError as e:
-		raise HTTPException(status_code=400, detail=str(e))
 	except Exception as e:
-		raise HTTPException(status_code=500, detail=str(e))
+		return f"Error: {e.__str__()}"
 
 
-@app.patch("/reservations/cancel")
+@mcp.tool()
 def cancel_reservation(customer_id: str, reservation_id: str):
+	"""
+	Cancel a reservation.
+
+	Args:
+		customer_id (str): Customer id.
+		reservation_id (str): Reservation id.
+
+	Returns:
+		dict: Cancellation result.
+	"""
 	try:
 		reservation = store.cancel_reservation(customer_id, reservation_id)
 		return {
 			"message": "Reservation cancelled",
 			"id": reservation.id,
-			"status": reservation.status.value
+			"status": reservation.status
 		}
-	except ValueError as e:
-		raise HTTPException(status_code=400, detail=str(e))
 	except Exception as e:
-		raise HTTPException(status_code=500, detail=str(e))
+		return f"Error: {e.__str__()}"
 
 
-@app.patch("/reservations/check-in")
+@mcp.tool()
 def check_in(customer_id: str, reservation_id: str):
+	"""
+	Check in a reservation.
+
+	Args:
+		customer_id (str): Customer id.
+		reservation_id (str): Reservation id.
+
+	Returns:
+		dict: Check-in result.
+	"""
 	try:
 		reservation = store.check_in(customer_id, reservation_id)
 		return {
 			"message": "Check in success",
 			"id": reservation.id,
-			"status": reservation.status.value,
+			"status": reservation.status,
 			"room_id": reservation.room.id,
 			"customer_id": reservation.customer.id
 		}
-	except ValueError as e:
-		raise HTTPException(status_code=400, detail=str(e))
 	except Exception as e:
-		raise HTTPException(status_code=500, detail=str(e))
+		return f"Error: {e.__str__()}"
 
 
-@app.patch("/reservations/check-out")
+@mcp.tool()
 def check_out(customer_id: str, reservation_id: str):
+	"""
+	Check out a reservation.
+
+	Args:
+		customer_id (str): Customer id.
+		reservation_id (str): Reservation id.
+
+	Returns:
+		dict: Check-out result.
+	"""
 	try:
 		reservation = store.check_out(customer_id, reservation_id)
 		return {
 			"message": "Check out success",
 			"id": reservation.id,
-			"status": reservation.status.value,
+			"status": reservation.status,
 			"room_id": reservation.room.id,
 			"customer_id": reservation.customer.id
 		}
-	except ValueError as e:
-		raise HTTPException(status_code=400, detail=str(e))
 	except Exception as e:
-		raise HTTPException(status_code=500, detail=str(e))
+		return f"Error: {e.__str__()}"
+
+
+@mcp.tool()
+def extend_time(customer_id: str, reservation_id: str, additional_hours: float):
+	"""
+	Extend reservation time.
+
+	Args:
+		customer_id (str): Customer id.
+		reservation_id (str): Reservation id.
+		additional_hours (float): Additional hours to add.
+
+	Returns:
+		dict: Updated reservation information.
+	"""
+	try:
+		reservation = store.extend_time(customer_id, reservation_id, additional_hours)
+		return {
+			"message": "Reservation extended",
+			"id": reservation.id,
+			"status": reservation.status,
+			"start_time": reservation.start_time,
+			"end_time": reservation.end_time,
+			"room_id": reservation.room.id,
+			"customer_id": reservation.customer.id,
+			"additional_hours": additional_hours
+		}
+	except Exception as e:
+		return f"Error: {e.__str__()}"
 
 
 # -------------------------
 # Member
 # -------------------------
-@app.post("/subscribe")
+@mcp.tool()
 def subscribe(
 	customer_id: str,
 	payment_gateway_name: str,
 	payment_information: str
 ):
+	"""
+	Subscribe a customer as a member.
+
+	Args:
+		customer_id (str): Customer id.
+		payment_gateway_name (str): Payment gateway name.
+		payment_information (str): Payment information.
+
+	Returns:
+		dict: Membership information.
+	"""
 	try:
 		member = store.subscribe(customer_id, payment_gateway_name, payment_information)
 		return {
 			"member_id": member.member_id,
 			"customer_id": member.id,
-			"status": member.status.value
+			"status": member.status
 		}
-	except ValueError as e:
-		raise HTTPException(status_code=400, detail=str(e))
 	except Exception as e:
-		raise HTTPException(status_code=500, detail=str(e))
+		return f"Error: {e.__str__()}"
 
 
-@app.patch("/members/unsubscribe")
+@mcp.tool()
 def unsubscribe(member_id: str):
+	"""
+	Unsubscribe a member.
+
+	Args:
+		member_id (str): Member id.
+
+	Returns:
+		dict: Unsubscribe result.
+	"""
 	try:
 		result = store.unsubscribe(member_id)
 		return {
 			"message": result
 		}
-	except ValueError as e:
-		raise HTTPException(status_code=400, detail=str(e))
 	except Exception as e:
-		raise HTTPException(status_code=500, detail=str(e))
+		return f"Error: {e.__str__()}"
 
 
 # -------------------------
 # Product / Game / Machine
 # -------------------------
-@app.post("/games")
+@mcp.tool()
 def create_game(
 	manager_id: str,
 	name: str,
@@ -216,39 +359,65 @@ def create_game(
 	genre: str,
 	game_type: str
 ):
+	"""
+	Create a new game.
+
+	Args:
+		manager_id (str): Manager id.
+		name (str): Game name.
+		description (str): Game description.
+		genre (str): Game genre.
+		game_type (str): Game type.
+
+	Returns:
+		dict: Game information.
+	"""
 	try:
 		game = store.create_game(manager_id, name, description, genre, game_type)
 		return {
 			"id": game.id
 		}
-	except ValueError as e:
-		raise HTTPException(status_code=400, detail=str(e))
 	except Exception as e:
-		raise HTTPException(status_code=500, detail=str(e))
+		return f"Error: {e.__str__()}"
 
 
-@app.post("/machines")
+@mcp.tool()
 def create_machine(
 	manager_id: str,
 	name: str,
 	machine_type: str
 ):
+	"""
+	Create a new machine.
+
+	Args:
+		manager_id (str): Manager id.
+		name (str): Machine name.
+		machine_type (str): Machine type.
+
+	Returns:
+		dict: Machine information.
+	"""
 	try:
 		machine = store.create_machine(manager_id, name, machine_type)
 		return {
 			"id": machine.id
 		}
-	except ValueError as e:
-		raise HTTPException(status_code=400, detail=str(e))
 	except Exception as e:
-		raise HTTPException(status_code=500, detail=str(e))
+		return f"Error: {e.__str__()}"
 
 
 # -------------------------
 # Stock
 # -------------------------
-@app.get("/stocks")
+@mcp.tool()
 def get_all_stocks():
+	"""
+	Get all stocks.
+
+	Returns:
+		list[dict]: Stock records.
+	"""
 	try:
 		stocks = store.get_all_stock()
 		return [
@@ -259,16 +428,28 @@ def get_all_stocks():
 			for stock in stocks
 		]
 	except Exception as e:
-		raise HTTPException(status_code=500, detail=str(e))
+		return f"Error: {e.__str__()}"
 
 
-@app.patch("/stocks/refill")
+@mcp.tool()
 def refill_stock(
 	manager_id: str,
 	stock_id: str,
 	quantity: int,
 	sell_price: float
 ):
+	"""
+	Refill stock.
+
+	Args:
+		manager_id (str): Manager id.
+		stock_id (str): Stock id.
+		quantity (int): Quantity to add.
+		sell_price (float): Sell price.
+
+	Returns:
+		dict: Refill result.
+	"""
 	try:
 		stock = store.refill_stock(manager_id, stock_id, quantity, sell_price)
 		return {
@@ -276,17 +457,24 @@ def refill_stock(
 			"stock_id": stock.id,
 			"product_id": stock.product.id
 		}
-	except ValueError as e:
-		raise HTTPException(status_code=400, detail=str(e))
 	except Exception as e:
-		raise HTTPException(status_code=500, detail=str(e))
+		return f"Error: {e.__str__()}"
 
 
 # -------------------------
 # Shelf
 # -------------------------
-@app.post("/shelves")
+@mcp.tool()
 def create_shelf(max_capacity: int):
+	"""
+	Create a shelf.
+
+	Args:
+		max_capacity (int): Shelf capacity.
+
+	Returns:
+		dict: Shelf information.
+	"""
 	try:
 		shelf = store.create_shelf(max_capacity)
 		return {
@@ -294,14 +482,18 @@ def create_shelf(max_capacity: int):
 			"max_capacity": shelf.max_capacity,
 			"current_amount": len(shelf.product_on__shelf)
 		}
-	except ValueError as e:
-		raise HTTPException(status_code=400, detail=str(e))
 	except Exception as e:
-		raise HTTPException(status_code=500, detail=str(e))
+		return f"Error: {e.__str__()}"
 
 
-@app.get("/shelves")
+@mcp.tool()
 def get_all_shelves():
+	"""
+	Get all shelves.
+
+	Returns:
+		list[dict]: Shelf records.
+	"""
 	try:
 		shelves = store.get_all_shelf()
 		return [
@@ -313,16 +505,28 @@ def get_all_shelves():
 			for shelf in shelves
 		]
 	except Exception as e:
-		raise HTTPException(status_code=500, detail=str(e))
+		return f"Error: {e.__str__()}"
 
 
-@app.patch("/shelves/refill")
+@mcp.tool()
 def refill_shelf(
 	staff_id: str,
 	shelf_id: str,
 	stock_id: str,
 	quantity: int
 ):
+	"""
+	Refill a shelf from stock.
+
+	Args:
+		staff_id (str): Staff id.
+		shelf_id (str): Shelf id.
+		stock_id (str): Stock id.
+		quantity (int): Quantity to move.
+
+	Returns:
+		dict: Refill result.
+	"""
 	try:
 		shelf = store.refill_shelf(staff_id, shelf_id, stock_id, quantity)
 		return {
@@ -331,16 +535,14 @@ def refill_shelf(
 			"current_amount": len(shelf.product_on__shelf),
 			"max_capacity": shelf.max_capacity
 		}
-	except ValueError as e:
-		raise HTTPException(status_code=400, detail=str(e))
 	except Exception as e:
-		raise HTTPException(status_code=500, detail=str(e))
+		return f"Error: {e.__str__()}"
 
 
 # -------------------------
 # Coupon
 # -------------------------
-@app.post("/coupons")
+@mcp.tool()
 def create_coupon(
 	manager_id: str,
 	customer_id: str,
@@ -348,6 +550,19 @@ def create_coupon(
 	discount_amount: float,
 	expire_date: datetime
 ):
+	"""
+	Create a coupon.
+
+	Args:
+		manager_id (str): Manager id.
+		customer_id (str): Customer id.
+		minimum_amount (float): Minimum amount.
+		discount_amount (float): Discount amount.
+		expire_date (datetime): Expiration date.
+
+	Returns:
+		dict: Coupon information.
+	"""
 	try:
 		coupon = store.create_coupon(
 			manager_id,
@@ -363,31 +578,46 @@ def create_coupon(
 			"discount_amount": coupon.discount_amount,
 			"expire_date": coupon.expire_date
 		}
-	except ValueError as e:
-		raise HTTPException(status_code=400, detail=str(e))
 	except Exception as e:
-		raise HTTPException(status_code=500, detail=str(e))
+		return f"Error: {e.__str__()}"
 
 
 # -------------------------
 # Cart
 # -------------------------
-@app.post("/cart/items")
+@mcp.tool()
 def add_product_to_cart(customer_id: str, product_id: str):
+	"""
+	Add a product to customer cart.
+
+	Args:
+		customer_id (str): Customer id.
+		product_id (str): Product id.
+
+	Returns:
+		dict: Cart summary.
+	"""
 	try:
 		cart = store.add_product_to_customer(customer_id, product_id)
 		return {
 			"message": "Product added to cart",
 			"total_items": len(cart.products)
 		}
-	except ValueError as e:
-		raise HTTPException(status_code=400, detail=str(e))
 	except Exception as e:
-		raise HTTPException(status_code=500, detail=str(e))
+		return f"Error: {e.__str__()}"
 
 
-@app.get("/cart")
+@mcp.tool()
 def view_cart(customer_id: str):
+	"""
+	View a customer cart.
+
+	Args:
+		customer_id (str): Customer id.
+
+	Returns:
+		list[dict]: Cart items.
+	"""
 	try:
 		cart_items = store.view_cart(customer_id)
 		return [
@@ -398,60 +628,83 @@ def view_cart(customer_id: str):
 			}
 			for item in cart_items
 		]
-	except ValueError as e:
-		raise HTTPException(status_code=400, detail=str(e))
 	except Exception as e:
-		raise HTTPException(status_code=500, detail=str(e))
+		return f"Error: {e.__str__()}"
 
 
-@app.delete("/cart/items")
+@mcp.tool()
 def remove_item_from_cart(customer_id: str, product_id: str):
+	"""
+	Remove an item from customer cart.
+
+	Args:
+		customer_id (str): Customer id.
+		product_id (str): Product id.
+
+	Returns:
+		dict: Cart summary.
+	"""
 	try:
 		cart = store.remove_item_from_cart(customer_id, product_id)
 		return {
 			"message": "Product removed from cart",
 			"total_items": len(cart.products)
 		}
-	except ValueError as e:
-		raise HTTPException(status_code=400, detail=str(e))
 	except Exception as e:
-		raise HTTPException(status_code=500, detail=str(e))
+		return f"Error: {e.__str__()}"
 
 
 # -------------------------
 # Product Detail
 # -------------------------
-@app.get("/products/detail")
+@mcp.tool()
 def view_product_detail(serial_number: str):
+	"""
+	View product detail by serial number.
+
+	Args:
+		serial_number (str): Product serial number.
+
+	Returns:
+		dict | None: Product detail or None.
+	"""
 	try:
 		product_detail = store.view_product_detail(serial_number)
 		if product_detail is None:
-			raise HTTPException(status_code=404, detail="Product item not found")
+			return None
 
 		return {
 			"serial_number": serial_number,
-			"status": product_detail["status"].value,
+			"status": product_detail["status"],
 			"sell_price": product_detail["sell_price"],
 			"condition": product_detail["condition"]
 		}
-	except HTTPException:
-		raise
-	except ValueError as e:
-		raise HTTPException(status_code=400, detail=str(e))
 	except Exception as e:
-		raise HTTPException(status_code=500, detail=str(e))
+		return f"Error: {e.__str__()}"
 
 
 # -------------------------
 # Room Item Request
 # -------------------------
-@app.post("/rooms/request-item")
+@mcp.tool()
 def request_item_for_room(
 	customer_id: str,
 	reservation_id: str,
 	product_id: str,
 	quantity: int
 ):
+	"""
+	Request item for a room.
+
+	Args:
+		customer_id (str): Customer id.
+		reservation_id (str): Reservation id.
+		product_id (str): Product id.
+		quantity (int): Quantity requested.
+
+	Returns:
+		dict: Room item request result.
+	"""
 	try:
 		room = store.request_item_for_room(customer_id, reservation_id, product_id, quantity)
 		return {
@@ -459,11 +712,13 @@ def request_item_for_room(
 			"room_id": room.id,
 			"total_items_in_room": len(room.product_item_list)
 		}
-	except ValueError as e:
-		raise HTTPException(status_code=400, detail=str(e))
 	except Exception as e:
-		raise HTTPException(status_code=500, detail=str(e))
+		return f"Error: {e.__str__()}"
+
+
+def main():
+	mcp.run(transport="stdio")
 
 
 if __name__ == "__main__":
-	uvicorn.run("main:app", host="127.0.0.1", port=8000, reload=True)
+	main()
