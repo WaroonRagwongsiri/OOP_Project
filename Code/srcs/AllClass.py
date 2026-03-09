@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, timedelta
 from enum import Enum
 import uuid
 
@@ -340,6 +340,10 @@ class Reservation:
 	start_time = property(get_start_time)
 	end_time = property(get_end_time)
 
+	@end_time.setter
+	def end_time(self, value: datetime):
+		self.__end_time = value
+
 	def calculate_price(self) -> float:
 		duration = self.__end_time - self.__start_time
 		hours = duration.total_seconds() / 3600
@@ -416,6 +420,7 @@ class CustomerAction(Enum):
 	CANCEL_RESERVATION = "Cancel Reservation"
 	CHECK_IN = "Check In"
 	CHECK_OUT = "Check Out"
+	EXTEND_TIME = "Extend Time"
 
 class CustomerLogs(Logs):
 	def __init__(self, log_id: str, customer: Customer, action: CustomerAction):
@@ -783,6 +788,31 @@ class GameStore:
 
 		return reservation
 
+	def extend_time(self, customer_id: str, reservation_id: str, additional_hours: float) -> Reservation:
+		customer = self.get_customer_by_id(customer_id)
+		if not customer:
+			raise ValueError("Customer not found")
+
+		reservation = customer.get_reservation_from_id(reservation_id)
+		if not reservation:
+			raise ValueError("Reservation not found")
+
+		if reservation.status != ReservationStatusEnum.CHECK_IN:
+			raise ValueError("Reservation not checked in")
+
+		if additional_hours <= 0:
+			raise ValueError("Invalid additional hours")
+
+		new_end_time = reservation.end_time + timedelta(hours=additional_hours)
+
+		if not reservation.room.check_time_availability(reservation.start_time, new_end_time):
+			raise ValueError("Room not available for extended time")
+
+		reservation.end_time = new_end_time
+
+		self.create_customer_logs(customer, CustomerAction.EXTEND_TIME)
+		return reservation
+	
 	def create_coupon(self, manager_id: str, customer_id: str, minimum_amount: float, discount_amount: float, expire_date: datetime) -> Coupon:
 		manager = self.get_manager_by_id(manager_id)
 		if not manager:
