@@ -819,6 +819,9 @@ class GameStore:
 		if not room:
 			raise ValueError("Room not found")
 
+		if reservation.status == ReservationStatusEnum.CHECK_IN:
+			raise ValueError("Already check in")
+
 		room.customer = reservation.customer
 		reservation.status = ReservationStatusEnum.CHECK_IN
 
@@ -842,6 +845,9 @@ class GameStore:
 		room = reservation.room
 		if room.customer != customer:
 			raise ValueError("Invalid Customer")
+		
+		if reservation.status == ReservationStatusEnum.CHECK_OUT:
+			raise ValueError("Already check out")
 
 		reservation.status = ReservationStatusEnum.CHECK_OUT
 		room.customer = None
