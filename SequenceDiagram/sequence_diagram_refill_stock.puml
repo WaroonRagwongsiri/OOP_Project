@@ -21,24 +21,32 @@ alt Did find manager instance
         deactivate StockProduct
     end
 
-    alt Did find StockProduct and 
-        GameStore -> StockProduct : refill_stock(quantity, sell_price)
-        activate StockProduct
-        loop loop for total of quantity times
-            StockProduct -> ProductItem : Create product item
-            activate ProductItem
-            ProductItem -> StockProduct : Return product item instance for storing
-            deactivate ProductItem
+    alt Did find StockProduct
+        alt quantity is more than zero
+            alt sell_price is more than zero
+                GameStore -> StockProduct : refill_stock(quantity, sell_price)
+                activate StockProduct
+                loop loop for total of quantity times
+                    StockProduct -> ProductItem : Create product item
+                    activate ProductItem
+                    ProductItem -> StockProduct : Return product item instance for storing
+                    deactivate ProductItem
+                end
+                StockProduct -> GameStore
+                deactivate StockProduct
+
+                GameStore -> Log : create_log(manager_instance, ManagerAction.REFILL_STOCK, stock_product)
+                activate Log
+                Log -> GameStore : Return instance for storing
+                deactivate Log
+
+                GameStore -> ManagerA : stock_product
+            else
+                GameStore -> ManagerA : Failed (Invalid sell_price)
+            end
+        else 
+            GameStore -> ManagerA : Failed (Invalid quantity)
         end
-        StockProduct -> GameStore
-        deactivate StockProduct
-
-        GameStore -> Log : create_log(manager_instance, ManagerAction.REFILL_STOCK, stock_product)
-        activate Log
-        Log -> GameStore : Return instance for storing
-        deactivate Log
-
-        GameStore -> ManagerA : stock_product
     else Did not find
         GameStore -> ManagerA : Failed (Invalid product ID)
     end
