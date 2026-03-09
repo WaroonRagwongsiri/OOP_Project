@@ -299,9 +299,21 @@ class Room:
 		self.__reservation_list.append(new_reservation)
 		return new_reservation
 
-	def check_time_availability(self, start_time: datetime, end_time: datetime) -> bool:
+	def check_time_availability(
+		self,
+		start_time: datetime,
+		end_time: datetime,
+		exclude_reservation_id: str | None = None
+	) -> bool:
 		for reservation in self.__reservation_list:
-			if start_time < reservation.end_time and end_time > reservation.start_time and reservation.status != ReservationStatusEnum.CANCEL:
+			if exclude_reservation_id is not None and reservation.id == exclude_reservation_id:
+				continue
+
+			if (
+				reservation.status != ReservationStatusEnum.CANCEL
+				and start_time < reservation.end_time
+				and end_time > reservation.start_time
+			):
 				return False
 		return True
 
@@ -413,6 +425,8 @@ class StockProduct:
 
 	def add_to_stock(self, transfer: list[ProductItem]):
 		self.__product_item_list.extend(transfer)
+		for product_item in self.__product_item_list:
+			product_item.status = ProductItemStatus.STOCKED
 
 class Shelf:
 	def __init__(self, max_capacity: int):
@@ -424,6 +438,8 @@ class Shelf:
 		if len(self.__product_on_shelf) + len(product_item_list) > self.__max_capacity:
 			raise ValueError("Exceed capacity")
 		self.__product_on_shelf.extend(product_item_list)
+		for product_item in self.__product_on_shelf:
+			product_item.status = ProductItemStatus.SELLING
 
 	def get_id(self) -> str:
 		return self.__id
@@ -848,7 +864,11 @@ class GameStore:
 
 		new_end_time = reservation.end_time + timedelta(hours=additional_hours)
 
-		if not reservation.room.check_time_availability(reservation.start_time, new_end_time):
+		if not reservation.room.check_time_availability(
+			reservation.start_time,
+			new_end_time,
+			exclude_reservation_id=reservation.id
+		):
 			raise ValueError("Room not available for extended time")
 
 		reservation.end_time = new_end_time

@@ -21,7 +21,7 @@ Call get_available_rooms → expect the room created above appears
 🎮 Phase 3 – Product & Inventory Setup
 
 Call create_game with manager_id={manager_id}, name="Chess", description="Classic strategy game", genre="Strategy", game_type="DISC" → save game_id
-Call create_machine with manager_id={manager_id}, name="Arcade1", machine_type="Arcade" → save machine_id
+Call create_machine with manager_id={manager_id}, name="Arcade1", machine_type="PLAYSTATION" → save machine_id
 Call get_all_stocks → save a stock_id from the list
 Call refill_stock with manager_id={manager_id}, stock_id={stock_id}, quantity=10, sell_price=29.99 → expect success message
 Call create_shelf with max_capacity=5 → save shelf_id
