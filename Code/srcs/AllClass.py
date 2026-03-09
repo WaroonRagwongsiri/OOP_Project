@@ -39,6 +39,10 @@ class Customer:
 	def get_age(self) -> int:
 		return self.__age
 
+	@property
+	def bill_list(self) -> list[Bill]:
+		return self.__bill_list
+
 	name = property(get_name)
 	age = property(get_age)
 	cart = property(get_cart)
@@ -374,9 +378,11 @@ class Logs:
 
 class CustomerAction(Enum):
 	CREATE_RESERVATION = "Create Reservation"
+	CANCEL_RESERVATION = "Cancel Reservation"
 	SUBSCRIBE = "Subscribe"
 	UNSUBSCRIBE = "Unsubscribe"
-	CANCEL_RESERVATION = "Cancel Reservation"
+	PURCHASE = "Purchase"
+	REFUND = "Refund"
 
 class CustomerLogs(Logs):
 	def __init__(self, log_id: str, customer: Customer, action: CustomerAction):
@@ -691,7 +697,7 @@ class GameStore:
 		new_log = self.create_manager_logs(manager, ManagerAction.REFILL_STOCK, stock)
 		return stock
 
-	def add_product_to_customer(self, customer_id : str, product_id : str):
+	def add_product_to_customer(self, customer_id : str, product_id : str) -> Cart:
 		stock_product = None
 		for stock in self.get_all_stock():
 			if stock.product.id == product_id:
@@ -709,12 +715,12 @@ class GameStore:
 
 		return cart
 	
-	def view_cart(self, customer_id : str):
+	def view_cart(self, customer_id : str) -> list[CartItem]:
 		customer_instance = self.get_customer_by_id(customer_id)
 		cart: Cart = customer_instance.cart
 		return [item for item in cart.products]
 	
-	def remove_item_from_cart(self, customer_id: str, product_id: str):
+	def remove_item_from_cart(self, customer_id: str, product_id: str) -> Cart:
 		customer_instance = self.get_customer_by_id(customer_id)
 		cart: Cart = customer_instance.cart
 		for cartItem in cart.products:
@@ -723,7 +729,7 @@ class GameStore:
 				break
 		return cart
 	
-	def view_product_detail(self, serial_number: str):
+	def view_product_detail(self, serial_number: str) -> dict:
 		product = self.get_product_by_id(serial_number)
 		for stock in self.get_all_stock():
 			for product_item in stock.product_item_list:
@@ -734,6 +740,81 @@ class GameStore:
 						"condition": product_item.condition
 					}
 		return None
+	
+	def view_store(self) -> dict:
+		return {
+			"id": self.__store_id,
+			"name": self.__store_name,
+			"customers" : self.__customer_list,
+			"members": self.__member_list,
+			"rooms": self.__room_list,
+			"staffs": self.__staff_list,
+			"stock product list": self.__stock_product_list,
+			"shelfs": self.__shelf_list,
+			"customer logs": self.__customer_logs_list,
+			"staff logs": self.__staff_logs_list,
+			"bills": self.__bill_list,
+			"payment gateways": self.__payment_gateway_list
+		}
+
+	def purchase(self, customer_id : str, payment_method_name : str, payment_info : list, coupon: Disc):
+		customer_instance = self.get_customer_by_id(customer_id)
+		if not customer_instance:
+			raise Exception("Customer doesn't exist")
+
+		payment_method = self.get_payment_gateway_by_name(payment_method_name)
+		if not payment_method:
+			raise Exception("Payment method not found")
+
+		cart_instance: Cart = customer_instance.cart
+		cart_item_instances: list[CartItem] = cart_instance.products
+
+		# Check if stock does still have that instance
+		for cart_item in cart_item_instances:
+			for stock_product in self.__stock_product_list:
+				if stock_product.product == cart_item.product_item.product:
+					for item in stock_product.product_item_list:
+						if cart_item.is_buy and (cart_item.product_item == item):
+							break
+					else:
+						raise Exception("Store already sold that product")
+			
+		# Payment
+		total_pricing = 0
+		for cart_item in cart_item_instances:
+			if cart_item.is_buy:
+				total_pricing += cart_item.product_item.calculate_price()
+		total_pricing *= customer_instance.apply_discount_benefit()
+		status = payment_method.start_payment(total_pricing, payment_info)
+		if not status:
+			raise Exception("Payment Failed.")
+
+		# Giving the customer their product
+		cart_items_given_to_customer: list[CartItem] = []
+		for cart_item in cart_item_instances:
+			if cart_item.is_buy:
+				cart_items_given_to_customer.append(cart_item)
+
+		# Remove product item from customer's cart
+		for cart_item in cart_items_given_to_customer:
+			cart_item_instances.remove(cart_item)
+
+		# Remove product item from stock
+		for cart_item in cart_items_given_to_customer:
+			product: Product = cart_item.product_item.product
+			for stock_product in self.__stock_product_list:
+				if stock_product.product == product:
+					stock_product.product_item_list.remove(cart_item.product_item)
+
+		bill = Bill(payment_method, total_pricing)
+		self.__bill_list.append(bill)
+		customer_instance.__bill_list.append(bill)
+
+		customer_log = self.create_customer_logs(customer_instance, CustomerAction.PURCHASE)
+		self.__customer_logs_list(customer_log)
+
+		product_sn_list = [cart_item.product_item.serial_number for cart_item in cart_items_given_to_customer]
+		return [bill, product_sn_list]
 
 class Bill:
 	def __init__(self, payment_gateway: PaymentGateway, amount: float):
