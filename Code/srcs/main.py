@@ -5,7 +5,7 @@ from mcp.server.fastmcp import FastMCP
 from AllClass import *
 
 mcp = FastMCP("OOP Project")
-store = GameStore("GameStore Demo")
+store = GameStore("Microslop")
 
 
 @mcp.tool()
