@@ -6,45 +6,50 @@ A_Customer -> GameStore: check_in(customer_id, reservation_id)
 activate A_Customer
 
 activate GameStore
-GameStore -> Customer: get_customer_by_id(customer_id)
-activate Customer
-Customer -> GameStore: Customer
-deactivate Customer
+loop get customer by id
+	GameStore -> Customer: get_customer_by_id(customer_id)
+	activate Customer
+	Customer -> GameStore: Customer
+	deactivate Customer
+end
+
 
 GameStore -> Customer: get_reservation_from_id(reservation_id)
 activate Customer
-Customer -> Reservation: get_reservation_from_id(reservation_id)
-activate Reservation
-Reservation -> Customer: Reservation
-deactivate Reservation
+loop get reservation by id
+	Customer -> Reservation: get_reservation_from_id(reservation_id)
+	activate Reservation
+	Reservation -> Customer: Reservation
+	deactivate Reservation
+end
 Customer -> GameStore: Reservation
 deactivate Customer
 
-GameStore -> Reservation: room
+GameStore -> Reservation: get_room(reservation)
 activate Reservation
-Reservation -> Room: room
+Reservation -> Room: get_room(reservation)
 activate Room
 Room -> Reservation: Room
 deactivate Room
 Reservation -> GameStore: Room
 deactivate Reservation
 
-GameStore -> Room: customer = reservation.customer
+GameStore -> Room: set_room_customer(customer)
 activate Room
-Room -> GameStore: (set)
+Room -> GameStore:
 deactivate Room
 
-GameStore -> Reservation: status = CHECK_IN
+GameStore -> Reservation: set_status(CHECK_IN)
 activate Reservation
-Reservation -> GameStore: (set)
+Reservation -> GameStore:
 deactivate Reservation
 
-GameStore -> CustomerLogs: CustomerLogs(make_id("LC-CHECK_IN"), customer, CustomerAction.CHECK_IN)
+GameStore -> CustomerLogs: CustomerLogs(customer, CustomerAction.CHECK_IN)
 activate CustomerLogs
 CustomerLogs -> GameStore: CustomerLogs
 deactivate CustomerLogs
 
-GameStore -> GameStore: __customer_logs_list.append(log)
+GameStore -> GameStore: add_customer_log(log)
 
 GameStore -> A_Customer: Reservation
 deactivate GameStore
