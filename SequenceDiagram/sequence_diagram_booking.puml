@@ -1,70 +1,90 @@
-@startuml CreateReservation
+@startuml UsecaseSequenceDiagram
 
-actor A_Customer
+actor Customer as A_Customer
 participant GameStore
-participant P_Customer
+participant Customer as P_Customer
 participant Room
 participant Reservation
 participant Log
 
 A_Customer -> GameStore : create_reservation(customer_id, room_id, start_time, end_time)
+activate A_Customer
 activate GameStore
 
-loop search customer by id
-	GameStore -> P_Customer : get_customer_by_id(customer_id)
-	P_Customer --> GameStore : customer / None
-end
+alt create reservation success
 
-alt invalid customer
-	GameStore -> A_Customer : "Invalid User"
+	loop get customer by id
 
-else valid customer
-	GameStore -> P_Customer : check_time_availability(start_time, end_time)
+		GameStore -> P_Customer : Get customer
+		activate P_Customer
 
-	alt invalid time frame
-		GameStore -> A_Customer : "Invalid Time Frame"
+		P_Customer -> GameStore : Customer
+		deactivate P_Customer
 
-	else customer available
-
-		loop search room by id
-			GameStore -> Room : get_room_by_id(room_id)
-			Room --> GameStore : room / None
-		end
-
-		alt room not found
-			GameStore -> A_Customer : "No Room this ID"
-
-		else room found
-			GameStore -> Room : create_reservation(make_id("RE"), customer, start_time, end_time)
-			activate Room
-
-			Room -> Reservation : create reservation
-			activate Reservation
-			Reservation -> Reservation : initialize reservation data
-			Reservation --> Room : reservation / None
-			deactivate Reservation
-
-			alt reservation creation failed
-				Room --> GameStore : None
-				deactivate Room
-				GameStore -> A_Customer : "Invalid Time Frame"
-
-			else reservation created
-				Room --> GameStore : reservation
-				deactivate Room
-
-				GameStore -> P_Customer : add_reservation(reservation)
-
-				GameStore -> Log : create_customer_logs(customer, CREATE_RESERVATION)
-				activate Log
-				Log --> GameStore : log created
-				deactivate Log
-
-				GameStore --> A_Customer : reservation.id
-			end
-		end
 	end
+
+	GameStore -> P_Customer : check_time_availability(start_time, end_time)
+	activate P_Customer
+
+	P_Customer -> GameStore : Available
+	deactivate P_Customer
+
+	loop get room by id
+
+		GameStore -> Room : Get room
+		activate Room
+
+		Room -> GameStore : Room
+		deactivate Room
+
+	end
+
+	GameStore -> Room : create_reservation(customer, start_time, end_time)
+	activate Room
+
+	Room -> Reservation : create_reservation(customer, start_time, end_time)
+	activate Reservation
+	Reservation -> Room : Reservation
+	deactivate Reservation
+
+	Room -> GameStore : Reservation
+	deactivate Room
+
+	GameStore -> P_Customer : add_reservation(reservation)
+	activate P_Customer
+	P_Customer -> GameStore
+	deactivate P_Customer
+
+	GameStore -> Log : create_customer_logs(customer, CREATE_RESERVATION)
+	activate Log
+	Log -> GameStore : Log
+	deactivate Log
+
+	GameStore -> A_Customer : reservation.id
+
+else create reservation fail (invalid user)
+
+	P_Customer -> GameStore : Fail (invalid user)
+	GameStore -> A_Customer : Invalid User
+
+else create reservation fail (invalid time frame)
+
+	P_Customer -> GameStore : Fail (invalid time frame)
+	GameStore -> A_Customer : Invalid Time Frame
+
+else create reservation fail (no room this id)
+
+	Room -> GameStore : Fail (no room this id)
+	GameStore -> A_Customer : No Room this ID
+
+else create reservation fail (fail to create reservation)
+
+	Room -> GameStore : Fail (invalid time frame)
+	GameStore -> A_Customer : Invalid Time Frame
+
 end
 
 deactivate GameStore
+deactivate A_Customer
+
 @enduml
