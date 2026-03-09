@@ -34,7 +34,6 @@ rectangle "Store" {
 	usecase "Unsubscribe" as UC_Unsubscribe
 
 	'Staff'
-	usecase "Checkout" as UC_Checkout
 	usecase "ApplyDiscount" as UC_ApplyDiscount
 	usecase "CreateCustomer" as UC_CreateCustomer
 	usecase "CreateMember" as UC_CreateMember
@@ -58,7 +57,7 @@ rectangle "Store" {
 	usecase "UpgradeRoom" as UC_UpgradeRoom
 	usecase "CheckoutRoom" as UC_CheckoutRoom
 	usecase "Refund" as UC_Refund
-	usecase "RequestGameForRoom" as UC_RequestGameForRoom
+	usecase "RequestItemForRoom" as UC_RequestItemForRoom
 }
 
 'Customer'
@@ -66,7 +65,7 @@ A_Customer --> UC_ViewCart
 A_Customer --> UC_ViewStore
 A_Customer --> UC_Purchase
 A_Customer --> UC_Subscribe
-A_Customer --> UC_RequestGameForRoom
+A_Customer --> UC_RequestItemForRoom
 
 UC_ViewStore <.. UC_AddProductToCart : <<extend>>
 UC_ViewStore <.. UC_ViewProductDetail : <<extend>>
