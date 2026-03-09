@@ -533,7 +533,7 @@ class GameStore:
 		self.__staff_logs_list: list[StaffLogs] = []
 		self.__bill_list: list[Bill] = []
 
-		self.__payment_gateway_list: list[PaymentGateway] = [QRCode()]
+		self.__payment_gateway_list: list[PaymentGateway] = [QRCode(), Card()]
 
 	def create_customer(self, name: str, age: int) -> Customer:
 		new_customer = Customer(make_id("C"), name, age)
@@ -621,7 +621,7 @@ class GameStore:
 
 	def get_payment_gateway_by_name(self, payment_gateway_name: str) -> PaymentGateway | None:
 		for payment_gateway in self.__payment_gateway_list:
-			if payment_gateway.name == payment_gateway_name:
+			if payment_gateway.name.upper() == payment_gateway_name.upper():
 				return payment_gateway
 		return None
 
@@ -1271,6 +1271,23 @@ class PaymentGateway(ABC):
 class QRCode(PaymentGateway):
 	def __init__(self):
 		super().__init__("QRCode")
+
+	def authenticate(self, payment_information) -> bool:
+		return True
+
+	def pay(self, amount) -> bool:
+		return True
+
+	def start_payment(self, payment_information, amount) -> bool:
+		if not self.authenticate(payment_information):
+			return False
+		if not self.pay(amount):
+			return False
+		return True
+
+class Card(PaymentGateway):
+	def __init__(self):
+		super().__init__("Card")
 
 	def authenticate(self, payment_information) -> bool:
 		return True
