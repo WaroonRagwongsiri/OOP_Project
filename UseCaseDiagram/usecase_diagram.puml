@@ -18,7 +18,7 @@ rectangle "Store" {
 	usecase "AddProductToCart" as UC_AddProductToCart
 	usecase "ViewCart" as UC_ViewCart
 	usecase "RemoveItemFromCart" as UC_RemoveItemFromCart
-	usecase "ViewShelf" as UC_ViewShelf
+	usecase "ViewStore" as UC_ViewStore
 	usecase "ViewProductDetail" as UC_ViewProductDetail
 	usecase "Purchase" as UC_Purchase
 	usecase "UseCoupon" as UC_UseCoupon
@@ -34,6 +34,8 @@ rectangle "Store" {
 	usecase "Unsubscribe" as UC_Unsubscribe
 
 	'Staff'
+	usecase "Checkout" as UC_Checkout
+	usecase "ApplyDiscount" as UC_ApplyDiscount
 	usecase "CreateCustomer" as UC_CreateCustomer
 	usecase "CreateMember" as UC_CreateMember
 
@@ -41,10 +43,10 @@ rectangle "Store" {
 	usecase "CreateGame" as UC_CreateGame
 	usecase "CreateMachine" as UC_CreateMachine
 	usecase "ViewProductStock" as UC_ViewProductStock
-	usecase "ViewShelf" as UC_ViewShelf
 	usecase "RefillShelf" as UC_RefillShelf
 	usecase "CreateCoupon" as UC_CreateCoupon
 	usecase "RefillStock" as UC_RefillStock
+	usecase "ViewStock" as UC_ViewStock
 
 	'Room Reservation'
 	usecase "SearchAvailableRoom" as UC_SearchAvailableRoom
@@ -53,24 +55,21 @@ rectangle "Store" {
 	usecase "CancelReservation" as UC_CancelReservation
 	usecase "CheckIn" as UC_CheckIn
 	usecase "ExtendTime" as UC_ExtendTime
+	usecase "UpgradeRoom" as UC_UpgradeRoom
 	usecase "CheckoutRoom" as UC_CheckoutRoom
 	usecase "Refund" as UC_Refund
-	usecase "RequestItemForRoom" as UC_RequestItemForRoom
+	usecase "RequestGameForRoom" as UC_RequestGameForRoom
 }
 
 'Customer'
 A_Customer --> UC_ViewCart
-A_Customer --> UC_ViewShelf
+A_Customer --> UC_ViewStore
 A_Customer --> UC_Purchase
 A_Customer --> UC_Subscribe
-A_Customer --> UC_RequestItemForRoom
-A_Customer --> UC_SearchAvailableRoom
-A_Customer --> UC_CreateReservation
-A_Customer --> UC_ViewReservation
-A_Customer --> UC_CheckIn
+A_Customer --> UC_RequestGameForRoom
 
-UC_ViewShelf <.. UC_AddProductToCart : <<extend>>
-UC_ViewShelf <.. UC_ViewProductDetail : <<extend>>
+UC_ViewStore <.. UC_AddProductToCart : <<extend>>
+UC_ViewStore <.. UC_ViewProductDetail : <<extend>>
 
 UC_ViewProductDetail <.. UC_AddProductToCart : <<extend>>
 
@@ -88,27 +87,35 @@ A_Member --> UC_ApplyDiscountBenefit
 A_Member --> UC_Unsubscribe
 
 'Staff'
+A_Staff --> UC_Checkout
 A_Staff --> UC_ViewProductStock
 A_Staff --> UC_CreateCustomer
 A_Staff --> UC_CreateMember
-A_Staff --> UC_ViewShelf
+A_Staff --> UC_CheckIn
+A_Staff --> UC_CheckoutRoom
+A_Staff --> UC_ViewStock
 
-UC_CheckIn <.. UC_Refund : <<extend>>
-UC_CheckIn <.. UC_ExtendTime : <<extend>>
-UC_CheckIn <.. UC_RemoveItemFromCart : <<extend>>
-UC_CheckIn <.. UC_CheckoutRoom : <<extend>>
+UC_CheckoutRoom <.. UC_Refund : <<extend>>
+UC_CheckoutRoom <.. UC_ExtendTime : <<extend>>
+UC_CheckoutRoom <.. UC_UpgradeRoom : <<extend>>
 
-UC_ViewProductStock <.. UC_RefillStock : <<extend>>
-UC_ViewShelf <.. UC_RefillShelf : <<extend>>
+UC_Checkout <.. UC_ApplyDiscount : <<extend>>
+UC_ViewProductStock <.. UC_RefillShelf : <<extend>>
 
 'Manager'
 A_Manager --> UC_CreateCoupon
 A_Manager --> UC_ViewProductStock
 A_Manager --> UC_CreateGame
 A_Manager --> UC_CreateMachine
+A_Manager --> UC_RefillStock
+
+'Customer / Member Reservation
+A_Customer --> UC_SearchAvailableRoom
+A_Customer --> UC_CreateReservation
+A_Customer --> UC_ViewReservation
+A_Customer --> UC_CancelReservation
 
 UC_CreateReservation ..> UC_StartPayment : <<include>>
-UC_CreateReservation <.. UC_UseCoupon : <<extend>>
-UC_CreateReservation <.. UC_CancelReservation : <<extend>>
+UC_CreateReservation <.. UC_UseCoupon : <<exclude>>
 
 @enduml
