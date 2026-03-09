@@ -511,6 +511,7 @@ class GameStore:
 		self.__staff_list: list[Staff] = []
 		self.__stock_product_list: list[StockProduct] = []
 		self.__shelf_list: list[Shelf] = []
+		self.__bought_list: list[ProductItem] = []
 
 		self.__customer_logs_list: list[CustomerLogs] = []
 		self.__staff_logs_list: list[StaffLogs] = []
@@ -1013,14 +1014,18 @@ class GameStore:
 		for cart_item in cart_items_given_to_customer:
 			cart_item_instances.remove(cart_item)
 
+		bought_items = [cart_item.product_item for cart_item in cart_items_given_to_customer]
+
 		bill = self.create_bill(payment_method, total_pricing)
 		self.__bill_list.append(bill)
+		bill.add_product_items(bought_items)
+		self.__bought_list.extend(bought_items)
 		customer_instance.add_bill(bill)
 
 		customer_log = self.create_customer_logs(customer_instance, CustomerAction.PURCHASE)
 		self.__customer_logs_list.append(customer_log)
 
-		product_sn_list = [cart_item.product_item.serial_number for cart_item in cart_items_given_to_customer]
+		product_sn_list = [item.serial_number for item in bought_items]
 		return [bill, product_sn_list]
 	
 	def get_product_item_by_serial_number(self, serial_number: str) -> ProductItem:
@@ -1045,17 +1050,23 @@ class GameStore:
 		bill_instance : Bill = self.get_bill_by_id(bill_id)
 		if bill_instance is None:
 			raise Exception("Unable to find the bill instance")
-		
-		product_items: list[ProductItem] = [self.get_product_item_by_serial_number(serial_number) for serial_number in product_sn_list]
+
+		# Validate every serial was part of this specific bill
+		bill_sn_set = {item.serial_number for item in bill_instance.product_items}
+		invalid = [sn for sn in product_sn_list if sn not in bill_sn_set]
+		if invalid:
+			raise Exception(f"Serial numbers not found in this bill: {invalid}")
+
+		product_items: list[ProductItem] = [self.get_product_item_by_serial_number(sn) for sn in product_sn_list]
 		total_price = 0
 		for product_item in product_items:
 			total_price += product_item.calculate_price()
 			if product_item.status != ProductItemStatus.SOLDED:
 				raise Exception("Product is not sold")
-		
+
 		if bill_instance.amount != total_price:
 			raise Exception("Not matching money amount")
-		
+
 		for product_item in product_items:
 			product_item.status = ProductItemStatus.STOCKED
 
@@ -1167,14 +1178,23 @@ class Bill:
 		self.__timestamp: datetime = datetime.now()
 		self.__payment_gateway: PaymentGateway = payment_gateway
 		self.__amount: float = amount
+		self.__product_items: list[ProductItem] = []
 
 	@property
 	def id(self) -> str:
 		return self.__id
-	
+
 	@property
 	def amount(self) -> float:
 		return self.__amount
+
+	@property
+	def product_items(self) -> list[ProductItem]:
+		return self.__product_items
+
+	def add_product_items(self, items: list[ProductItem]):
+		self.__product_items.extend(items)
+
 
 class PaymentGateway(ABC):
 	def __init__(self, name: str):
