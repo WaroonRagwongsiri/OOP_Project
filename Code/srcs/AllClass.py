@@ -63,6 +63,9 @@ class Customer:
 	def apply_discount_benefit(self) -> float:
 		return 1
 
+	def add_coupon(self, coupon: Coupon):
+		self.__coupons_list.append(coupon)
+
 class MemberStatusEnum(Enum):
 	ACTIVE = "Active"
 	INACTIVE = "Inactive"
@@ -223,13 +226,18 @@ class Room:
 
 	rate_price = property(get_rate_price)
 
+	def get_reservation(self) -> list[Reservation]:
+		return self.__reservation_list
+
+	reservation = property(get_reservation)
+
 	@property
 	def customer(self) -> Customer:
 		return self.__customer
 
 	@customer.setter
-	def customer(self, value: Customer):
-		self.__customer = value
+	def customer(self, customer: Customer):
+		self.__customer = customer
 
 	def create_reservation(self, reservation_id: str, customer: Customer, start_time: datetime, end_time: datetime) -> "Reservation":
 		if self.check_time_availability(start_time, end_time) == False:
@@ -245,7 +253,6 @@ class Room:
 		return True
 
 	def set_room_status(self, reservation: Reservation):
-		self.__status = RoomStatusEnum.BEING_USE
 		self.__customer = reservation.customer
 
 
@@ -302,10 +309,10 @@ class Reservation:
 		return self.__customer
 
 class StockProduct:
-	def __init__(self, product: Product, product_item_list: list[ProductItem] = []):
+	def __init__(self, product: Product, product_item_list: list[ProductItem] | None = None):
 		self.__id: str = make_id('ST')
 		self.__product: Product = product
-		self.__product_item_list: list[ProductItem] = product_item_list
+		self.__product_item_list: list[ProductItem] = product_item_list if product_item_list is not None else []
 
 	def get_product(self) -> Product:
 		return self.__product
@@ -328,7 +335,7 @@ class StockProduct:
 
 		transfer = self.__product_item_list[:quantity]
 		for item in transfer:
-			self.__product_item_list.remove(transfer)
+			self.__product_item_list.remove(item)
 
 		return transfer
 
@@ -377,7 +384,7 @@ class ManagerAction(Enum):
 	CREATE_COUPON = "Create Coupon"
 
 class ManagerLogs(StaffLogs):
-	def __init__(self, log_id: str, manager: str, action: ManagerAction, target = None):
+	def __init__(self, log_id: str, manager: Manager, action: ManagerAction, target=None):
 		super().__init__(log_id, manager, action)
 		self.__target = target
 
@@ -439,18 +446,18 @@ class GameStore:
 	
 	def get_reservation_by_id(self, reservation_id: str) -> Reservation | None:
 		for room in self.__room_list:
-			for reservation in room.reservations:
+			for reservation in room.reservation:
 				if reservation.id == reservation_id:
 					return reservation
 		return None
 
 	def create_customer_logs(self, customer: Customer, action: CustomerAction, target=None) -> CustomerLogs:
 		new_log = CustomerLogs(make_id(f"LC-{action}"), customer, action)
-		self.__customer_list.append(new_log)
+		self.__customer_logs_list.append(new_log)
 		return new_log
 
-	def create_staff_logs(self, staff: Staff, action: StaffAction, target=None) -> StaffAction:
-		new_log = StaffLogs(make_id('LS')-{action}, staff, action)
+	def create_staff_logs(self, staff: Staff, action: StaffAction, target=None) -> StaffLogs:
+		new_log = StaffLogs(make_id(f'LS-{action}'), staff, action)
 		self.__staff_logs_list.append(new_log)
 		return new_log
 
@@ -544,7 +551,7 @@ class GameStore:
 				return staff
 		return None
 
-	def create_stock_product(self, product: Product, product_item_list: list[ProductItem] = []) -> StockProduct:
+	def create_stock_product(self, product: Product, product_item_list: list[ProductItem] | None = None) -> StockProduct:
 		new_stock_product = StockProduct(product, product_item_list)
 		self.__stock_product_list.append(new_stock_product)
 		return new_stock_product
@@ -675,77 +682,68 @@ class GameStore:
 
 		new_log = self.create_manager_logs(manager, ManagerAction.REFILL_STOCK, stock)
 		return stock
-	
+
 	def check_in(self, customer_id: str, reservation_id: str):
 		customer = self.get_customer_by_id(customer_id)
 		if not customer:
 			raise ValueError("Customer not found")
-		
-		reservation = customer.get_reservation_by_id(reservation_id)
+
+		reservation = customer.get_reservation_from_id(reservation_id)
 		if not reservation:
 			raise ValueError("Reservation not found")
-		
+
 		room = reservation.room
-		if not room or room.get_status() != RoomStatusEnum.AVAILABLE:
-			raise ValueError("Room not available")
-		
-		room.set_room_status(reservation)
-		reservation.set_status(ReservationStatusEnum.CHECK_IN)
-		
+		if not room:
+			raise ValueError("Room not found")
+
+		room.customer = reservation.customer
+		reservation.status = ReservationStatusEnum.CHECK_IN
+
 		log = CustomerLogs(make_id("LC-CHECK_IN"), customer, CustomerAction.CHECK_IN)
 		self.__customer_logs_list.append(log)
 
-		return None
+		return reservation
 
 	def check_out(self, customer_id: str, reservation_id: str):
 		customer = self.get_customer_by_id(customer_id)
 		if not customer:
 			raise ValueError("Customer not found")
-		
+
 		reservation = customer.get_reservation_from_id(reservation_id)
 		if not reservation:
 			raise ValueError("Reservation not found")
-		
+
 		if reservation.status != ReservationStatusEnum.CHECK_IN:
 			raise ValueError("Reservation not checked in")
-		
+
 		room = reservation.room
 		if room.customer != customer:
 			raise ValueError("Invalid Customer")
-		
-		room.status = RoomStatusEnum.AVAILABLE
+
 		reservation.status = ReservationStatusEnum.CHECK_OUT
 		room.customer = None
-		
+
 		log = CustomerLogs(make_id("LC-CHECK_OUT"), customer, CustomerAction.CHECK_OUT)
 		self.__customer_logs_list.append(log)
-		
-		return None
-	
-	def create_coupon(self, manager_id: str, customer_id: str, minimum_amount: float, discount_amount: float, expire_date: datetime):
+
+		return reservation
+
+	def create_coupon(self, manager_id: str, customer_id: str, minimum_amount: float, discount_amount: float, expire_date: datetime) -> Coupon:
 		manager = self.get_manager_by_id(manager_id)
 		if not manager:
 			raise ValueError("Manager not found")
-		
+
 		customer = self.get_customer_by_id(customer_id)
 		if not customer:
 			raise ValueError("Customer not found")
-		
+
 		coupon_id = make_id("D-CP")
 		coupon = Coupon(coupon_id, "coupon", customer, minimum_amount, discount_amount, expire_date)
-		customer.coupons.append(coupon)
-		
+		customer.add_coupon(coupon)
+
 		self.create_manager_logs(manager, ManagerAction.CREATE_COUPON, coupon)
-		
-		return "Coupon created successfully"
-	
-	def add_coupon(self, customer_id: str, coupon: Coupon):
-		customer = self.get_customer_by_id(customer_id)
-		if not customer:
-			raise ValueError("Customer not found")
-		
-		customer.coupons.append(coupon)
-		return None
+
+		return coupon
 
 class Bill:
 	def __init__(self, payment_gateway: PaymentGateway, amount: float):
@@ -761,7 +759,7 @@ class PaymentGateway(ABC):
 		self.__id: str = make_id('P')
 		self.__name: str = name
 		self.__status: str = "Active"
-	
+
 	@abstractmethod
 	def authenticate():
 		pass
@@ -796,36 +794,32 @@ class QRCode(PaymentGateway):
 		if not self.pay(amount):
 			return False
 		return True
-	
-class Discount(ABC):
-    def __init__(self, id: str, type: str, owner: Customer, minimum_amount: float, discount_amount: float, expire_date: datetime):
-        self.__id: str = id
-        self.__type: str = type
-        self.__owner: Customer = owner
-        self.__minimum_amount: float = minimum_amount
-        self.__discount_amount: float = discount_amount
-        self.__expire_date: datetime = expire_date
-    
-    @property
-    def id(self):
-        return self.__id
-    
-    @property
-    def type(self):
-        return self.__type
-    
-    @property
-    def minimum_amount(self):
-        return self.__minimum_amount
-    
-    @property
-    def discount_amount(self):
-        return self.__discount_amount
-    
-    @property
-    def expire_date(self):
-        return self.__expire_date
-	
-class Coupon(Discount):
-    def __init__(self, id: str, type: str, owner: str, minimum_amount: float, discount_amount: float, expire_date: datetime):
-        super().__init__(id, type, owner, minimum_amount, discount_amount, expire_date)
+
+class Coupon():
+	def __init__(self, id: str, type: str, owner: Customer, minimum_amount: float, discount_amount: float, expire_date: datetime):
+		self.__id: str = id
+		self.__type: str = type
+		self.__owner: Customer = owner
+		self.__minimum_amount: float = minimum_amount
+		self.__discount_amount: float = discount_amount
+		self.__expire_date: datetime = expire_date
+
+	@property
+	def id(self):
+		return self.__id
+
+	@property
+	def type(self):
+		return self.__type
+
+	@property
+	def minimum_amount(self):
+		return self.__minimum_amount
+
+	@property
+	def discount_amount(self):
+		return self.__discount_amount
+
+	@property
+	def expire_date(self):
+		return self.__expire_date
