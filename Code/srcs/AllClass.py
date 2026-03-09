@@ -230,6 +230,9 @@ class ProductItem:
 	@property
 	def status(self) -> ProductItemStatus:
 		return self.__status
+	@status.setter
+	def status(self, value: ProductItemStatus):
+		self.__status = value
 	@property
 	def condition(self) -> float:
 		return self.__condition
@@ -930,7 +933,7 @@ class GameStore:
 			"payment gateways": self.__payment_gateway_list
 		}
 
-	def purchase(self, customer_id : str, payment_method_name : str, payment_info : list, coupon: Disc):
+	def purchase(self, customer_id : str, payment_method_name : str, payment_info : list, coupon_id: str = None) -> tuple[Bill, list[str]]:
 		customer_instance = self.get_customer_by_id(customer_id)
 		if not customer_instance:
 			raise Exception("Customer doesn't exist")
@@ -947,7 +950,7 @@ class GameStore:
 			for stock_product in self.__stock_product_list:
 				if stock_product.product == cart_item.product_item.product:
 					for item in stock_product.product_item_list:
-						if cart_item.is_buy and (cart_item.product_item == item):
+						if cart_item.is_buy and cart_item.product_item == item and item.status == ProductItemStatus.SELLING:
 							break
 					else:
 						raise Exception("Store already sold that product")
@@ -958,6 +961,16 @@ class GameStore:
 			if cart_item.is_buy:
 				total_pricing += cart_item.product_item.calculate_price()
 		total_pricing *= customer_instance.apply_discount_benefit()
+		if coupon_id is not None:
+			for coupon in customer_instance.coupons:
+				if coupon_id == coupon.id:
+					coupon_instance = coupon
+					if datetime.now() > coupon_instance.expire_date or coupon_instance.minimum_amount:
+						raise Exception("Error while applying coupon")
+					total_pricing -= coupon_instance.discount_amount
+					break
+			else:
+				raise Exception("Unable to find coupon")
 		status = payment_method.start_payment(total_pricing, payment_info)
 		if not status:
 			raise Exception("Payment Failed.")
@@ -972,14 +985,16 @@ class GameStore:
 		for cart_item in cart_items_given_to_customer:
 			cart_item_instances.remove(cart_item)
 
-		# Remove product item from stock
+		# Changing the status of the product item stored in game store
 		for cart_item in cart_items_given_to_customer:
 			product: Product = cart_item.product_item.product
 			for stock_product in self.__stock_product_list:
 				if stock_product.product == product:
-					stock_product.product_item_list.remove(cart_item.product_item)
+					idx = stock_product.product_item_list.index(cart_item.product_item)
+					stock_product.product_item_list[idx].status = ProductItemStatus.SOLDED
+					break
 
-		bill = Bill(payment_method, total_pricing)
+		bill = self.create_bill(payment_method, total_pricing)
 		self.__bill_list.append(bill)
 		customer_instance.__bill_list.append(bill)
 
@@ -988,6 +1003,48 @@ class GameStore:
 
 		product_sn_list = [cart_item.product_item.serial_number for cart_item in cart_items_given_to_customer]
 		return [bill, product_sn_list]
+	
+	def get_product_item_by_serial_number(self, serial_number: str) -> ProductItem:
+		for stock in self.__stock_product_list:
+			for product_item in stock.product_item_list:
+				if product_item.serial_number == serial_number:
+					return product_item
+		return None
+
+	def refund(self, customer_id : str, bill_id : str, product_sn_list: list[str]):
+		bill_instance = None
+		for bill in self.__bill_list:
+			if bill.id == bill_id:
+				bill_instance = bill
+				break
+		else:
+			raise Exception("Unable to find the bill instance")
+		product_items: list[ProductItem] = [self.get_product_item_by_serial_number(serial_number) for serial_number in product_sn_list]
+		for product_item in product_items:
+			if product_item != ProductItemStatus.SOLDED:
+				raise Exception("Product is not sold")
+		
+		total_price = 0
+		for product_item in product_items:
+			total_price += product_item.calculate_price()
+		if bill_instance.amount != total_price:
+			raise Exception("Not matching money amount")
+		
+		for product_item in product_items:
+			product_item.status = ProductItemStatus.STOCKED
+
+		customer_instance = self.get_customer_by_id(customer_id)
+		log = self.create_customer_logs(customer_instance, CustomerAction.REFUND)
+		self.__customer_logs_list.append(log)
+
+		manager_id = None
+		for staff in self.__staff_list:
+			if isinstance(staff, Manager):
+				manager_id = staff.id
+				break
+		coupon = self.create_coupon(manager_id, customer_id, 0, total_price, datetime.today() + timedelta(days=90))
+
+		return coupon
 
 	def get_stock_by_product_id(self, product_id: str) -> StockProduct:
 		for stock in self.__stock_product_list:
@@ -1072,6 +1129,14 @@ class Bill:
 		self.__timestamp: datetime = datetime.now()
 		self.__payment_gateway: PaymentGateway = payment_gateway
 		self.__amount: float = amount
+
+	@property
+	def id(self) -> str:
+		return self.__id
+	
+	@property
+	def amount(self) -> float:
+		return self.__amount
 
 class PaymentGateway(ABC):
 	def __init__(self, name: str):
