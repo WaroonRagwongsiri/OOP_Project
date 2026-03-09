@@ -27,25 +27,19 @@ manager_id={manager_id}, customer_id="INVALID_CUSTOMER_ID", minimum_amount=10.0,
 → Expect: "Error: Customer not found"
 (from: if not customer → raise ValueError("Customer not found"))
 
-Test 4 – discount_amount exceeds minimum_amount
-Call create_coupon with:
-manager_id={manager_id}, customer_id={customer_id}, minimum_amount=5.0, discount_amount=50.0, expire_date="2027-01-01T00:00:00"
-→ Expect: "Error: ..." or coupon created (verify whether the system validates this business rule)
-(no guard exists in the current snippet — flag if discount > minimum is silently allowed)
-
-Test 5 – Expired expire_date (date in the past)
+Test 4 – Expired expire_date (date in the past)
 Call create_coupon with:
 manager_id={manager_id}, customer_id={customer_id}, minimum_amount=10.0, discount_amount=5.0, expire_date="2020-01-01T00:00:00"
 → Expect: "Error: ..." or coupon created (verify whether the system rejects past expiry dates)
 (no guard exists in the current snippet — flag if past dates are silently accepted)
 
-Test 6 – minimum_amount of zero or negative value
+Test 5 – minimum_amount of zero or negative value
 Call create_coupon with:
 manager_id={manager_id}, customer_id={customer_id}, minimum_amount=0.0, discount_amount=5.0, expire_date="2027-01-01T00:00:00"
 → Expect: "Error: ..." or coupon created (verify whether zero/negative minimums are guarded)
 (no guard exists in the current snippet — flag if minimum_amount <= 0 is silently allowed)
 
-Test 7 – discount_amount of zero or negative value
+Test 6 – discount_amount of zero or negative value
 Call create_coupon with:
 manager_id={manager_id}, customer_id={customer_id}, minimum_amount=10.0, discount_amount=0.0, expire_date="2027-01-01T00:00:00"
 → Expect: "Error: ..." or coupon created (verify whether zero/negative discounts are guarded)
