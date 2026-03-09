@@ -20,6 +20,7 @@ class Customer:
 		self.__cart: "Cart" = Cart(self)
 		self.__reservation_list: list[Reservation] = []
 		self.__bill_list: list[Bill] = []
+		self.__coupons_list: list[Coupon] = []
 
 	def get_customer_id(self) -> str:
 		return self.__customer_id
@@ -45,6 +46,10 @@ class Customer:
 	reservation_list = property(fget=get_reservation_list)
 	id = property(fget=get_customer_id)
 
+	@property
+	def coupons(self) -> list[Coupon]:
+		return self.__coupons_list
+
 	def check_time_availability(self, start_time: datetime, end_time: datetime) -> bool:
 		for reservation in self.__reservation_list:
 			if start_time < reservation.end_time and end_time > reservation.start_time and reservation.status != ReservationStatusEnum.CANCEL:
@@ -62,6 +67,9 @@ class Customer:
 
 	def apply_discount_benefit(self) -> float:
 		return 1
+
+	def add_coupon(self, coupon: Coupon):
+		self.__coupons_list.append(coupon)
 
 class MemberStatusEnum(Enum):
 	ACTIVE = "Active"
@@ -242,7 +250,7 @@ class Room:
 		self.__rate_price: float = rate_price
 		self.__room_type: RoomTypeEnum = RoomTypeEnum.NORMAL
 		self.__status: RoomStatusEnum = RoomStatusEnum.AVAILABLE
-		self.__customer_list: list[Customer] = []
+		self.__customer: Customer = None
 		self.__reservation_list: list[Reservation] = []
 
 	def get_room_id(self) -> str:
@@ -253,12 +261,28 @@ class Room:
 	def get_status(self) -> RoomStatusEnum:
 		return self.__status
 
-	status = property(fget=get_status)
+	def set_status(self, status: RoomStatusEnum):
+		self.__status = status
+
+	status = property(fget=get_status, fset=set_status)
 
 	def get_rate_price(self) -> float:
 		return self.__rate_price
 
 	rate_price = property(get_rate_price)
+
+	def get_reservation(self) -> list[Reservation]:
+		return self.__reservation_list
+
+	reservation = property(get_reservation)
+
+	@property
+	def customer(self) -> Customer:
+		return self.__customer
+
+	@customer.setter
+	def customer(self, customer: Customer):
+		self.__customer = customer
 
 	def create_reservation(self, reservation_id: str, customer: Customer, start_time: datetime, end_time: datetime) -> "Reservation":
 		if self.check_time_availability(start_time, end_time) == False:
@@ -272,6 +296,9 @@ class Room:
 			if start_time < reservation.end_time and end_time > reservation.start_time and reservation.status != ReservationStatusEnum.CANCEL:
 				return False
 		return True
+
+	def set_room_status(self, reservation: Reservation):
+		self.__customer = reservation.customer
 
 
 class ReservationStatusEnum(Enum):
@@ -317,12 +344,20 @@ class Reservation:
 		duration = self.__end_time - self.__start_time
 		hours = duration.total_seconds() / 3600
 		return hours * self.__room.rate_price
+	
+	@property
+	def room(self) -> Room:
+		return self.__room
+
+	@property
+	def customer(self) -> Customer:
+		return self.__customer
 
 class StockProduct:
-	def __init__(self, product: Product, product_item_list: list[ProductItem] = []):
+	def __init__(self, product: Product, product_item_list: list[ProductItem] | None = None):
 		self.__id: str = make_id('ST')
 		self.__product: Product = product
-		self.__product_item_list: list[ProductItem] = product_item_list
+		self.__product_item_list: list[ProductItem] = product_item_list if product_item_list is not None else []
 
 	def get_product(self) -> Product:
 		return self.__product
@@ -350,7 +385,7 @@ class StockProduct:
 
 		transfer = self.__product_item_list[:quantity]
 		for item in transfer:
-			self.__product_item_list.remove(transfer)
+			self.__product_item_list.remove(item)
 
 		return transfer
 
@@ -365,6 +400,11 @@ class Shelf:
 			raise ValueError("Exceed capacity")
 		self.__product_on_shelf.extend(product_item_list)
 
+	def get_id(self) -> str:
+		return self.__id
+
+	id = property(get_id)
+
 class Logs:
 	def __init__(self, log_id: str):
 		self.__log_id: str = log_id
@@ -374,6 +414,8 @@ class CustomerAction(Enum):
 	SUBSCRIBE = "Subscribe"
 	UNSUBSCRIBE = "Unsubscribe"
 	CANCEL_RESERVATION = "Cancel Reservation"
+	CHECK_IN = "Check In"
+	CHECK_OUT = "Check Out"
 
 class CustomerLogs(Logs):
 	def __init__(self, log_id: str, customer: Customer, action: CustomerAction):
@@ -394,9 +436,10 @@ class ManagerAction(Enum):
 	CREATE_GAME = "Create Game"
 	CREATE_MACHINE = "Create Machine"
 	REFILL_STOCK = "Refill Stock"
+	CREATE_COUPON = "Create Coupon"
 
 class ManagerLogs(StaffLogs):
-	def __init__(self, log_id: str, manager: str, action: ManagerAction, target = None):
+	def __init__(self, log_id: str, manager: Manager, action: ManagerAction, target=None):
 		super().__init__(log_id, manager, action)
 		self.__target = target
 
@@ -455,14 +498,21 @@ class GameStore:
 			if room.id == room_id:
 				return room
 		return None
+	
+	def get_reservation_by_id(self, reservation_id: str) -> Reservation | None:
+		for room in self.__room_list:
+			for reservation in room.reservation:
+				if reservation.id == reservation_id:
+					return reservation
+		return None
 
 	def create_customer_logs(self, customer: Customer, action: CustomerAction, target=None) -> CustomerLogs:
 		new_log = CustomerLogs(make_id(f"LC-{action}"), customer, action)
-		self.__customer_list.append(new_log)
+		self.__customer_logs_list.append(new_log)
 		return new_log
 
-	def create_staff_logs(self, staff: Staff, action: StaffAction, target=None) -> StaffAction:
-		new_log = StaffLogs(make_id('LS')-{action}, staff, action)
+	def create_staff_logs(self, staff: Staff, action: StaffAction, target=None) -> StaffLogs:
+		new_log = StaffLogs(make_id(f'LS-{action}'), staff, action)
 		self.__staff_logs_list.append(new_log)
 		return new_log
 
@@ -556,7 +606,7 @@ class GameStore:
 				return staff
 		return None
 
-	def create_stock_product(self, product: Product, product_item_list: list[ProductItem] = []) -> StockProduct:
+	def create_stock_product(self, product: Product, product_item_list: list[ProductItem] | None = None) -> StockProduct:
 		new_stock_product = StockProduct(product, product_item_list)
 		self.__stock_product_list.append(new_stock_product)
 		return new_stock_product
@@ -688,6 +738,68 @@ class GameStore:
 		new_log = self.create_manager_logs(manager, ManagerAction.REFILL_STOCK, stock)
 		return stock
 
+	def check_in(self, customer_id: str, reservation_id: str):
+		customer = self.get_customer_by_id(customer_id)
+		if not customer:
+			raise ValueError("Customer not found")
+
+		reservation = customer.get_reservation_from_id(reservation_id)
+		if not reservation:
+			raise ValueError("Reservation not found")
+
+		room = reservation.room
+		if not room:
+			raise ValueError("Room not found")
+
+		room.customer = reservation.customer
+		reservation.status = ReservationStatusEnum.CHECK_IN
+
+		log = CustomerLogs(make_id("LC-CHECK_IN"), customer, CustomerAction.CHECK_IN)
+		self.__customer_logs_list.append(log)
+
+		return reservation
+
+	def check_out(self, customer_id: str, reservation_id: str):
+		customer = self.get_customer_by_id(customer_id)
+		if not customer:
+			raise ValueError("Customer not found")
+
+		reservation = customer.get_reservation_from_id(reservation_id)
+		if not reservation:
+			raise ValueError("Reservation not found")
+
+		if reservation.status != ReservationStatusEnum.CHECK_IN:
+			raise ValueError("Reservation not checked in")
+
+		room = reservation.room
+		if room.customer != customer:
+			raise ValueError("Invalid Customer")
+
+		reservation.status = ReservationStatusEnum.CHECK_OUT
+		room.customer = None
+
+		log = CustomerLogs(make_id("LC-CHECK_OUT"), customer, CustomerAction.CHECK_OUT)
+		self.__customer_logs_list.append(log)
+
+		return reservation
+
+	def create_coupon(self, manager_id: str, customer_id: str, minimum_amount: float, discount_amount: float, expire_date: datetime) -> Coupon:
+		manager = self.get_manager_by_id(manager_id)
+		if not manager:
+			raise ValueError("Manager not found")
+
+		customer = self.get_customer_by_id(customer_id)
+		if not customer:
+			raise ValueError("Customer not found")
+
+		coupon_id = make_id("D-CP")
+		coupon = Coupon(coupon_id, "coupon", customer, minimum_amount, discount_amount, expire_date)
+		customer.add_coupon(coupon)
+
+		self.create_manager_logs(manager, ManagerAction.CREATE_COUPON, coupon)
+
+		return coupon
+
 	def add_product_to_customer(self, customer_id : str, product_id : str):
 		stock_product = None
 		for stock in self.get_all_stock():
@@ -746,7 +858,7 @@ class PaymentGateway(ABC):
 		self.__id: str = make_id('P')
 		self.__name: str = name
 		self.__status: str = "Active"
-	
+
 	@abstractmethod
 	def authenticate():
 		pass
@@ -781,3 +893,32 @@ class QRCode(PaymentGateway):
 		if not self.pay(amount):
 			return False
 		return True
+
+class Coupon():
+	def __init__(self, id: str, type: str, owner: Customer, minimum_amount: float, discount_amount: float, expire_date: datetime):
+		self.__id: str = id
+		self.__type: str = type
+		self.__owner: Customer = owner
+		self.__minimum_amount: float = minimum_amount
+		self.__discount_amount: float = discount_amount
+		self.__expire_date: datetime = expire_date
+
+	@property
+	def id(self):
+		return self.__id
+
+	@property
+	def type(self):
+		return self.__type
+
+	@property
+	def minimum_amount(self):
+		return self.__minimum_amount
+
+	@property
+	def discount_amount(self):
+		return self.__discount_amount
+
+	@property
+	def expire_date(self):
+		return self.__expire_date
