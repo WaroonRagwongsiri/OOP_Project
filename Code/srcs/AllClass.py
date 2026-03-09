@@ -997,7 +997,7 @@ class GameStore:
 		total_pricing *= customer_instance.apply_discount_benefit()
 		if coupon_id is not None:
 			coupon_instance = self.get_coupon_by_id(customer_id, coupon_id)
-			if datetime.now() >= coupon_instance.expire_date or total_pricing < coupon_instance.minimum_amount:
+			if datetime.now() >= coupon_instance.expire_date or total_pricing < coupon_instance.minimum_amount or coupon_instance is None:
 				raise Exception("Error while applying coupon")
 			total_pricing -= coupon_instance.discount_amount
 			
