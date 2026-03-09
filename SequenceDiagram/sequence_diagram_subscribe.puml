@@ -8,89 +8,111 @@ participant PaymentGateway
 participant Bill
 participant Logs
 
+A_Customer -> GameStore : subscribe(customer_id, payment_gateway_name, payment_information)
 activate A_Customer
-
-A_Customer -> GameStore : subscribe(customer_id, payment_gateway, payment_information)
 activate GameStore
 
-loop get_customer_from_id
+alt subscribe success
 
-	GameStore -> P_Customer : get_customer()
-	activate P_Customer
+	loop get customer by id
 
-	P_Customer -> GameStore : Customer
-	deactivate P_Customer
+		GameStore -> P_Customer : Get customer
+		activate P_Customer
 
-end
+		P_Customer -> GameStore : Customer
+		deactivate P_Customer
 
-alt Found User
+	end
 
-	loop get_member_from_customer_id
+	loop get member by customer id
 
-		GameStore -> Member : get_member()
+		GameStore -> Member : Get member
 		activate Member
 
-		Member -> GameStore : Member
+		Member -> GameStore : Member / None
 		deactivate Member
 
 	end
 
-	alt Not already member
+	loop get payment gateway by name
 
-		GameStore -> PaymentGateway : start_transaction(payment_information, amount)
+		GameStore -> PaymentGateway : Get payment gateway
 		activate PaymentGateway
 
-		alt Success
+		PaymentGateway -> GameStore : PaymentGateway
+		deactivate PaymentGateway
 
-			PaymentGateway -> GameStore : Success
+	end
 
-		else Fail
+	GameStore -> PaymentGateway : start_payment(payment_information, 500)
+	activate PaymentGateway
 
-			PaymentGateway -> GameStore : Failed
-			deactivate PaymentGateway
+	PaymentGateway -> GameStore : Success
+	deactivate PaymentGateway
 
-			GameStore -> A_Customer : Payment Failed
+	GameStore -> Bill : create_bill(payment_gateway, 500)
+	activate Bill
+	Bill -> GameStore : Bill
+	deactivate Bill
 
-		end
+	GameStore -> P_Customer : add_bill(Bill)
+	activate P_Customer
+	P_Customer -> GameStore
+	deactivate P_Customer
 
-		GameStore -> Bill : create_bill(Customer, amount)
-		activate Bill
+	alt existing member but inactive
 
-		Bill -> GameStore : Bill
-		deactivate Bill
-
-		GameStore -> P_Customer : add_bill(Bill)
-		activate P_Customer
-
-		P_Customer -> GameStore
-		deactivate P_Customer
-
-		GameStore -> Member : create_member(Customer)
+		GameStore -> Member : set_status(ACTIVE)
 		activate Member
-
 		Member -> GameStore : Member
 		deactivate Member
 
-		GameStore -> Logs : create_logs(Customer, customer_action)
+		GameStore -> Logs : create_customer_logs(Customer, SUBSCRIBE)
 		activate Logs
-
 		Logs -> GameStore : Log
 		deactivate Logs
 
-		GameStore -> A_Customer : member_id
+		GameStore -> A_Customer : member
 
-	else Already Member
+	else create new member
 
-		GameStore -> A_Customer : Fail already member
+		GameStore -> Member : create_member(Customer)
+		activate Member
+		Member -> GameStore : Member
+		deactivate Member
+
+		GameStore -> Logs : create_customer_logs(Customer, SUBSCRIBE)
+		activate Logs
+		Logs -> GameStore : Log
+		deactivate Logs
+
+		GameStore -> A_Customer : new_member
 
 	end
 
-else Not found user
+else subscribe fail (customer not found)
 
-	GameStore -> A_Customer : Fail to find user
-	deactivate GameStore
+	P_Customer -> GameStore : Fail (customer not found)
+	GameStore -> A_Customer : Customer not found
+
+else subscribe fail (already active member)
+
+	Member -> GameStore : Fail (already active member)
+	GameStore -> A_Customer : Fail already be a member
+
+else subscribe fail (payment gateway not found)
+
+	PaymentGateway -> GameStore : Fail (payment gateway not found)
+	GameStore -> A_Customer : Payment gateway not found
+
+else subscribe fail (fail to payment)
+
+	PaymentGateway -> GameStore : Failed
+	GameStore -> A_Customer : Fail to payment
+
 end
 
+deactivate GameStore
 deactivate A_Customer
 
 @enduml
