@@ -1,0 +1,45 @@
+@startuml namespace
+
+actor Manager as A_Manager
+participant GameStore
+participant Manager
+participant Customer
+participant Log
+participant Coupon
+
+A_Manager -> GameStore: create_coupon(manager_id, customer_id, minimum_amount, discount_amount, expire_date)
+activate A_Manager
+activate GameStore
+
+loop get manager by id
+    GameStore -> Manager: get_manager_by_id(manager_id)
+    activate Manager
+    Manager -> GameStore: Manager
+    deactivate Manager
+end loop
+
+loop get customer by id
+    GameStore -> Customer: get_customer_by_id(customer_id)
+    activate Customer
+    Customer -> GameStore: Customer
+    deactivate Customer
+end loop
+
+GameStore -> Coupon: create_coupon(minimum_amount, discount_amount, expire_date)
+activate Coupon
+Coupon -> GameStore: Coupon
+deactivate Coupon
+
+GameStore -> Customer: add_coupon(customer_id, coupon)
+activate Customer
+Customer -> GameStore: "Coupon added to customer successfully"
+deactivate Customer
+
+GameStore -> Log: create_log(manager, action, coupon)
+activate Log
+Log -> GameStore: Log
+deactivate Log
+
+GameStore -> A_Manager: "Coupon created successfully"
+deactivate GameStore
+deactivate A_Manager
