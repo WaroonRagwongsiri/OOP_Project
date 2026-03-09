@@ -10,29 +10,29 @@ store = GameStore("GameStore Demo")
 @mcp.tool()
 def test_connection():
 	"""
-    Test the connection to the GameStore MCP service.
+	Test the connection to the GameStore MCP service.
 
-    Returns:
-        dict: A dictionary indicating the service name to confirm
-        that the API connection is functioning.
-    """
+	Returns:
+		dict: A dictionary indicating the service name to confirm
+		that the API connection is functioning.
+	"""
 	return {"service": "GameStore API"}
 
 @mcp.tool()
 def create_customer(name: str, age: int):
 	"""
-    Create a new customer in the GameStore system.
+	Create a new customer in the GameStore system.
 
-    Args:
-        name (str): Name of the customer.
-        age (int): Age of the customer.
+	Args:
+		name (str): Name of the customer.
+		age (int): Age of the customer.
 
-    Returns:
-        dict: Customer information including id, name, and age.
+	Returns:
+		dict: Customer information including id, name, and age.
 
-    Raises:
-        Exception: If customer creation fails.
-    """
+	Raises:
+		Exception: If customer creation fails.
+	"""
 	try:
 		customer = store.create_customer(name, age)
 		return {
@@ -47,14 +47,14 @@ def create_customer(name: str, age: int):
 @mcp.tool()
 def get_all_customers():
 	"""
-    Retrieve all registered customers.
+	Retrieve all registered customers.
 
-    Returns:
-        list[dict]: List of customers containing:
-            - id (str): Customer identifier
-            - name (str): Customer name
-            - age (int): Customer age
-    """
+	Returns:
+		list[dict]: List of customers containing:
+			- id (str): Customer identifier
+			- name (str): Customer name
+			- age (int): Customer age
+	"""
 	customers = store.get_all_customer()
 	return [
 		{
@@ -69,18 +69,18 @@ def get_all_customers():
 @mcp.tool()
 def create_room(max_customer: int, rate_price: float):
 	"""
-    Create a new game room.
+	Create a new game room.
 
-    Args:
-        max_customer (int): Maximum number of customers allowed in the room.
-        rate_price (float): Hourly or session price for the room.
+	Args:
+		max_customer (int): Maximum number of customers allowed in the room.
+		rate_price (float): Hourly or session price for the room.
 
-    Returns:
-        dict: Room information including id and status.
+	Returns:
+		dict: Room information including id and status.
 
-    Raises:
-        Exception: If the room cannot be created.
-    """
+	Raises:
+		Exception: If the room cannot be created.
+	"""
 	try:
 		room = store.create_room(max_customer, rate_price)
 		return {
@@ -94,13 +94,13 @@ def create_room(max_customer: int, rate_price: float):
 @mcp.tool()
 def get_available_rooms():
 	"""
-    Retrieve all rooms that are currently available.
+	Retrieve all rooms that are currently available.
 
-    Returns:
-        list[dict]: List of available rooms including:
-            - id (str): Room identifier
-            - status (str): Current room status
-    """
+	Returns:
+		list[dict]: List of available rooms including:
+			- id (str): Room identifier
+			- status (str): Current room status
+	"""
 	rooms = store.get_available_room()
 	return [
 		{
@@ -119,21 +119,21 @@ def create_reservation(
 	end_time: datetime
 ):
 	"""
-    Create a reservation for a room.
+	Create a reservation for a room.
 
-    Args:
-        customer_id (str): Identifier of the customer making the reservation.
-        room_id (str): Identifier of the room to reserve.
-        start_time (datetime): Reservation start time.
-        end_time (datetime): Reservation end time.
+	Args:
+		customer_id (str): Identifier of the customer making the reservation.
+		room_id (str): Identifier of the room to reserve.
+		start_time (datetime): Reservation start time.
+		end_time (datetime): Reservation end time.
 
-    Returns:
-        dict: Reservation details including id, status, start_time, and end_time.
+	Returns:
+		dict: Reservation details including id, status, start_time, and end_time.
 
-    Raises:
-        ValueError: If reservation validation fails.
-        Exception: For unexpected system errors.
-    """
+	Raises:
+		ValueError: If reservation validation fails.
+		Exception: For unexpected system errors.
+	"""
 	try:
 		reservation = store.create_reservation(customer_id, room_id, start_time, end_time)
 		return {
@@ -151,19 +151,19 @@ def create_reservation(
 @mcp.tool()
 def cancel_reservation(customer_id: str, reservation_id: str):
 	"""
-    Cancel an existing reservation.
+	Cancel an existing reservation.
 
-    Args:
-        customer_id (str): Identifier of the customer requesting cancellation.
-        reservation_id (str): Identifier of the reservation.
+	Args:
+		customer_id (str): Identifier of the customer requesting cancellation.
+		reservation_id (str): Identifier of the reservation.
 
-    Returns:
-        dict: Cancellation confirmation including reservation id and status.
+	Returns:
+		dict: Cancellation confirmation including reservation id and status.
 
-    Raises:
-        ValueError: If the reservation or customer is invalid.
-        Exception: For unexpected system errors.
-    """
+	Raises:
+		ValueError: If the reservation or customer is invalid.
+		Exception: For unexpected system errors.
+	"""
 	try:
 		reservation = store.cancel_reservation(customer_id, reservation_id)
 		return {
@@ -184,20 +184,20 @@ def subscribe(
 	payment_information: str
 ):
 	"""
-    Subscribe a customer to the membership program.
+	Subscribe a customer to the membership program.
 
-    Args:
-        customer_id (str): Identifier of the customer.
-        payment_gateway_name (str): Payment provider used for subscription.
-        payment_information (str): Payment details or reference.
+	Args:
+		customer_id (str): Identifier of the customer.
+		payment_gateway_name (str): Payment provider used for subscription. (QRCode)
+		payment_information (str): Payment details or reference.
 
-    Returns:
-        dict: Membership details including member_id, customer_id, and status.
+	Returns:
+		dict: Membership details including member_id, customer_id, and status.
 
-    Raises:
-        ValueError: If subscription validation fails.
-        Exception: For unexpected system errors.
-    """
+	Raises:
+		ValueError: If subscription validation fails.
+		Exception: For unexpected system errors.
+	"""
 	try:
 		member = store.subscribe(customer_id, payment_gateway_name, payment_information)
 		return {
@@ -214,18 +214,18 @@ def subscribe(
 @mcp.tool()
 def unsubscribe(member_id: str):
 	"""
-    Cancel a customer's membership subscription.
+	Cancel a customer's membership subscription.
 
-    Args:
-        member_id (str): Identifier of the membership.
+	Args:
+		member_id (str): Identifier of the membership.
 
-    Returns:
-        dict: Message indicating whether the unsubscription succeeded.
+	Returns:
+		dict: Message indicating whether the unsubscription succeeded.
 
-    Raises:
-        ValueError: If the member_id is invalid.
-        Exception: For unexpected system errors.
-    """
+	Raises:
+		ValueError: If the member_id is invalid.
+		Exception: For unexpected system errors.
+	"""
 	try:
 		result = store.unsubscribe(member_id)
 		return {
@@ -240,18 +240,18 @@ def unsubscribe(member_id: str):
 @mcp.tool()
 def create_manager(name: str, age: int):
 	"""
-    Create a new manager account.
+	Create a new manager account.
 
-    Args:
-        name (str): Manager's name.
-        age (int): Manager's age.
+	Args:
+		name (str): Manager's name.
+		age (int): Manager's age.
 
-    Returns:
-        dict: Manager information including id, name, and age.
+	Returns:
+		dict: Manager information including id, name, and age.
 
-    Raises:
-        Exception: If manager creation fails.
-    """
+	Raises:
+		Exception: If manager creation fails.
+	"""
 	try:
 		manager = store.create_manager(name, age)
 		return {
@@ -272,22 +272,22 @@ def create_game(
 	game_type: str
 ):
 	"""
-    Create a new game product.
+	Create a new game product.
 
-    Args:
-        manager_id (str): Identifier of the manager creating the game.
-        name (str): Name of the game.
-        description (str): Game description.
-        genre (str): Game genre category.
-        game_type (str): Type of game (DISC, KEYCARD, CARTRIDGE).
+	Args:
+		manager_id (str): Identifier of the manager creating the game.
+		name (str): Name of the game.
+		description (str): Game description.
+		genre (str): Game genre category.
+		game_type (str): Type of game (DISC, KEYCARD, CARTRIDGE).
 
-    Returns:
-        dict: Created game information including id and name.
+	Returns:
+		dict: Created game information including id and name.
 
-    Raises:
-        ValueError: If validation fails.
-        Exception: For unexpected system errors.
-    """
+	Raises:
+		ValueError: If validation fails.
+		Exception: For unexpected system errors.
+	"""
 	try:
 		game = store.create_game(manager_id, name, description, genre, game_type)
 		return {
@@ -307,20 +307,20 @@ def create_machine(
 	machine_type: str
 ):
 	"""
-    Create a new gaming machine.
+	Create a new gaming machine.
 
-    Args:
-        manager_id (str): Identifier of the manager.
-        name (str): Machine name.
-        machine_type (str): Type of machine.
+	Args:
+		manager_id (str): Identifier of the manager.
+		name (str): Machine name.
+		machine_type (str): Type of machine (PLAYSTATION, PC, GAMEBOY).
 
-    Returns:
-        dict: Machine information including id and name.
+	Returns:
+		dict: Machine information including id and name.
 
-    Raises:
-        ValueError: If validation fails.
-        Exception: For unexpected system errors.
-    """
+	Raises:
+		ValueError: If validation fails.
+		Exception: For unexpected system errors.
+	"""
 	try:
 		machine = store.create_machine(manager_id, name, machine_type)
 		return {
@@ -336,14 +336,14 @@ def create_machine(
 @mcp.tool()
 def get_all_stocks():
 	"""
-    Retrieve all stock items in the inventory.
+	Retrieve all stock items in the inventory.
 
-    Returns:
-        list[dict]: Stock records including:
-            - id (str): Stock identifier
-            - product_id (str): Product identifier
-            - product_name (str): Name of the product
-    """
+	Returns:
+		list[dict]: Stock records including:
+			- id (str): Stock identifier
+			- product_id (str): Product identifier
+			- product_name (str): Name of the product
+	"""
 	try:
 		stocks = store.get_all_stock()
 		return [
@@ -366,21 +366,21 @@ def refill_stock(
 	sell_price: float
 ):
 	"""
-    Refill inventory stock for a product.
+	Refill inventory stock for a product.
 
-    Args:
-        manager_id (str): Identifier of the manager performing the refill.
-        stock_id (str): Identifier of the stock entry.
-        quantity (int): Quantity of product added.
-        sell_price (float): Selling price for the product.
+	Args:
+		manager_id (str): Identifier of the manager performing the refill.
+		stock_id (str): Identifier of the stock entry.
+		quantity (int): Quantity of product added.
+		sell_price (float): Selling price for the product.
 
-    Returns:
-        dict: Confirmation including stock id and product details.
+	Returns:
+		dict: Confirmation including stock id and product details.
 
-    Raises:
-        ValueError: If refill validation fails.
-        Exception: For unexpected system errors.
-    """
+	Raises:
+		ValueError: If refill validation fails.
+		Exception: For unexpected system errors.
+	"""
 	try:
 		stock = store.refill_stock(manager_id, stock_id, quantity, sell_price)
 		return {
@@ -398,18 +398,18 @@ def refill_stock(
 @mcp.tool()
 def create_shelf(max_capacity: int):
 	"""
-    Create a new shelf for product display.
+	Create a new shelf for product display.
 
-    Args:
-        max_capacity (int): Maximum number of items the shelf can hold.
+	Args:
+		max_capacity (int): Maximum number of items the shelf can hold.
 
-    Returns:
-        dict: Shelf identifier.
+	Returns:
+		dict: Shelf identifier.
 
-    Raises:
-        ValueError: If capacity validation fails.
-        Exception: For unexpected system errors.
-    """
+	Raises:
+		ValueError: If capacity validation fails.
+		Exception: For unexpected system errors.
+	"""
 	try:
 		shelf = store.create_shelf(max_capacity)
 		return {
@@ -424,11 +424,11 @@ def create_shelf(max_capacity: int):
 @mcp.tool()
 def get_all_shelves():
 	"""
-    Retrieve all shelves in the store.
+	Retrieve all shelves in the store.
 
-    Returns:
-        list[dict]: List of shelf identifiers.
-    """
+	Returns:
+		list[dict]: List of shelf identifiers.
+	"""
 	try:
 		shelves = store.get_all_shelf()
 		return [
@@ -449,21 +449,21 @@ def refill_shelf(
 	quantity: int
 ):
 	"""
-    Move items from stock to a shelf.
+	Move items from stock to a shelf.
 
-    Args:
-        staff_id (str): Identifier of the staff member performing the refill.
-        shelf_id (str): Identifier of the shelf.
-        stock_id (str): Identifier of the stock source.
-        quantity (int): Quantity of items placed on the shelf.
+	Args:
+		staff_id (str): Identifier of the staff member performing the refill.
+		shelf_id (str): Identifier of the shelf.
+		stock_id (str): Identifier of the stock source.
+		quantity (int): Quantity of items placed on the shelf.
 
-    Returns:
-        dict: Confirmation message including shelf id.
+	Returns:
+		dict: Confirmation message including shelf id.
 
-    Raises:
-        ValueError: If validation fails.
-        Exception: For unexpected system errors.
-    """
+	Raises:
+		ValueError: If validation fails.
+		Exception: For unexpected system errors.
+	"""
 	try:
 		shelf = store.refill_shelf(staff_id, shelf_id, stock_id, quantity)
 		return {
@@ -474,6 +474,106 @@ def refill_shelf(
 		return f"Error: {e.__str__()}"
 	except Exception as e:
 		return f"Error: {e.__str__()}"
+
+
+@mcp.tool()
+def add_product_to_customer(customer_id: str, product_id: str):
+	"""
+	Add a product item to a customer's cart.
+
+	Args:
+		customer_id (str): Identifier of the customer.
+		product_id (str): Identifier of the product to add.
+
+	Returns:
+		dict: Updated cart summary including customer id and total items.
+
+	Raises:
+		Exception: If the customer or product is invalid.
+	"""
+	try:
+		cart = store.add_product_to_customer(customer_id, product_id)
+		return {
+			"customer_id": customer_id,
+			"total_items": len(cart.products)
+		}
+	except Exception as e:
+		return f"Error: {e.__str__()}"
+
+
+@mcp.tool()
+def view_cart(customer_id: str):
+	"""
+	Retrieve all items in a customer's cart.
+
+	Args:
+		customer_id (str): Identifier of the customer.
+
+	Returns:
+		list[dict]: Cart items including product id, product name,
+			serial number, and purchase flag.
+	"""
+	try:
+		items = store.view_cart(customer_id)
+		return [
+			{
+				"product_id": item.product_item.product.id,
+				"product_name": item.product_item.product.name,
+				"serial_number": item.product_item.serial_number,
+				"is_buy": item.is_buy
+			}
+			for item in items
+		]
+	except Exception as e:
+		return f"Error: {e.__str__()}"
+
+
+@mcp.tool()
+def remove_item_from_cart(customer_id: str, product_id: str):
+	"""
+	Remove the first matching product from a customer's cart.
+
+	Args:
+		customer_id (str): Identifier of the customer.
+		product_id (str): Identifier of the product to remove.
+
+	Returns:
+		dict: Updated cart summary including customer id and total items.
+	"""
+	try:
+		cart = store.remove_item_from_cart(customer_id, product_id)
+		return {
+			"customer_id": customer_id,
+			"total_items": len(cart.products)
+		}
+	except Exception as e:
+		return f"Error: {e.__str__()}"
+
+
+@mcp.tool()
+def view_product_detail(serial_number: str):
+	"""
+	Retrieve detail for a specific product item by serial number.
+
+	Args:
+		serial_number (str): Serial number of the product item.
+
+	Returns:
+		dict | None: Product item detail including status, sell price,
+			and condition, or None if not found.
+	"""
+	try:
+		detail = store.view_product_detail(serial_number)
+		if detail is None:
+			return None
+		return {
+			"status": str(detail["status"]),
+			"sell_price": detail["sell_price"],
+			"condition": detail["condition"]
+		}
+	except Exception as e:
+		return f"Error: {e.__str__()}"
+
 
 def main():
 	mcp.run(transport="stdio")
