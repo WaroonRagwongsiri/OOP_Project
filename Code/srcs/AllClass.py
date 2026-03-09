@@ -465,6 +465,16 @@ class Shelf:
 
 	max_capacity = property(get_max_capacity)
 
+	def remove_product(self, product_item: ProductItem) -> bool:
+		if product_item not in self.__product_on_shelf:
+			return False
+		self.__product_on_shelf.remove(product_item)
+		return True
+
+	@property
+	def current_amount(self) -> int:
+		return len(self.__product_on_shelf)
+
 class Logs:
 	def __init__(self, log_id: str):
 		self.__log_id: str = log_id
@@ -1027,6 +1037,8 @@ class GameStore:
 		total_pricing *= customer_instance.apply_discount_benefit()
 		if coupon_id is not None:
 			coupon_instance = self.get_coupon_by_id(customer_id, coupon_id)
+			if coupon_instance is None:
+				raise ValueError("Coupon not found")
 			if datetime.now() >= coupon_instance.expire_date or total_pricing < coupon_instance.minimum_amount or coupon_instance is None:
 				raise Exception("Error while applying coupon")
 			total_pricing -= coupon_instance.discount_amount
@@ -1051,6 +1063,11 @@ class GameStore:
 		bill.add_product_items(bought_items)
 		self.__bought_list.extend(bought_items)
 		customer_instance.add_bill(bill)
+
+		for item in bought_items:
+			for shelf in self.__shelf_list:
+				if shelf.remove_product(item):
+					break
 
 		customer_log = self.create_customer_logs(customer_instance, CustomerAction.PURCHASE)
 		self.__customer_logs_list.append(customer_log)
