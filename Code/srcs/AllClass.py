@@ -321,6 +321,8 @@ class Room:
 		self.__customer = reservation.customer
 
 	def add_item(self, transfer: list[ProductItem]):
+		for item in transfer:
+			item.status = ProductItemStatus.RENTING
 		self.__product_item_list.extend(transfer)
 
 	def get_product_item_list(self) -> list[ProductItem]:
@@ -437,8 +439,9 @@ class Shelf:
 	def refill_shelf(self, product_item_list: list[ProductItem]):
 		if len(self.__product_on_shelf) + len(product_item_list) > self.__max_capacity:
 			raise ValueError("Exceed capacity")
+
 		self.__product_on_shelf.extend(product_item_list)
-		for product_item in self.__product_on_shelf:
+		for product_item in product_item_list:
 			product_item.status = ProductItemStatus.SELLING
 
 	def get_id(self) -> str:
@@ -723,6 +726,8 @@ class GameStore:
 		if reservation is None:
 			raise ValueError("Reservaton Not Found")
 
+		if reservation.status == ReservationStatusEnum.CANCEL:
+			raise ValueError("Reservation is already cancel")
 		reservation.status = ReservationStatusEnum.CANCEL
 
 		new_log = self.create_customer_logs(customer, CustomerAction.CANCEL_RESERVATION)
@@ -991,7 +996,7 @@ class GameStore:
 		total_pricing *= customer_instance.apply_discount_benefit()
 		if coupon_id is not None:
 			coupon_instance = self.get_coupon_by_id(customer_id, coupon_id)
-			if datetime.now() >= coupon_instance.expire_date or coupon_instance.minimum_amount:
+			if datetime.now() >= coupon_instance.expire_date or total_pricing < coupon_instance.minimum_amount:
 				raise Exception("Error while applying coupon")
 			total_pricing -= coupon_instance.discount_amount
 			
@@ -1000,20 +1005,20 @@ class GameStore:
 		if not status:
 			raise Exception("Payment Failed.")
 
-		# Remove product item from customer's cart
-		for cart_item in cart_items_given_to_customer:
-			cart_item_instances.remove(cart_item)
-
 		# Changing the status of the product item stored in game store
 		for cart_item in cart_items_given_to_customer:
 			cart_item.product_item.status = ProductItemStatus.SOLDED
 
+		# Remove product item from customer's cart
+		for cart_item in cart_items_given_to_customer:
+			cart_item_instances.remove(cart_item)
+
 		bill = self.create_bill(payment_method, total_pricing)
 		self.__bill_list.append(bill)
-		customer_instance.__bill_list.append(bill)
+		customer_instance.add_bill(bill)
 
 		customer_log = self.create_customer_logs(customer_instance, CustomerAction.PURCHASE)
-		self.__customer_logs_list(customer_log)
+		self.__customer_logs_list.append(customer_log)
 
 		product_sn_list = [cart_item.product_item.serial_number for cart_item in cart_items_given_to_customer]
 		return [bill, product_sn_list]
@@ -1021,6 +1026,10 @@ class GameStore:
 	def get_product_item_by_serial_number(self, serial_number: str) -> ProductItem:
 		for stock in self.__stock_product_list:
 			for product_item in stock.product_item_list:
+				if product_item.serial_number == serial_number:
+					return product_item
+		for shelf in self.__shelf_list:
+			for product_item in shelf.product_on_shelf:
 				if product_item.serial_number == serial_number:
 					return product_item
 		return None
@@ -1033,7 +1042,7 @@ class GameStore:
 		
 
 	def refund(self, customer_id : str, bill_id : str, product_sn_list: list[str]) -> Coupon:
-		bill_instance : Bill = self.get_bill_by_id(customer_id, bill_id)
+		bill_instance : Bill = self.get_bill_by_id(bill_id)
 		if bill_instance is None:
 			raise Exception("Unable to find the bill instance")
 		
@@ -1041,7 +1050,7 @@ class GameStore:
 		total_price = 0
 		for product_item in product_items:
 			total_price += product_item.calculate_price()
-			if product_item != ProductItemStatus.SOLDED:
+			if product_item.status != ProductItemStatus.SOLDED:
 				raise Exception("Product is not sold")
 		
 		if bill_instance.amount != total_price:
@@ -1138,6 +1147,18 @@ class GameStore:
 			stock.add_to_stock([product_item])
 
 		room.clear_item()
+
+	def set_cart_item_buy(self, customer_id: str, serial_number: str, is_buy: bool) -> ProductItem:
+		customer = self.get_customer_by_id(customer_id)
+		if not customer:
+			raise Exception("Customer not found")
+
+		for item in customer.cart.products:
+			if item.product_item.serial_number == serial_number:
+				item.is_buy = is_buy
+				return item
+
+		raise Exception("Item not found in cart")
 
 class Bill:
 	def __init__(self, payment_gateway: PaymentGateway, amount: float):

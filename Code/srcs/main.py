@@ -480,7 +480,7 @@ def create_shelf(max_capacity: int):
 		return {
 			"id": shelf.id,
 			"max_capacity": shelf.max_capacity,
-			"current_amount": len(shelf.product_on__shelf)
+			"current_amount": len(shelf.product_on_shelf)
 		}
 	except Exception as e:
 		return f"Error: {e.__str__()}"
@@ -500,7 +500,7 @@ def get_all_shelves():
 			{
 				"id": shelf.id,
 				"max_capacity": shelf.max_capacity,
-				"current_amount": len(shelf.product_on__shelf)
+				"current_amount": len(shelf.product_on_shelf)
 			}
 			for shelf in shelves
 		]
@@ -532,7 +532,7 @@ def refill_shelf(
 		return {
 			"message": "Shelf refilled",
 			"shelf_id": shelf.id,
-			"current_amount": len(shelf.product_on__shelf),
+			"current_amount": len(shelf.product_on_shelf),
 			"max_capacity": shelf.max_capacity
 		}
 	except Exception as e:
@@ -732,20 +732,11 @@ def set_cart_item_buy(customer_id: str, serial_number: str, is_buy: bool):
 		dict: Updated cart item.
 	"""
 	try:
-		customer = store.get_customer_by_id(customer_id)
-		if not customer:
-			raise Exception("Customer not found")
-
-		for item in customer.cart.products:
-			if item.product_item.serial_number == serial_number:
-				item.is_buy = is_buy
-				return {
-					"serial_number": serial_number,
-					"is_buy": item.is_buy
-				}
-
-		raise Exception("Item not found in cart")
-
+		store.set_cart_item_buy(customer_id, serial_number, is_buy)
+		return {
+				"serial_number": serial_number,
+				"is_buy": is_buy
+			}
 	except Exception as e:
 		return f"Error: {e.__str__()}"
 
