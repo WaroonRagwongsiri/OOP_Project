@@ -400,6 +400,11 @@ class Shelf:
 			raise ValueError("Exceed capacity")
 		self.__product_on_shelf.extend(product_item_list)
 
+	def get_id(self) -> str:
+		return self.__id
+
+	id = property(get_id)
+
 class Logs:
 	def __init__(self, log_id: str):
 		self.__log_id: str = log_id
