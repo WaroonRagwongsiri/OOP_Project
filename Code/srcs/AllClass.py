@@ -250,6 +250,7 @@ class Room:
 		self.__rate_price: float = rate_price
 		self.__room_type: RoomTypeEnum = RoomTypeEnum.NORMAL
 		self.__status: RoomStatusEnum = RoomStatusEnum.AVAILABLE
+		self.__product_item_list: list[ProductItem] = []
 		self.__customer: Customer = None
 		self.__reservation_list: list[Reservation] = []
 
@@ -300,6 +301,16 @@ class Room:
 	def set_room_status(self, reservation: Reservation):
 		self.__customer = reservation.customer
 
+	def add_item(self, transfer: list[ProductItem]):
+		self.__product_item_list.extend(transfer)
+
+	def get_product_item_list(self) -> list[ProductItem]:
+		return self.__product_item_list
+
+	product_item_list = property(get_product_item_list)
+
+	def clear_item(self):
+		self.__product_item_list.clear()
 
 class ReservationStatusEnum(Enum):
 	PENDING = "Pending"
@@ -389,6 +400,9 @@ class StockProduct:
 
 		return transfer
 
+	def add_to_stock(self, transfer: list[ProductItem]):
+		self.__product_item_list.extend(transfer)
+
 class Shelf:
 	def __init__(self, max_capacity: int):
 		self.__id: str = make_id('SH')
@@ -404,6 +418,16 @@ class Shelf:
 		return self.__id
 
 	id = property(get_id)
+
+	def get_product_on_shelf(self) -> list[ProductItem]:
+		return self.__product_on_shelf
+
+	product_on__shelf = property(get_product_on_shelf)
+
+	def get_max_capacity(self) -> int:
+		return self.__max_capacity
+
+	max_capacity = property(get_max_capacity)
 
 class Logs:
 	def __init__(self, log_id: str):
@@ -475,6 +499,11 @@ class GameStore:
 		new_manager = Manager(make_id('MA'), name, age)
 		self.__staff_list.append(new_manager)
 		return new_manager
+
+	def create_staff(self, name: str, age: int) -> Manager:
+		new_staff = Staff(make_id('STA'), name, age)
+		self.__staff_list.append(new_staff)
+		return new_staff
 
 	def create_room(self, max_customer: int, rate_price: float) -> Room:
 		new_room = Room(make_id("RO"), max_customer, rate_price)
@@ -718,10 +747,13 @@ class GameStore:
 		if not stock:
 			raise ValueError("No stock found")
 
+		if len(shelf.product_on__shelf) + quantity > shelf.max_capacity:
+			raise ValueError("Exceed capacity")
+
 		transfer = stock.take_product_items(quantity)
 		shelf.refill_shelf(transfer)
 
-		new_log = self.create_staff_logs(staff, StaffAction.REFILL_SHELF)
+		self.create_staff_logs(staff, StaffAction.REFILL_SHELF)
 		return shelf
 
 	def refill_stock(self, manager_id : str, stock_id : str, quantity : int, sell_price: float) -> StockProduct:
@@ -738,7 +770,7 @@ class GameStore:
 		new_log = self.create_manager_logs(manager, ManagerAction.REFILL_STOCK, stock)
 		return stock
 
-	def check_in(self, customer_id: str, reservation_id: str):
+	def check_in(self, customer_id: str, reservation_id: str) -> Reservation:
 		customer = self.get_customer_by_id(customer_id)
 		if not customer:
 			raise ValueError("Customer not found")
@@ -759,7 +791,7 @@ class GameStore:
 
 		return reservation
 
-	def check_out(self, customer_id: str, reservation_id: str):
+	def check_out(self, customer_id: str, reservation_id: str) -> Reservation:
 		customer = self.get_customer_by_id(customer_id)
 		if not customer:
 			raise ValueError("Customer not found")
@@ -777,6 +809,8 @@ class GameStore:
 
 		reservation.status = ReservationStatusEnum.CHECK_OUT
 		room.customer = None
+
+		self.clear_room(room)
 
 		log = CustomerLogs(make_id("LC-CHECK_OUT"), customer, CustomerAction.CHECK_OUT)
 		self.__customer_logs_list.append(log)
@@ -817,12 +851,12 @@ class GameStore:
 		cart.products.append(CartItem(stock_product.product_item_list[0]))
 
 		return cart
-	
+
 	def view_cart(self, customer_id : str):
 		customer_instance = self.get_customer_by_id(customer_id)
 		cart: Cart = customer_instance.cart
 		return [item for item in cart.products]
-	
+
 	def remove_item_from_cart(self, customer_id: str, product_id: str):
 		customer_instance = self.get_customer_by_id(customer_id)
 		cart: Cart = customer_instance.cart
@@ -831,7 +865,7 @@ class GameStore:
 				cart.products.remove(cartItem)
 				break
 		return cart
-	
+
 	def view_product_detail(self, serial_number: str):
 		product = self.get_product_by_id(serial_number)
 		for stock in self.get_all_stock():
@@ -839,10 +873,48 @@ class GameStore:
 				if product_item.serial_number == serial_number:
 					return {
 						"status": product_item.status,
-						"sell_price": product_item.sell_price,
+						"sell_price": product_item.calculate_price(),
 						"condition": product_item.condition
 					}
 		return None
+
+	def get_stock_by_product_id(self, product_id: str) -> StockProduct:
+		for stock in self.__stock_product_list:
+			if stock.product.id == product_id:
+				return stock
+
+	def request_item_for_room(self, customer_id: str, reservation_id: str, product_id: str, quantity: int) -> Room:
+		customer = self.get_customer_by_id(customer_id)
+		if not customer:
+			raise ValueError("Customer not found")
+
+		reservation = customer.get_reservation_from_id(reservation_id)
+		if not reservation:
+			raise ValueError("Reservation not found")
+
+		room = reservation.room
+		if not room:
+			raise ValueError("Room not found")
+
+		stock = self.get_stock_by_product_id(product_id)
+
+		if not stock:
+			raise ValueError("Stock not found")
+
+		if room.customer != customer:
+			raise ValueError("Invalid Customer")
+
+		transfer = stock.take_product_items(quantity)
+		room.add_item(transfer)
+		return room
+
+	def clear_room(self, room: Room):
+		for product_item in room.product_item_list:
+			product_item: ProductItem = product_item
+			stock = self.get_stock_by_product_id(product_item.product.id)
+			stock.add_to_stock([product_item])
+
+		room.clear_item()
 
 class Bill:
 	def __init__(self, payment_gateway: PaymentGateway, amount: float):
