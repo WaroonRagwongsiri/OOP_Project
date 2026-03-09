@@ -433,7 +433,7 @@ class Shelf:
 	def get_product_on_shelf(self) -> list[ProductItem]:
 		return self.__product_on_shelf
 
-	product_on__shelf = property(get_product_on_shelf)
+	product_on_shelf = property(get_product_on_shelf)
 
 	def get_max_capacity(self) -> int:
 		return self.__max_capacity
@@ -761,7 +761,7 @@ class GameStore:
 		if not stock:
 			raise ValueError("No stock found")
 
-		if len(shelf.product_on__shelf) + quantity > shelf.max_capacity:
+		if len(shelf.product_on_shelf) + quantity > shelf.max_capacity:
 			raise ValueError("Exceed capacity")
 
 		transfer = stock.take_product_items(quantity)
@@ -873,11 +873,15 @@ class GameStore:
 
 		return coupon
 
+	def get_product_from_shelf(self, product_id: str) -> ProductItem:
+		for shelf in self.get_all_shelf():
+			for product_item in shelf.product_on_shelf:
+				if product_item.product.id == product_id:
+					return product_item
+		return None
+
 	def add_product_to_customer(self, customer_id : str, product_id : str):
-		stock_product = None
-		for stock in self.get_all_stock():
-			if stock.product.id == product_id:
-				stock_product = stock
+		stock_product = self.get_product_from_shelf(product_id)
 		if stock_product is None:
 			raise Exception("No product with matching ID")
 		
