@@ -1,54 +1,45 @@
-@startuml UsecaseSequenceDiagram
+@startuml Customer
+actor Customer
+participant GameStore
+participant Room
 
-Customer -> GameStore : Create booking (Room ID)
-activate Customer
+Customer -> GameStore : create_reservation(customer_id, room_id, start_time, end_time)
 activate GameStore
 
-alt booking success
+GameStore -> GameStore : get_customer_by_id(customer_id)
 
-	loop get room by id
+alt customer not found
+	GameStore --> Customer : ValueError("Invalid User")
 
-		GameStore -> Room : Get room
-		activate Room
+else customer found
+	GameStore -> Customer : check_time_availability(start_time, end_time)
 
-		Room -> GameStore : Room
-		deactivate Room
+	alt invalid time frame
+		GameStore --> Customer : ValueError("Invalid Time Frame")
 
+	else time available
+		GameStore -> GameStore : get_room_by_id(room_id)
+
+		alt room not found
+			GameStore --> Customer : ValueError("No Room this ID")
+
+		else room found
+			GameStore -> Room : create_reservation(make_id("RE"), customer, start_time, end_time)
+			activate Room
+			Room --> GameStore : reservation / None
+			deactivate Room
+
+			alt reservation is None
+				GameStore --> Customer : ValueError("Invalid Time Frame")
+
+			else reservation created
+				GameStore -> Customer : add_reservation(reservation)
+				GameStore -> GameStore : create_customer_logs(customer, CREATE_RESERVATION)
+				GameStore --> Customer : reservation.id
+			end
+		end
 	end
-
-	GameStore -> Room : Set booking
-	activate Room
-
-	Room -> Reservation : Create Reservation(customer, room, room_type)
-	activate Reservation
-	Reservation -> Reservation : status = Pending
-	Reservation -> Room : Created(reservation_id)
-	deactivate Reservation
-
-	Room -> GameStore : Reservation
-	deactivate Room
-
-	GameStore -> Transaction : Create Transaction(reservation_id)
-	activate Transaction
-	Transaction -> Transaction : status = Pending
-	Transaction -> GameStore : Transaction Instance
-	deactivate Transaction
-
-	GameStore -> Customer : Success
-
-else booking fail (fail to get rooms)
-
-	Room -> GameStore : Fail (fail to get rooms)
-	GameStore -> Customer : Fail (fail to get rooms)
-
-else booking fail (fail to create reservation)
-
-	Room -> GameStore : Fail (fail to create reservation)
-	GameStore -> Customer : Fail (fail to create reservation)
-
-	deactivate GameStore
-	deactivate Customer
-
 end
 
+deactivate GameStore
 @enduml
