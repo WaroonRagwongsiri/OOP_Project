@@ -897,6 +897,15 @@ class GameStore:
 		if not customer:
 			raise ValueError("Customer not found")
 
+		if minimum_amount <= 0:
+			raise ValueError("Invalid minimum amount")
+		
+		if discount_amount <= 0:
+			raise ValueError("Invalid discount amount")
+		
+		if expire_date <= datetime.now():
+			raise ValueError("Invalid Expire date")
+
 		coupon_id = make_id("D-CP")
 		coupon = Coupon(coupon_id, "coupon", customer, minimum_amount, discount_amount, expire_date)
 		customer.add_coupon(coupon)
