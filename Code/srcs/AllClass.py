@@ -411,6 +411,12 @@ class StockProduct:
 	id = property(get_id)
 
 	def refill_stock(self, quantity: int, sell_price: float):
+		if quantity <= 0:
+			raise ValueError("Invalid Quantity")
+
+		if sell_price <= 0:
+			raise ValueError("Invalid Sellprice")
+
 		for i in range(quantity):
 			new_product_item = ProductItem(self.__product, sell_price)
 			self.__product_item_list.append(new_product_item)
@@ -786,6 +792,9 @@ class GameStore:
 		if len(shelf.product_on_shelf) + quantity > shelf.max_capacity:
 			raise ValueError("Exceed capacity")
 
+		if quantity <= 0:
+			raise ValueError("Invalid Quantity")
+
 		transfer = stock.take_product_items(quantity)
 		shelf.refill_shelf(transfer)
 
@@ -800,6 +809,12 @@ class GameStore:
 		stock = self.get_stock_by_id(stock_id)
 		if not stock:
 			raise ValueError("Stock Not found")
+
+		if quantity <= 0:
+			raise ValueError("Invalid Quantity")
+
+		if sell_price <= 0:
+			raise ValueError("Invalid Sellprice")
 
 		stock.refill_stock(quantity, sell_price)
 
