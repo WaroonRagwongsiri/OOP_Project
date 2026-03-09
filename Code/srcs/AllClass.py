@@ -411,6 +411,12 @@ class StockProduct:
 	id = property(get_id)
 
 	def refill_stock(self, quantity: int, sell_price: float):
+		if quantity <= 0:
+			raise ValueError("Invalid Quantity")
+
+		if sell_price <= 0:
+			raise ValueError("Invalid Sellprice")
+
 		for i in range(quantity):
 			new_product_item = ProductItem(self.__product, sell_price)
 			self.__product_item_list.append(new_product_item)
@@ -786,6 +792,9 @@ class GameStore:
 		if len(shelf.product_on_shelf) + quantity > shelf.max_capacity:
 			raise ValueError("Exceed capacity")
 
+		if quantity <= 0:
+			raise ValueError("Invalid Quantity")
+
 		transfer = stock.take_product_items(quantity)
 		shelf.refill_shelf(transfer)
 
@@ -800,6 +809,12 @@ class GameStore:
 		stock = self.get_stock_by_id(stock_id)
 		if not stock:
 			raise ValueError("Stock Not found")
+
+		if quantity <= 0:
+			raise ValueError("Invalid Quantity")
+
+		if sell_price <= 0:
+			raise ValueError("Invalid Sellprice")
 
 		stock.refill_stock(quantity, sell_price)
 
@@ -818,6 +833,9 @@ class GameStore:
 		room = reservation.room
 		if not room:
 			raise ValueError("Room not found")
+
+		if reservation.status == ReservationStatusEnum.CHECK_IN:
+			raise ValueError("Already check in")
 
 		room.customer = reservation.customer
 		reservation.status = ReservationStatusEnum.CHECK_IN
@@ -842,6 +860,9 @@ class GameStore:
 		room = reservation.room
 		if room.customer != customer:
 			raise ValueError("Invalid Customer")
+		
+		if reservation.status == ReservationStatusEnum.CHECK_OUT:
+			raise ValueError("Already check out")
 
 		reservation.status = ReservationStatusEnum.CHECK_OUT
 		room.customer = None
@@ -890,6 +911,15 @@ class GameStore:
 		customer = self.get_customer_by_id(customer_id)
 		if not customer:
 			raise ValueError("Customer not found")
+
+		if minimum_amount <= 0:
+			raise ValueError("Invalid minimum amount")
+		
+		if discount_amount <= 0:
+			raise ValueError("Invalid discount amount")
+		
+		if expire_date <= datetime.now():
+			raise ValueError("Invalid Expire date")
 
 		coupon_id = make_id("D-CP")
 		coupon = Coupon(coupon_id, "coupon", customer, minimum_amount, discount_amount, expire_date)

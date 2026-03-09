@@ -455,7 +455,9 @@ def refill_stock(
 		return {
 			"message": "Stock refilled",
 			"stock_id": stock.id,
-			"product_id": stock.product.id
+			"product_id": stock.product.id,
+			"quantity": len(stock.product_item_list),
+			"sell_price": stock.product_item_list[-1].calculate_price()
 		}
 	except Exception as e:
 		return f"Error: {e.__str__()}"
