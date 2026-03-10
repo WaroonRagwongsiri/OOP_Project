@@ -583,6 +583,35 @@ def create_coupon(
 	except Exception as e:
 		return f"Error: {e.__str__()}"
 
+@mcp.tool()
+def view_coupon(customer_id: str):
+	"""
+	View Coupon customer have
+
+	Args:
+		customer_id (str): Customer id
+
+	Returns:
+		dict: Coupon information
+	"""
+	try:
+		coupon_list = store.view_coupon(customer_id)
+
+		return {
+			"customer_id": customer_id,
+			"coupons": [
+				{
+					"id": coupon.id,
+					"type": coupon.type,
+					"minimum_amount": coupon.minimum_amount,
+					"discount_amount": coupon.discount_amount,
+					"expire_date": coupon.expire_date
+				}
+				for coupon in coupon_list
+			]
+		}
+	except Exception as e:
+		return f"Error: {e.__str__()}"
 
 # -------------------------
 # Cart
