@@ -1025,6 +1025,10 @@ class GameStore:
 			if cart_item.is_buy:
 				cart_items_given_to_customer.append(cart_item)
 
+		# Check if cart does have atleast one selected product
+		if cart_items_given_to_customer <= 0:
+			raise Exception("No selected item inside cart")
+
 		# Check if stock does still have that instance
 		for cart_item in cart_items_given_to_customer:
 			if cart_item.product_item.status != ProductItemStatus.SELLING:
