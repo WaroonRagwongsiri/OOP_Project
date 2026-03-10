@@ -433,7 +433,7 @@ class StockProduct:
 
 	def add_to_stock(self, transfer: list[ProductItem]):
 		self.__product_item_list.extend(transfer)
-		for product_item in self.__product_item_list:
+		for product_item in transfer:
 			product_item.status = ProductItemStatus.STOCKED
 
 class Shelf:
@@ -533,7 +533,7 @@ class GameStore:
 		self.__staff_logs_list: list[StaffLogs] = []
 		self.__bill_list: list[Bill] = []
 
-		self.__payment_gateway_list: list[PaymentGateway] = [QRCode()]
+		self.__payment_gateway_list: list[PaymentGateway] = [QRCode(), Card()]
 
 	def create_customer(self, name: str, age: int) -> Customer:
 		new_customer = Customer(make_id("C"), name, age)
@@ -621,7 +621,7 @@ class GameStore:
 
 	def get_payment_gateway_by_name(self, payment_gateway_name: str) -> PaymentGateway | None:
 		for payment_gateway in self.__payment_gateway_list:
-			if payment_gateway.name == payment_gateway_name:
+			if payment_gateway.name.upper() == payment_gateway_name.upper():
 				return payment_gateway
 		return None
 
@@ -922,10 +922,10 @@ class GameStore:
 		if not customer:
 			raise ValueError("Customer not found")
 
-		if minimum_amount <= 0:
+		if minimum_amount < 0:
 			raise ValueError("Invalid minimum amount")
 		
-		if discount_amount <= 0:
+		if discount_amount < 0:
 			raise ValueError("Invalid discount amount")
 		
 		if expire_date <= datetime.now():
@@ -1007,73 +1007,74 @@ class GameStore:
 				return coupon
 		return None
 
-def purchase(self, customer_id : str, payment_method_name : str, payment_info : list, coupon_id: str = None) -> tuple[Bill, list[str]]:
-	customer_instance = self.get_customer_by_id(customer_id)
-	if not customer_instance:
-		raise Exception("Customer doesn't exist")
+	def purchase(self, customer_id : str, payment_method_name : str, payment_info : list, coupon_id: str = None) -> tuple[Bill, list[str]]:
+		customer_instance = self.get_customer_by_id(customer_id)
+		if not customer_instance:
+			raise Exception("Customer doesn't exist")
 
-	payment_method = self.get_payment_gateway_by_name(payment_method_name)
-	if not payment_method:
-		raise Exception("Payment method not found")
+		payment_method = self.get_payment_gateway_by_name(payment_method_name)
+		if not payment_method:
+			raise Exception("Payment method not found")
 
-	cart_instance: Cart = customer_instance.cart
-	cart_item_instances: list[CartItem] = cart_instance.products
+		cart_instance: Cart = customer_instance.cart
+		cart_item_instances: list[CartItem] = cart_instance.products
 
-	# Setting the buy product item list
-	cart_items_given_to_customer: list[CartItem] = []
-	for cart_item in cart_item_instances:
-		if cart_item.is_buy:
-			cart_items_given_to_customer.append(cart_item)
+		# Setting the buy product item list
+		cart_items_given_to_customer: list[CartItem] = []
+		for cart_item in cart_item_instances:
+			if cart_item.is_buy:
+				cart_items_given_to_customer.append(cart_item)
 
-	# Check if stock does still have that instance
-	for cart_item in cart_items_given_to_customer:
-		if cart_item.product_item.status != ProductItemStatus.SELLING:
-			raise Exception("Product is unavailable")
-		
-	# Pricing
-	total_pricing = 0
-	for cart_item in cart_items_given_to_customer:
-		total_pricing += cart_item.product_item.calculate_price()
-	total_pricing *= customer_instance.apply_discount_benefit()
-	if coupon_id is not None:
-		coupon_instance = self.get_coupon_by_id(customer_id, coupon_id)
-		if coupon_instance is None:
-			raise ValueError("Coupon not found")
-		if datetime.now() >= coupon_instance.expire_date or total_pricing < coupon_instance.minimum_amount:
-			raise Exception("Error while applying coupon")
-		total_pricing -= coupon_instance.discount_amount
-		
-	# Payment
-	status = payment_method.start_payment(total_pricing, payment_info)
-	if not status:
-		raise Exception("Payment Failed.")
+		# Check if stock does still have that instance
+		for cart_item in cart_items_given_to_customer:
+			if cart_item.product_item.status != ProductItemStatus.SELLING:
+				raise Exception("Product is unavailable")
+			
+		# Pricing
+		total_pricing = 0
+		for cart_item in cart_items_given_to_customer:
+			total_pricing += cart_item.product_item.calculate_price()
+		total_pricing *= customer_instance.apply_discount_benefit()
+		if coupon_id is not None:
+			coupon_instance = self.get_coupon_by_id(customer_id, coupon_id)
+			if coupon_instance is None:
+				raise ValueError("Coupon not found")
+			if datetime.now() >= coupon_instance.expire_date or total_pricing < coupon_instance.minimum_amount:
+				raise Exception("Error while applying coupon")
+			total_pricing -= coupon_instance.discount_amount
+			customer_instance.coupons.remove(coupon_instance)
+			
+		# Payment
+		status = payment_method.start_payment(total_pricing, payment_info)
+		if not status:
+			raise Exception("Payment Failed.")
 
-	# Changing the status of the product item stored in game store
-	for cart_item in cart_items_given_to_customer:
-		cart_item.product_item.status = ProductItemStatus.SOLDED
+		# Changing the status of the product item stored in game store
+		for cart_item in cart_items_given_to_customer:
+			cart_item.product_item.status = ProductItemStatus.SOLDED
 
-	# Remove product item from customer's cart
-	for cart_item in cart_items_given_to_customer:
-		cart_item_instances.remove(cart_item)
+		# Remove product item from customer's cart
+		for cart_item in cart_items_given_to_customer:
+			cart_item_instances.remove(cart_item)
 
-	bought_items = [cart_item.product_item for cart_item in cart_items_given_to_customer]
+		bought_items = [cart_item.product_item for cart_item in cart_items_given_to_customer]
 
-	bill = self.create_bill(payment_method, total_pricing)
-	self.__bill_list.append(bill)
-	bill.add_product_items(bought_items)
-	self.__bought_list.extend(bought_items)
-	customer_instance.add_bill(bill)
+		bill = self.create_bill(payment_method, total_pricing)
+		self.__bill_list.append(bill)
+		bill.add_product_items(bought_items)
+		self.__bought_list.extend(bought_items)
+		customer_instance.add_bill(bill)
 
-	for item in bought_items:
-		for shelf in self.__shelf_list:
-			if shelf.remove_product(item):
-				break
+		for item in bought_items:
+			for shelf in self.__shelf_list:
+				if shelf.remove_product(item):
+					break
 
 		customer_log = self.create_customer_logs(customer_instance, CustomerAction.PURCHASE)
 
 		product_sn_list = [item.serial_number for item in bought_items]
 		return [bill, product_sn_list]
-	
+
 	def get_product_item_by_serial_number(self, serial_number: str) -> ProductItem:
 		for stock in self.__stock_product_list:
 			for product_item in stock.product_item_list:
@@ -1083,6 +1084,9 @@ def purchase(self, customer_id : str, payment_method_name : str, payment_info : 
 			for product_item in shelf.product_on_shelf:
 				if product_item.serial_number == serial_number:
 					return product_item
+		for item in self.__bought_list:
+			if item.serial_number == serial_number:
+				return item
 		return None
 
 	def get_bill_by_id(self, bill_id : str) -> Bill:
@@ -1104,14 +1108,12 @@ def purchase(self, customer_id : str, payment_method_name : str, payment_info : 
 			raise Exception(f"Serial numbers not found in this bill: {invalid}")
 
 		product_items: list[ProductItem] = [self.get_product_item_by_serial_number(sn) for sn in product_sn_list]
-		total_price = 0
+		if any(item is None for item in product_items):
+			raise Exception("One or more serial numbers could not be found")
+
 		for product_item in product_items:
-			total_price += product_item.calculate_price()
 			if product_item.status != ProductItemStatus.SOLDED:
 				raise Exception("Product is not sold")
-
-		if bill_instance.amount != total_price:
-			raise Exception("Not matching money amount")
 
 		for product_item in product_items:
 			product_item.status = ProductItemStatus.STOCKED
@@ -1124,7 +1126,14 @@ def purchase(self, customer_id : str, payment_method_name : str, payment_info : 
 			if isinstance(staff, Manager):
 				manager_id = staff.id
 				break
-		coupon = self.create_coupon(manager_id, customer_id, 0, total_price, datetime.today() + timedelta(days=90))
+		if manager_id is None:
+			raise Exception("No manager found in the system to issue refund coupon")
+
+		for item in product_items:
+			stock = self.get_stock_by_product_id(item.product.id)
+			stock.add_to_stock([item])
+
+		coupon = self.create_coupon(manager_id, customer_id, 0, bill_instance.amount, datetime.today() + timedelta(days=90))
 
 		return coupon
 
@@ -1269,6 +1278,23 @@ class PaymentGateway(ABC):
 class QRCode(PaymentGateway):
 	def __init__(self):
 		super().__init__("QRCode")
+
+	def authenticate(self, payment_information) -> bool:
+		return True
+
+	def pay(self, amount) -> bool:
+		return True
+
+	def start_payment(self, payment_information, amount) -> bool:
+		if not self.authenticate(payment_information):
+			return False
+		if not self.pay(amount):
+			return False
+		return True
+
+class Card(PaymentGateway):
+	def __init__(self):
+		super().__init__("Card")
 
 	def authenticate(self, payment_information) -> bool:
 		return True
