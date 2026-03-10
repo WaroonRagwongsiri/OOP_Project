@@ -1111,14 +1111,9 @@ class GameStore:
 		if any(item is None for item in product_items):
 			raise Exception("One or more serial numbers could not be found")
 
-		total_price = 0
 		for product_item in product_items:
-			total_price += product_item.calculate_price()
 			if product_item.status != ProductItemStatus.SOLDED:
 				raise Exception("Product is not sold")
-
-		if bill_instance.amount != total_price:
-			raise Exception("Not matching money amount")
 
 		for product_item in product_items:
 			product_item.status = ProductItemStatus.STOCKED
@@ -1139,7 +1134,7 @@ class GameStore:
 			stock = self.get_stock_by_product_id(item.product.id)
 			stock.add_to_stock([item])
 
-		coupon = self.create_coupon(manager_id, customer_id, 0, total_price, datetime.today() + timedelta(days=90))
+		coupon = self.create_coupon(manager_id, customer_id, 0, bill_instance.amount, datetime.today() + timedelta(days=90))
 
 		return coupon
 
