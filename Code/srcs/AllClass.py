@@ -1007,67 +1007,67 @@ class GameStore:
 				return coupon
 		return None
 
-	def purchase(self, customer_id : str, payment_method_name : str, payment_info : list, coupon_id: str = None) -> tuple[Bill, list[str]]:
-		customer_instance = self.get_customer_by_id(customer_id)
-		if not customer_instance:
-			raise Exception("Customer doesn't exist")
+def purchase(self, customer_id : str, payment_method_name : str, payment_info : list, coupon_id: str = None) -> tuple[Bill, list[str]]:
+	customer_instance = self.get_customer_by_id(customer_id)
+	if not customer_instance:
+		raise Exception("Customer doesn't exist")
 
-		payment_method = self.get_payment_gateway_by_name(payment_method_name)
-		if not payment_method:
-			raise Exception("Payment method not found")
+	payment_method = self.get_payment_gateway_by_name(payment_method_name)
+	if not payment_method:
+		raise Exception("Payment method not found")
 
-		cart_instance: Cart = customer_instance.cart
-		cart_item_instances: list[CartItem] = cart_instance.products
+	cart_instance: Cart = customer_instance.cart
+	cart_item_instances: list[CartItem] = cart_instance.products
 
-		# Setting the buy product item list
-		cart_items_given_to_customer: list[CartItem] = []
-		for cart_item in cart_item_instances:
-			if cart_item.is_buy:
-				cart_items_given_to_customer.append(cart_item)
+	# Setting the buy product item list
+	cart_items_given_to_customer: list[CartItem] = []
+	for cart_item in cart_item_instances:
+		if cart_item.is_buy:
+			cart_items_given_to_customer.append(cart_item)
 
-		# Check if stock does still have that instance
-		for cart_item in cart_items_given_to_customer:
-			if cart_item.product_item.status != ProductItemStatus.SELLING:
-				raise Exception("Product is unavailable")
-			
-		# Pricing
-		total_pricing = 0
-		for cart_item in cart_items_given_to_customer:
-			total_pricing += cart_item.product_item.calculate_price()
-		total_pricing *= customer_instance.apply_discount_benefit()
-		if coupon_id is not None:
-			coupon_instance = self.get_coupon_by_id(customer_id, coupon_id)
-			if coupon_instance is None:
-				raise ValueError("Coupon not found")
-			if datetime.now() >= coupon_instance.expire_date or total_pricing < coupon_instance.minimum_amount or coupon_instance is None:
-				raise Exception("Error while applying coupon")
-			total_pricing -= coupon_instance.discount_amount
-			
-		# Payment
-		status = payment_method.start_payment(total_pricing, payment_info)
-		if not status:
-			raise Exception("Payment Failed.")
+	# Check if stock does still have that instance
+	for cart_item in cart_items_given_to_customer:
+		if cart_item.product_item.status != ProductItemStatus.SELLING:
+			raise Exception("Product is unavailable")
+		
+	# Pricing
+	total_pricing = 0
+	for cart_item in cart_items_given_to_customer:
+		total_pricing += cart_item.product_item.calculate_price()
+	total_pricing *= customer_instance.apply_discount_benefit()
+	if coupon_id is not None:
+		coupon_instance = self.get_coupon_by_id(customer_id, coupon_id)
+		if coupon_instance is None:
+			raise ValueError("Coupon not found")
+		if datetime.now() >= coupon_instance.expire_date or total_pricing < coupon_instance.minimum_amount:
+			raise Exception("Error while applying coupon")
+		total_pricing -= coupon_instance.discount_amount
+		
+	# Payment
+	status = payment_method.start_payment(total_pricing, payment_info)
+	if not status:
+		raise Exception("Payment Failed.")
 
-		# Changing the status of the product item stored in game store
-		for cart_item in cart_items_given_to_customer:
-			cart_item.product_item.status = ProductItemStatus.SOLDED
+	# Changing the status of the product item stored in game store
+	for cart_item in cart_items_given_to_customer:
+		cart_item.product_item.status = ProductItemStatus.SOLDED
 
-		# Remove product item from customer's cart
-		for cart_item in cart_items_given_to_customer:
-			cart_item_instances.remove(cart_item)
+	# Remove product item from customer's cart
+	for cart_item in cart_items_given_to_customer:
+		cart_item_instances.remove(cart_item)
 
-		bought_items = [cart_item.product_item for cart_item in cart_items_given_to_customer]
+	bought_items = [cart_item.product_item for cart_item in cart_items_given_to_customer]
 
-		bill = self.create_bill(payment_method, total_pricing)
-		self.__bill_list.append(bill)
-		bill.add_product_items(bought_items)
-		self.__bought_list.extend(bought_items)
-		customer_instance.add_bill(bill)
+	bill = self.create_bill(payment_method, total_pricing)
+	self.__bill_list.append(bill)
+	bill.add_product_items(bought_items)
+	self.__bought_list.extend(bought_items)
+	customer_instance.add_bill(bill)
 
-		for item in bought_items:
-			for shelf in self.__shelf_list:
-				if shelf.remove_product(item):
-					break
+	for item in bought_items:
+		for shelf in self.__shelf_list:
+			if shelf.remove_product(item):
+				break
 
 		customer_log = self.create_customer_logs(customer_instance, CustomerAction.PURCHASE)
 
