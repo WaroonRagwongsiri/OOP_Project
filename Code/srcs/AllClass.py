@@ -55,6 +55,12 @@ class Customer:
 		return self.__coupons_list
 
 	def check_time_availability(self, start_time: datetime, end_time: datetime) -> bool:
+		if start_time < datetime.now():
+			return False
+
+		if end_time <= start_time:
+			return False
+
 		for reservation in self.__reservation_list:
 			if start_time < reservation.end_time and end_time > reservation.start_time and reservation.status != ReservationStatusEnum.CANCEL:
 				return False
@@ -74,6 +80,9 @@ class Customer:
 
 	def add_coupon(self, coupon: Coupon):
 		self.__coupons_list.append(coupon)
+
+	def view_coupons(self) -> list[Coupon]:
+		return self.coupons
 
 class MemberStatusEnum(Enum):
 	ACTIVE = "Active"
@@ -305,6 +314,12 @@ class Room:
 		end_time: datetime,
 		exclude_reservation_id: str | None = None
 	) -> bool:
+		if start_time < datetime.now():
+			return False
+
+		if end_time <= start_time:
+			return False
+
 		for reservation in self.__reservation_list:
 			if exclude_reservation_id is not None and reservation.id == exclude_reservation_id:
 				continue
@@ -571,6 +586,12 @@ class GameStore:
 			if customer.id == customer_id:
 				return customer
 		return None
+
+	def view_coupon(self, customer_id: str) -> list[Coupon]:
+		customer = self.get_customer_by_id(customer_id)
+		if customer is None:
+			raise ValueError("Customer not found")
+		return customer.view_coupons()
 
 	def get_room_by_id(self, room_id: str) -> Room | None:
 		for room in self.__room_list:
