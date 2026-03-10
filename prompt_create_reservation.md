@@ -1,79 +1,20 @@
-🧪 create_reservation Test Suite
+Phase 0 setup
+ทำการสร้าง Manager ชื่อ M อายุ 19 ปี ให้ M ทำการสร้างห้อง 3 ห้อง
+ห้องที่ 1 จำกัด 20 คน ราคา 150 บาท
+ห้องที่ 2 จำกัด 50 คน ราคา 700 บาท
+ห้องที่ 3 จำกัด 30 คน ราคา 300 บาท
+จากนั้นทำการสร้างลูกค้าชื่อ Bob กับ Alice
 
-⚙️ Setup (Prerequisites)
+Phase 1 Good Test
+Bob ดูห้องที่ว่างทั้งหมด
+Bob ทำการจองห้องที่จำกัด 50 คน วันที่ 19 มีนาคม เวลา 10:00 - 18:00
+Bob จองอีกห้องที่จำกัด 30 คน วันที่ 19 มีนาคม เวลา 20:00 - 22:00
+Bob ดูการจองของเขา
 
-Call create_customer with name="Alice", age=25 → save customer_id Call create_room with max_customer=4, rate_price=100.0 → save room_id
+Phase 2 Bad Test
+Bob จองห้อง 20 คน วันที่ 19 มีนาคม เวลา 10:00 - 18:00 (เวลาซ้อน)
+Alice ทำการจองห้องที่จำกัด 50 คน วันที่ 19 มีนาคม เวลา 10:00 - 18:00 (เวลาชน)
+Alice จองห้องที่จำกัด 30 คน 19 มกราคม 2020 ถึง 30 มีนาคม 2027 (เวลาในอดีต)
+Alice ทำการจองห้องที่จำกัด 100 คน (ไม่มีห้องนี้)
 
-✅ Happy Path
-
-Test 1 – Valid reservation Call create_reservation with:
-
-
-
-
-
-customer_id={customer_id}, room_id={room_id}
-
-
-
-start_time="2026-03-10T10:00:00", end_time="2026-03-10T12:00:00"
-
-→ Expect: reservation object returned, save as reservation_id
-
-❌ Fail Cases
-
-Test 2 – Invalid customer_id (non-existent customer) Call create_reservation with:
-
-
-
-
-
-customer_id="INVALID_ID", room_id={room_id}
-
-
-
-start_time="2026-03-10T10:00:00", end_time="2026-03-10T12:00:00"
-
-→ Expect: "Error: Invalid User"
-
-Test 3 – Invalid room_id (non-existent room) Call create_reservation with:
-
-
-
-
-
-customer_id={customer_id}, room_id="INVALID_ROOM"
-
-
-
-start_time="2026-03-10T10:00:00", end_time="2026-03-10T12:00:00"
-
-→ Expect: "Error: No Room this ID"
-
-Test 4 – Overlapping time (customer already has a reservation in this window) (Uses reservation_id from Test 1 — same customer, overlapping time) Call create_reservation with:
-
-
-
-
-
-customer_id={customer_id}, room_id={room_id}
-
-
-
-start_time="2026-03-10T11:00:00", end_time="2026-03-10T13:00:00" (overlaps with Test 1)
-
-→ Expect: "Error: Invalid Time Frame" (from customer.check_time_availability)
-
-Test 5 – Room already booked in that time window Call create_reservation with a different valid customer (customer_id_2) but same room and same time as Test 1:
-
-
-
-
-
-customer_id={customer_id_2}, room_id={room_id}
-
-
-
-start_time="2026-03-10T10:00:00", end_time="2026-03-10T12:00:00"
-
-→ Expect: "Error: Invalid Time Frame" (from room.create_reservation returning None)
+Mamba ทำการจอง ห้อง 20 คน วันที่ 19 มีนาคม เวลา 08:00 - 09:00 (ไม่มีลูกค้า)

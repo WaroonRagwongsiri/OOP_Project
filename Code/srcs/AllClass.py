@@ -147,6 +147,16 @@ class Staff:
 
 	id = property(get_id)
 
+	def get_name(self) -> str:
+		return self.__name
+
+	name = property(get_name)
+
+	def get_age(self) -> int:
+		return self.__age
+
+	age = property(get_age)
+
 class Manager(Staff):
 	def __init__(self, id, name, age):
 		super().__init__(id, name, age)
@@ -1245,6 +1255,12 @@ class GameStore:
 				return item
 
 		raise Exception("Item not found in cart")
+
+	def get_all_staff(self) -> list[Staff]:
+		return self.__staff_list
+
+	def get_all_manager(self) -> list[Manager]:
+		return [x for x in self.__staff_list if isinstance(x, Manager)]
 
 class Bill:
 	def __init__(self, payment_gateway: PaymentGateway, amount: float):
