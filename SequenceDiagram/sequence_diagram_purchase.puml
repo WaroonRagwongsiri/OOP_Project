@@ -20,7 +20,7 @@ loop Get payment method by nam
     deactivate PaymentMethod
 end
 
-GameStore -> Customer : Get CartItem list
+GameStore -> Customer : Get all the cart items that the customer choose to buy\n, sum the price and check if it is selling
 activate Customer
 Customer -> Cart : Get CartItem list
 activate Cart
@@ -33,12 +33,7 @@ deactivate Cart
 Customer -> GameStore : Return CartItem list
 deactivate Customer
 
-GameStore -> CartItem : Get all the product items that the customer choose to buy, sum the price and check if is selling
-activate CartItem
-CartItem -> GameStore
-deactivate CartItem
-
-alt All the product item have a selling status
+alt Have atleast one selected product / All the product item have a selling status
     GameStore -> Customer : Get customer discount benefit
     activate Customer
     Customer -> GameStore : Return the discount benefit
@@ -110,7 +105,7 @@ alt All the product item have a selling status
         GameStore -> CustomerA : Failed (Payment failed)
     end
 else
-    GameStore -> CustomerA : Failed (Product is unavailable)
+    GameStore -> CustomerA : Failed (No selected item inside cart /\nProduct is unavailable)
 end
 
 
