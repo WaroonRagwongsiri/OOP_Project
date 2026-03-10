@@ -1,3 +1,10 @@
+ช่วยทดสอบการเชื่อมต่อกับร้านค้าให้หน่อย
+
+สร้างลูกค้าชื่อ Alice อายุ 25 และผู้จัดการชื่อ ManagerMike อายุ 40
+ManagerMike ต้องการสร้างเกมชื่อ Chess มีรายระเอียดคือ Classic strategy game มีแนวเป็น Strategy ระบุให้มีชนิดเป็นแผ่นเกม
+
+
+
 ```
 🛒 Purchase Function Test Prompt
 Prerequisites (run first to get required IDs):
@@ -21,7 +28,9 @@ Prerequisites (run first to get required IDs):
 * `purchase` with empty cart (no items marked is_buy=true) → expect empty bill or zero total
 * `purchase` with an expired coupon (expire_date in the past) → expect `"Error: Error while applying coupon"`
 * `purchase` with a coupon where total < minimum_amount → expect `"Error: Error while applying coupon"`
-* `purchase` the same product twice (already SOLDED status) → expect `"Error: Product is unavailable"`🛒 Purchase Function Test Prompt
+* `purchase` the same product twice (already SOLDED status) → expect `"Error: Product is unavailable"`
+
+🛒 Purchase Function Test Prompt
 Prerequisites (run first to get required IDs):
 1. `test_connection` → verify connection
 2. `create_customer` name="Alice", age=25 → save `customer_id`
@@ -43,7 +52,9 @@ Prerequisites (run first to get required IDs):
 * `purchase` with empty cart (no items marked is_buy=true) → expect empty bill or zero total
 * `purchase` with an expired coupon (expire_date in the past) → expect `"Error: Error while applying coupon"`
 * `purchase` with a coupon where total < minimum_amount → expect `"Error: Error while applying coupon"`
-* `purchase` the same product twice (already SOLDED status) → expect `"Error: Product is unavailable"`🛒 Purchase Function Test Prompt
+* `purchase` the same product twice (already SOLDED status) → expect `"Error: Product is unavailable"`
+
+🛒 Purchase Function Test Prompt
 Prerequisites (run first to get required IDs):
 1. `test_connection` → verify connection
 2. `create_customer` name="Alice", age=25 → save `customer_id`

@@ -2,7 +2,7 @@
 
 actor Manager as ManagerA
 
-ManagerA -> GameStore : refill_stock(managerID, productID, quantity)
+ManagerA -> GameStore : refill_stock(manager_id, stock_id, quantity, sell_price)
 activate ManagerA
 activate GameStore
 
@@ -14,41 +14,39 @@ loop Find manager instance by ID
 end
 
 alt Did find manager instance
-    loop Find StockProduct by product id
+    loop Find stock by id
         GameStore -> StockProduct
         activate StockProduct
-        StockProduct -> Product
-        activate Product
-
-        Product -> StockProduct
-        deactivate Product
         StockProduct -> GameStore
         deactivate StockProduct
     end
 
     alt Did find StockProduct
-        loop Create new product instances and add to StockProduct's ProductItem list
-            GameStore -> ProductItem : create_product_item(Product)
-            activate ProductItem
-            ProductItem -> GameStore : Return instance
-            deactivate ProductItem
+        alt quantity is more than zero
+            alt sell_price is more than zero
+                GameStore -> StockProduct : refill_stock(quantity, sell_price)
+                activate StockProduct
+                loop loop for total of quantity times
+                    StockProduct -> ProductItem : Create product item
+                    activate ProductItem
+                    ProductItem -> StockProduct : Return product item instance for storing
+                    deactivate ProductItem
+                end
+                StockProduct -> GameStore
+                deactivate StockProduct
 
-            GameStore -> StockProduct : Add to StockProduct's ProductItem list
-            activate StockProduct
-            StockProduct -> ProductItem
-            activate ProductItem
-            ProductItem -> StockProduct
-            deactivate ProductItem
-            StockProduct -> GameStore
-            deactivate StockProduct
+                GameStore -> Log : create_log(manager_instance, ManagerAction.REFILL_STOCK, stock_product)
+                activate Log
+                Log -> GameStore : Return instance for storing
+                deactivate Log
+
+                GameStore -> ManagerA : stock_product
+            else
+                GameStore -> ManagerA : Failed (Invalid sell_price)
+            end
+        else 
+            GameStore -> ManagerA : Failed (Invalid quantity)
         end
-
-        GameStore -> Log : create_log(manager_instance, staff_action)
-        activate Log
-        Log -> GameStore : Return instance for storing
-        deactivate Log
-
-        GameStore -> ManagerA : Success
     else Did not find
         GameStore -> ManagerA : Failed (Invalid product ID)
     end

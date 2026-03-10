@@ -79,7 +79,7 @@ alt All the product item have a selling status
     deactivate PaymentMethod
 
     alt Payment successful
-        loop Set the product item status to be sold
+        loop Set the product item status to be sold and remove from shelf
             GameStore -> CartItem : Access the product item
             activate CartItem
             CartItem -> ProductItem : Set the status to being sold
@@ -88,6 +88,11 @@ alt All the product item have a selling status
             deactivate ProductItem
             CartItem -> GameStore
             deactivate CartItem
+
+            GameStore -> Shelf : Remove Product Item from shelf
+            activate Shelf
+            Shelf -> GameStore
+            deactivate Shelf
         end
 
         GameStore -> Bill : create_bill(payment_method, total_pricing) and add the puchasing products

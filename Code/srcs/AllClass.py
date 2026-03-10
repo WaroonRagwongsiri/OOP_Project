@@ -1060,9 +1060,10 @@ class GameStore:
 			coupon_instance = self.get_coupon_by_id(customer_id, coupon_id)
 			if coupon_instance is None:
 				raise ValueError("Coupon not found")
-			if datetime.now() >= coupon_instance.expire_date or total_pricing < coupon_instance.minimum_amount or coupon_instance is None:
+			if datetime.now() >= coupon_instance.expire_date or total_pricing < coupon_instance.minimum_amount:
 				raise Exception("Error while applying coupon")
 			total_pricing -= coupon_instance.discount_amount
+			customer_instance.coupons.remove(coupon_instance)
 			
 		# Payment
 		status = payment_method.start_payment(total_pricing, payment_info)
@@ -1091,7 +1092,6 @@ class GameStore:
 					break
 
 		customer_log = self.create_customer_logs(customer_instance, CustomerAction.PURCHASE)
-		self.__customer_logs_list.append(customer_log)
 
 		product_sn_list = [item.serial_number for item in bought_items]
 		return [bill, product_sn_list]
@@ -1141,7 +1141,6 @@ class GameStore:
 
 		customer_instance = self.get_customer_by_id(customer_id)
 		log = self.create_customer_logs(customer_instance, CustomerAction.REFUND)
-		self.__customer_logs_list.append(log)
 
 		manager_id = None
 		for staff in self.__staff_list:
