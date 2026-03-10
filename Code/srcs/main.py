@@ -111,6 +111,56 @@ def create_manager(name: str, age: int):
 	except Exception as e:
 		return f"Error: {e.__str__()}"
 
+@mcp.tool()
+def view_all_staff():
+	"""
+	View all staff in the store
+
+	Returns:
+		dict: Staff information
+	"""
+	try:
+		staff_list = store.get_all_staff()
+
+		return {
+			"staff": [
+				{
+					"id": staff.id,
+					"name": staff.name,
+					"age": staff.age,
+					"role": "Manager" if isinstance(staff, Manager) else "Staff"
+				}
+				for staff in staff_list
+			]
+		}
+
+	except Exception as e:
+		return f"Error: {str(e)}"
+
+@mcp.tool()
+def view_all_manager():
+	"""
+	View all managers in the store
+
+	Returns:
+		dict: Manager information
+	"""
+	try:
+		manager_list = store.get_all_manager()
+
+		return {
+			"managers": [
+				{
+					"id": manager.id,
+					"name": manager.name,
+					"age": manager.age
+				}
+				for manager in manager_list
+			]
+		}
+
+	except Exception as e:
+		return f"Error: {str(e)}"
 
 # -------------------------
 # Room
