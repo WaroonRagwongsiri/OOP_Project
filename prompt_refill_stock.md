@@ -1,46 +1,21 @@
-📦 Refill Stock Function – Test Prompt
-Phase Setup (Prerequisites)
+Phase 0: การเตรียมการ
+ช่วยทดสอบการเชื่อมต่อกับร้านค้าให้หน่อย
 
-Call test_connection → expect {"message": "Hello World"}
-Call create_manager with name="ManagerMike", age=40 → save manager_id
-Call create_game with manager_id={manager_id}, name="Chess", description="Classic strategy game", genre="Strategy", game_type="DISC" → save game_id
-Call get_all_stocks → save a valid stock_id from the list
+สร้างผู้จัดการชื่อ ManagerMike อายุ 40
+สร้างพนักงานชื่อ Skibidoi อายุ 1
+ManagerMike ต้องการสร้างเกมชื่อ Chess มีรายระเอียดคือ Classic strategy game มีแนวเป็น Strategy มีชนิดเป็นแผ่นเกม
 
 
-✅ Happy Path Tests
-Test 1 – Basic refill
-Call refill_stock with manager_id={manager_id}, stock_id={stock_id}, quantity=10, sell_price=29.99
-→ Expect: returns updated StockProduct object
-→ Expect: stock quantity increases by 10
-→ Expect: sell_price is updated to 29.99
-→ Expect: a REFILL_STOCK manager log entry is created
-Test 2 – Refill with quantity=1 (minimum valid)
-Call refill_stock with quantity=1, sell_price=9.99
-→ Expect: stock quantity increases by 1
-→ Expect: success with updated stock returned
-Test 3 – Refill with a high quantity
-Call refill_stock with quantity=9999, sell_price=49.99
-→ Expect: stock quantity increases by 9999 without error
-Test 4 – Refill updates sell_price correctly
-Call refill_stock twice with different sell_price values (e.g. 19.99 then 39.99)
-→ Expect: second call's sell_price=39.99 is reflected in the stock
+Phase 1: การเติม stock ที่ถูกต้อง
+ลองให้ ManagerMike เติม stock เกม Chess จำนวน 10 ชุดราคา 29.99
+ทีนี้ลองเติมด้วยราคาเดิมแต่แค่ชิ้นเดียว
+ทีนี้ลองเติม 9999 ชิ้นราคา 49.99
+ลองเช็คทีว่าการเติม stock สองครั้งล่าสุดว่าราคาต่างกันไหม (29.99 กับ 49.99)
 
-❌ Error / Edge Case Tests
-Test 5 – Invalid manager ID
-Call refill_stock with manager_id="nonexistent_id", valid stock_id, quantity=10, sell_price=29.99
-→ Expect: ValueError("Manager Not found")
-Test 6 – Invalid stock ID
-Call refill_stock with valid manager_id, stock_id="nonexistent_id", quantity=10, sell_price=29.99
-→ Expect: ValueError("Stock Not found")
-Test 7 – Refill with quantity=0
-Call refill_stock with quantity=0, valid manager_id and stock_id
-→ Expect: either stock quantity unchanged or an appropriate error raised by stock.refill_stock()
-Test 8 – Refill with negative quantity
-Call refill_stock with quantity=-5
-→ Expect: error raised — stock quantity should never decrease via refill
-Test 9 – Refill with negative sell_price
-Call refill_stock with sell_price=-1.0
-→ Expect: error raised — sell price should never be negative
-Test 10 – Non-manager staff attempting refill
-Call refill_stock using a staff_id in place of manager_id
-→ Expect: ValueError("Manager Not found")
+
+Phase 1: การเติม stock ที่ผิด
+ลองให้มีการเติม stock เกม Chess เหมือนเดิมแต่ใช้ id ผู้จัดการที่ไม่มีตัวตนที
+ทีนี้ลองให้ ManagerMike เติม stock เกมที่ไม่มีตัวตนอยู่ เอาเป็น Roblox ละกัน
+ลองเติม stock แต่ให้จำนวนเกมเป็น 0 และติดลบที
+ทีนี้ลองเติม stock แต่ให้ราคาเป็น 0 และติดลบที
+ทีนี้ลองให้พนักงาน Skibidoi เป็นคนเติม Stock แทน
