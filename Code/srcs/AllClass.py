@@ -75,6 +75,9 @@ class Customer:
 	def add_coupon(self, coupon: Coupon):
 		self.__coupons_list.append(coupon)
 
+	def view_coupons(self) -> list[Coupon]:
+		return self.coupons
+
 class MemberStatusEnum(Enum):
 	ACTIVE = "Active"
 	INACTIVE = "Inactive"
@@ -571,6 +574,12 @@ class GameStore:
 			if customer.id == customer_id:
 				return customer
 		return None
+
+	def view_coupon(self, customer_id: str) -> list[Coupon]:
+		customer = self.get_customer_by_id(customer_id)
+		if customer is None:
+			raise ValueError("Customer not found")
+		return customer.view_coupons()
 
 	def get_room_by_id(self, room_id: str) -> Room | None:
 		for room in self.__room_list:
