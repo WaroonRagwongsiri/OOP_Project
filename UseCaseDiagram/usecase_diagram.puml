@@ -23,6 +23,10 @@ rectangle "Store" {
 	usecase "Purchase" as UC_Purchase
 	usecase "UseCoupon" as UC_UseCoupon
 	usecase "Subscribe" as UC_Subscribe
+	usecase "ViewStaff" as UC_ViewStaff
+	usecase "ViewManager" as UC_ViewManager
+	usecase "ViewCoupon" as UC_ViewCoupon
+	usecase "ViewBill" as UC_ViewBill
 
 	'Payment'
 	usecase "StartPayment" as UC_StartPayment
@@ -65,10 +69,15 @@ A_Customer --> UC_Purchase
 A_Customer --> UC_Subscribe
 A_Customer --> UC_CheckIn
 A_Customer --> UC_ViewShelf
-A_Customer --> UC_Refund
+A_Customer --> UC_ViewBill
+A_Customer --> UC_ViewStaff
+A_Customer --> UC_ViewManager
+A_Customer --> UC_ViewCoupon
 
 UC_ViewShelf <.. UC_AddProductToCart : <<extend>>
 UC_ViewShelf <.. UC_ViewProductDetail : <<extend>>
+
+UC_ViewBill <.. UC_Refund : <<extend>>
 
 UC_ViewProductDetail <.. UC_AddProductToCart : <<extend>>
 

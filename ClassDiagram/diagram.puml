@@ -8,6 +8,7 @@ class GameStore
 
 	- shelf_list : List<Shelf>
 	- stock_product_list: List<StockProduct>
+	- bought_list: List<ProductItem>
 
 	- room_list: List<Room>
 
@@ -24,7 +25,6 @@ class GameStore
 	- manager_logs_list: List<ManagerLogs>
 	- customer_logs_list: List<CustomerLogs>
 
-	- bill: List<Bill>
 	- bill: List<Bill>
 
 	+ make_reservation(customer: Customer, room: Room)

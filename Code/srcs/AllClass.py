@@ -84,6 +84,9 @@ class Customer:
 	def view_coupons(self) -> list[Coupon]:
 		return self.coupons
 
+	def get_bill(self) -> list[Bill]:
+		return self.__bill_list
+
 class MemberStatusEnum(Enum):
 	ACTIVE = "Active"
 	INACTIVE = "Inactive"
@@ -170,6 +173,11 @@ class Product:
 		return self._id
 
 	id = property(get_id)
+
+	def get_name(self) ->  str:
+		return self._name
+
+	name = property(get_name)
 
 class Game(Product):
 	def __init__(self, id: str, name: str, description: str, genre: str, support_platform: tuple[Machine]):
@@ -1265,6 +1273,13 @@ class GameStore:
 
 	def get_all_manager(self) -> list[Manager]:
 		return [x for x in self.__staff_list if isinstance(x, Manager)]
+
+	def get_customer_bill(self, customer_id: str) -> list[Bill]:
+		customer = self.get_customer_by_id(customer_id)
+		if not customer:
+			raise ValueError("Customer not found")
+
+		return customer.bill_list
 
 class Bill:
 	def __init__(self, payment_gateway: PaymentGateway, amount: float):
