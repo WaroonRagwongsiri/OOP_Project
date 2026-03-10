@@ -55,6 +55,12 @@ class Customer:
 		return self.__coupons_list
 
 	def check_time_availability(self, start_time: datetime, end_time: datetime) -> bool:
+		if start_time < datetime.now():
+			return False
+
+		if end_time <= start_time:
+			return False
+
 		for reservation in self.__reservation_list:
 			if start_time < reservation.end_time and end_time > reservation.start_time and reservation.status != ReservationStatusEnum.CANCEL:
 				return False
@@ -308,6 +314,12 @@ class Room:
 		end_time: datetime,
 		exclude_reservation_id: str | None = None
 	) -> bool:
+		if start_time < datetime.now():
+			return False
+
+		if end_time <= start_time:
+			return False
+
 		for reservation in self.__reservation_list:
 			if exclude_reservation_id is not None and reservation.id == exclude_reservation_id:
 				continue
