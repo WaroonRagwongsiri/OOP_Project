@@ -20,9 +20,13 @@ rectangle "Store" {
 	usecase "RemoveItemFromCart" as UC_RemoveItemFromCart
 	usecase "ViewShelf" as UC_ViewShelf
 	usecase "ViewProductDetail" as UC_ViewProductDetail
-	usecase "Purchase" as UC_Purchase
+	usecase "Purchase" as UC_Purchase #ADD8E6
 	usecase "UseCoupon" as UC_UseCoupon
-	usecase "Subscribe" as UC_Subscribe
+	usecase "Subscribe" as UC_Subscribe #ADD8E6
+	usecase "ViewStaff" as UC_ViewStaff
+	usecase "ViewManager" as UC_ViewManager
+	usecase "ViewCoupon" as UC_ViewCoupon
+	usecase "ViewBill" as UC_ViewBill
 
 	'Payment'
 	usecase "StartPayment" as UC_StartPayment
@@ -43,16 +47,16 @@ rectangle "Store" {
 	usecase "CreateMachine" as UC_CreateMachine
 	usecase "ViewProductStock" as UC_ViewProductStock
 	usecase "RefillShelf" as UC_RefillShelf
-	usecase "CreateCoupon" as UC_CreateCoupon
-	usecase "RefillStock" as UC_RefillStock
+	usecase "CreateCoupon" as UC_CreateCoupon #ADD8E6
+	usecase "RefillStock" as UC_RefillStock #ADD8E6
 	usecase "ViewStock" as UC_ViewStock
 
 	'Room Reservation'
 	usecase "SearchAvailableRoom" as UC_SearchAvailableRoom
-	usecase "CreateReservation" as UC_CreateReservation
+	usecase "CreateReservation" as UC_CreateReservation #ADD8E6
 	usecase "ViewReservation" as UC_ViewReservation
 	usecase "CancelReservation" as UC_CancelReservation
-	usecase "CheckIn" as UC_CheckIn
+	usecase "CheckIn" as UC_CheckIn #ADD8E6
 	usecase "ExtendTime" as UC_ExtendTime
 	usecase "CheckOut" as UC_CheckOut
 	usecase "Refund" as UC_Refund
@@ -65,10 +69,15 @@ A_Customer --> UC_Purchase
 A_Customer --> UC_Subscribe
 A_Customer --> UC_CheckIn
 A_Customer --> UC_ViewShelf
-A_Customer --> UC_Refund
+A_Customer --> UC_ViewBill
+A_Customer --> UC_ViewStaff
+A_Customer --> UC_ViewManager
+A_Customer --> UC_ViewCoupon
 
 UC_ViewShelf <.. UC_AddProductToCart : <<extend>>
 UC_ViewShelf <.. UC_ViewProductDetail : <<extend>>
+
+UC_ViewBill <.. UC_Refund : <<extend>>
 
 UC_ViewProductDetail <.. UC_AddProductToCart : <<extend>>
 

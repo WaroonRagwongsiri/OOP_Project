@@ -895,6 +895,43 @@ def refund(
 	except Exception as e:
 		return f"Error: {e.__str__()}"
 
+@mcp.tool()
+def view_bill(customer_id: str):
+	"""
+	View bill from customer
+
+	Args:
+		customer_id (str): Customer id
+
+	Returns:
+		dict: Bill result
+	"""
+	try:
+		bill_list = store.get_customer_bill(customer_id)
+
+		return {
+			"customer_id": customer_id,
+			"bills": [
+				{
+					"id": bill.id,
+					"amount": bill.amount,
+					"product_items": [
+						{
+							"serial_number": item.serial_number,
+							"product": item.product.name,
+							"status": item.status,
+							"condition": item.condition,
+							"price": item.calculate_price()
+						}
+						for item in bill.product_items
+					]
+				}
+				for bill in bill_list
+			]
+		}
+
+	except Exception as e:
+		return f"Error: {str(e)}"
 
 def main():
 	mcp.run(transport="stdio")
